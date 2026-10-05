@@ -15,12 +15,19 @@ test('zero matches display automatic web discoveries as unreviewed suggestions',
  await page.route('**/api/imports?*',async route=>{const url=new URL(route.request().url());if(url.searchParams.get('q')!=='unusual support need'){await route.continue();return;}await route.fulfill({json:{total:0,records:[],mapRecords:[],mappedCount:0,unmappedCount:0,searchMode:'semantic'}});});await page.route('**/api/assistant',route=>route.fulfill({json:{mode:'openai',summary:'No directory matches. Here is a service found online.',answer:'',needs:[],nextSteps:[],citations:[],services:[],warnings:[],discoveries:[{suggestionId:123,name:'Community support centre',provider:'Local charity',description:'Support described on the provider website.',url:'https://example.org/community',postcode:'BS1 1AA',reviewStatus:'pending'}]}}));await page.goto('/');await page.getByLabel('What do you need help with?',{exact:true}).fill('unusual support need');await page.getByRole('button',{name:'Location Choose an area or use your location'}).click();await page.getByRole('button',{name:'Bristol Well Aware directory'}).click();await expect(page.getByText('Not yet reviewed',{exact:true})).toBeVisible();await expect(page.getByText('Suggested from web sources · Details have not been checked by staff.')).toBeVisible();await expect(page.getByRole('link',{name:'Community support centre'})).toHaveAttribute('href','https://example.org/community');await expect(page.getByText('Sent to staff for review.')).toBeVisible();
 });
 
-test('including unmapped services preserves the overview and pending AI requests',async({page})=>{
+test('including unmapped services refreshes the overview while keeping the previous answer visible',async({page})=>{
  let release:()=>void=()=>{};const pending=new Promise<void>(resolve=>{release=resolve;});let calls=0;
  await page.context().grantPermissions(['geolocation']);await page.context().setGeolocation({latitude:51.4545,longitude:-2.5879});
- await page.route('**/api/assistant',async route=>{calls++;await pending;await route.fulfill({json:{mode:'openai',summary:'Anxiety support from your search.',answer:'',needs:[],nextSteps:[],citations:[],services:[],warnings:[]}});});
+ await page.route('**/api/assistant',async route=>{calls++;await pending;await route.fulfill({json:{mode:'openai',summary:route.request().postDataJSON().search.unknown==='0'?'Mapped anxiety support.':'Anxiety support from your search.',answer:'',needs:[],nextSteps:[],citations:[],services:[],warnings:[]}});});
  await page.goto('/');await page.getByLabel('What do you need help with?',{exact:true}).fill('anxiety');await page.getByRole('button',{name:'Location Choose an area or use your location'}).click();await page.getByRole('button',{name:'Use current location',exact:true}).click();
  const overview=page.getByRole('region',{name:'Search overview'});await expect(overview.locator('.assistant-spinner')).toBeVisible();
  const checkbox=page.getByRole('checkbox',{name:'Also show services with unknown distance'});await checkbox.uncheck();await expect(overview.locator('.assistant-spinner')).toBeVisible();release();
- await expect(overview).toContainText('Anxiety support from your search.');await checkbox.check();await expect(overview).toContainText('Anxiety support from your search.');expect(calls).toBe(1);
+ await expect(overview).toContainText('Mapped anxiety support.');await checkbox.check();await expect(overview).toContainText('Mapped anxiety support.');await expect(overview).toContainText('Anxiety support from your search.');expect(calls).toBeGreaterThanOrEqual(2);
+});
+
+test('map and service list divider supports dragging and keyboard resizing',async({page})=>{
+ test.skip(test.info().project.name==='mobile','Divider is desktop only');
+ await page.goto('/');await page.getByRole('button',{name:'Location Choose an area or use your location'}).click();await page.getByRole('button',{name:'Bristol Well Aware directory'}).click();
+ const divider=page.getByRole('separator',{name:'Resize service list and map'});await expect(divider).toBeVisible();const box=await divider.boundingBox();await page.mouse.move(box!.x+box!.width/2,box!.y+40);await page.mouse.down();await page.mouse.move(box!.x+110,box!.y+40);await page.mouse.up();expect(Number(await divider.getAttribute('aria-valuenow'))).toBeGreaterThan(50);
+ await divider.focus();await page.keyboard.press('Home');await expect(divider).toHaveAttribute('aria-valuenow','25');await page.keyboard.press('ArrowRight');await expect(divider).toHaveAttribute('aria-valuenow','30');
 });
