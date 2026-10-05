@@ -1,0 +1,4 @@
+.assistant-loading {display:flex;align-items:center;gap:12px;font-size:16px;line-height:1.5;}
+.assistant-spinner {display:inline-block;width:20px;height:20px;flex:0 0 20px;border:3px solid #b8d4e9;border-top-color:#1d70b8;border-radius:50%;animation:assistant-spin .8s linear infinite;}
+@keyframes assistant-spin {to {transform:rotate(360deg);}}
+@media(prefers-reduced-motion:reduce) {.assistant-spinner {animation:none;}}

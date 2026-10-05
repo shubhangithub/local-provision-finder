@@ -1,0 +1,93 @@
+{
+  "evaluatedAt": "2026-10-05T14:31:07.889Z",
+  "sources": {
+    "bristol-oruk": {
+      "total": 862,
+      "coverage": {
+        "description": 857,
+        "postcode": 251,
+        "lat": 83,
+        "lastVerified": 861,
+        "sourceUpdatedAt": 862,
+        "publicPhone": 686,
+        "publicEmail": 612,
+        "cost": 103,
+        "openingTimes": 251,
+        "categories": 0,
+        "needs": 444
+      },
+      "possibleDuplicateGroups": [],
+      "needCounts": {
+        "Childcare": 7,
+        "Confidence": 77,
+        "Digital skills": 11,
+        "Housing": 71,
+        "Mental health": 170,
+        "Money and debt": 74,
+        "Physical health": 129,
+        "Skills and training": 185
+      },
+      "textBeyondExcelCellLimit": 0,
+      "missingProvider": 2
+    },
+    "buckinghamshire-oruk": {
+      "total": 3872,
+      "coverage": {
+        "description": 3852,
+        "postcode": 3294,
+        "lat": 3289,
+        "lastVerified": 0,
+        "sourceUpdatedAt": 3872,
+        "publicPhone": 3157,
+        "publicEmail": 3611,
+        "cost": 2301,
+        "openingTimes": 2391,
+        "categories": 3871,
+        "needs": 2783
+      },
+      "possibleDuplicateGroups": [],
+      "needCounts": {
+        "Childcare": 1083,
+        "Confidence": 396,
+        "Digital skills": 55,
+        "Housing": 70,
+        "Mental health": 382,
+        "Money and debt": 231,
+        "Physical health": 568,
+        "Skills and training": 1605
+      },
+      "textBeyondExcelCellLimit": 0,
+      "missingProvider": 0
+    },
+    "kingston-ck": {
+      "total": 351,
+      "coverage": {
+        "description": 351,
+        "postcode": 133,
+        "lat": 133,
+        "lastVerified": 0,
+        "sourceUpdatedAt": 351,
+        "publicPhone": 315,
+        "publicEmail": 343,
+        "cost": 341,
+        "openingTimes": 47,
+        "categories": 350,
+        "needs": 290
+      },
+      "possibleDuplicateGroups": [],
+      "needCounts": {
+        "Childcare": 13,
+        "Confidence": 53,
+        "Digital skills": 13,
+        "Housing": 47,
+        "Mental health": 92,
+        "Money and debt": 93,
+        "Physical health": 123,
+        "Skills and training": 129
+      },
+      "textBeyondExcelCellLimit": 0,
+      "missingProvider": 0
+    }
+  },
+  "totalFlags": 4846
+}

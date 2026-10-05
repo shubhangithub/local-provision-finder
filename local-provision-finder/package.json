@@ -1,0 +1,44 @@
+{
+  "name": "local-provision-finder",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npm run restore:data && vite --host 127.0.0.1 --port 8000 --strictPort",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 4173",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "check": "npm run test && npm run build",
+    "ingest": "node --experimental-strip-types ingest/run.ts && npm run clean:data",
+    "test:ingest": "node --experimental-strip-types --test ingest/*.test.ts",
+    "audit:data": "node --experimental-strip-types scripts/audit-data.ts",
+    "export:csv": "npm run clean:data && node --experimental-strip-types scripts/export-csv.ts",
+    "clean:data": "node --experimental-strip-types scripts/clean-data.ts && npm run snapshot:data",
+    "index:semantic": "node --experimental-strip-types scripts/index-semantic.ts",
+    "snapshot:data": "node --experimental-strip-types scripts/snapshot-data.ts",
+    "restore:data": "node --experimental-strip-types scripts/restore-data.ts"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^4.3.0",
+    "docx": "^9.8.1",
+    "html-to-image": "^1.11.13",
+    "jspdf": "^4.2.1",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^0.468.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.51.0",
+    "@types/leaflet": "^1.9.22",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "~5.7.3",
+    "vite": "^6.1.0",
+    "vitest": "^4.1.11"
+  }
+}

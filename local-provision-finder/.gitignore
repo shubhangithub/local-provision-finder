@@ -1,0 +1,32 @@
+.DS_Store
+node_modules/
+dist/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+playwright-report/
+test-results/
+__pycache__/
+*.pyc
+
+data/ingest-cache/
+data/*.sqlite-wal
+data/*.sqlite-shm
+.tools/
+
+# Rebuildable local sentence embeddings; source catalogue remains tracked.
+data/semantic-index.sqlite*
+
+# User reports and review decisions are local application state.
+data/feedback.sqlite*
+data/availability.sqlite*
+data/suggestions.sqlite*
+
+# Complete database ships as a lossless compressed snapshot; restored locally.
+data/services.sqlite
+data/services.internal.json
+data/services.cleaned.json
+data/tags.sqlite*
+
+!data/semantic-index.sqlite.gz

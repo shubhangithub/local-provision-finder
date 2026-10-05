@@ -1,0 +1,128 @@
+{
+  "originalCount": 5101,
+  "cleanedCount": 5085,
+  "rowsConsolidated": 16,
+  "rule": "Same source, normalized service name and provider. Combine contacts, locations and descriptions; preserve all source IDs. Original responses archived separately.",
+  "groups": [
+    {
+      "canonicalId": "bristol-oruk:0a60a513-a5ce-d59a-53cf-344771351dda",
+      "name": "Thrive - using gardening to change lives",
+      "provider": "Thrive - using gardening to change lives",
+      "sourceIds": [
+        "bristol-oruk:0a60a513-a5ce-d59a-53cf-344771351dda",
+        "bristol-oruk:c5073687-edce-336c-13c9-4036f5644433"
+      ]
+    },
+    {
+      "canonicalId": "bristol-oruk:1ab5e41f-929e-c63e-2b27-a43888f4b01f",
+      "name": "Reiki Training",
+      "provider": "LEARN REIKI – BRISTOL",
+      "sourceIds": [
+        "bristol-oruk:1ab5e41f-929e-c63e-2b27-a43888f4b01f",
+        "bristol-oruk:25d55a0d-fff8-69e4-ae32-4504332ae5ac"
+      ]
+    },
+    {
+      "canonicalId": "bristol-oruk:2677bd56-eb0f-3c81-8e34-b81b4b25186a",
+      "name": "Woodland Wellbeing",
+      "provider": "Forest of Avon Trust",
+      "sourceIds": [
+        "bristol-oruk:2677bd56-eb0f-3c81-8e34-b81b4b25186a",
+        "bristol-oruk:9b5eb22a-c9e1-d677-cf6d-232c8ef878ee",
+        "bristol-oruk:cc006cca-f688-1025-b841-d303656047fe"
+      ]
+    },
+    {
+      "canonicalId": "bristol-oruk:296bd6b7-1c3d-8e05-990d-2cd49b36b45f",
+      "name": "Roots to Wellbeing",
+      "provider": "Your Park Bristol and Bath",
+      "sourceIds": [
+        "bristol-oruk:296bd6b7-1c3d-8e05-990d-2cd49b36b45f",
+        "bristol-oruk:31c14eb8-1a74-141d-58f9-7a3066539dd4"
+      ]
+    },
+    {
+      "canonicalId": "bristol-oruk:386cd2a2-7992-f1de-2784-0d7c664d7836",
+      "name": "Respite Day Centre",
+      "provider": "Autumn Years Community Care Limited",
+      "sourceIds": [
+        "bristol-oruk:386cd2a2-7992-f1de-2784-0d7c664d7836",
+        "bristol-oruk:676bceba-f43f-de15-8a53-0ad506e4f44f",
+        "bristol-oruk:7d93bb2d-1b39-cc10-2290-60cd1867a456"
+      ]
+    },
+    {
+      "canonicalId": "bristol-oruk:4a8a5367-9de4-4e2b-ac1f-57ef791d212b",
+      "name": "Bristol Autism Spectrum Service",
+      "provider": "Bristol Autism Spectrum Service",
+      "sourceIds": [
+        "bristol-oruk:4a8a5367-9de4-4e2b-ac1f-57ef791d212b",
+        "bristol-oruk:6db21e61-a215-4b0a-ae5d-b414591b7d80"
+      ]
+    },
+    {
+      "canonicalId": "bristol-oruk:6b3a0bdb-1a0b-0d58-45f8-b602d66caea7",
+      "name": "Yoga for Beginners",
+      "provider": "Discover Yoga Discover You",
+      "sourceIds": [
+        "bristol-oruk:6b3a0bdb-1a0b-0d58-45f8-b602d66caea7",
+        "bristol-oruk:7f999405-0bd3-a9c1-8c25-bb6508675908",
+        "bristol-oruk:ad0a96e2-caae-301d-d1f2-d0ea7bb91275"
+      ]
+    },
+    {
+      "canonicalId": "bristol-oruk:6bf46cbe-f625-4549-af9f-53b0075a4df2",
+      "name": "The Sequal Trust",
+      "provider": "The Sequal Trust",
+      "sourceIds": [
+        "bristol-oruk:6bf46cbe-f625-4549-af9f-53b0075a4df2",
+        "bristol-oruk:9fa7bf67-ad4b-dacc-09ca-8cfabf0031dc"
+      ]
+    },
+    {
+      "canonicalId": "bristol-oruk:787d0f0a-aac6-88b6-c761-d4c5c86e3ada",
+      "name": "Seated Yoga and Tai Chi Shibashi",
+      "provider": "Discover Yoga Discover You",
+      "sourceIds": [
+        "bristol-oruk:787d0f0a-aac6-88b6-c761-d4c5c86e3ada",
+        "bristol-oruk:844343ae-561c-2863-414d-8a039f70628c"
+      ]
+    },
+    {
+      "canonicalId": "buckinghamshire-oruk:16852",
+      "name": "Toddler Praise + (0 to 4) - Chalfont St Peter",
+      "provider": "Gold Hill Baptist Church",
+      "sourceIds": [
+        "buckinghamshire-oruk:16852",
+        "buckinghamshire-oruk:9811"
+      ]
+    },
+    {
+      "canonicalId": "kingston-ck:769e4312-f78b-4019-851a-283d1178a16b",
+      "name": "Compassionate Cafe",
+      "provider": "Princess Alice Hospice",
+      "sourceIds": [
+        "kingston-ck:769e4312-f78b-4019-851a-283d1178a16b",
+        "kingston-ck:90278396-57bc-4b5f-8262-d19b8d1602af"
+      ]
+    },
+    {
+      "canonicalId": "kingston-ck:aea5a826-235b-44bc-afcd-144ea217b8f0",
+      "name": "Love to Sing",
+      "provider": "Home Instead Senior Care - Wimbledon & Kingston",
+      "sourceIds": [
+        "kingston-ck:aea5a826-235b-44bc-afcd-144ea217b8f0",
+        "kingston-ck:f88be311-b34e-42be-98d6-7806c5e1f527"
+      ]
+    },
+    {
+      "canonicalId": "kingston-ck:e32726f5-30e1-4b00-b403-45249e29390a",
+      "name": "Surbiton Junior Chess Club",
+      "provider": "Surbiton Junior Chess Club",
+      "sourceIds": [
+        "kingston-ck:e32726f5-30e1-4b00-b403-45249e29390a",
+        "kingston-ck:fc150e13-13d7-405b-ad35-432d087a3d8b"
+      ]
+    }
+  ]
+}

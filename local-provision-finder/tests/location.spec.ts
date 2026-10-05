@@ -1,0 +1,33 @@
+import { test, expect } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
+test('choose a directory and search stored postcodes', async ({page}) => {
+  await page.goto('/');
+  await page.getByRole('button',{name:'Location Choose an area or use your location'}).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  expect((await new AxeBuilder({page}).include('.location-dialog').analyze()).violations).toEqual([]);
+  await page.getByLabel('Town or service postcode').fill('Bristol');await page.getByRole('button',{name:'Search this area',exact:true}).click();
+  await expect(page.locator('.directory-results-count [role=status]')).toHaveText(`${(await (await page.request.get('/api/imports?area=Bristol')).json()).total} services`);
+  await page.getByRole('button',{name:/^Location Bristol$/i}).click();
+  await page.getByLabel('Town or service postcode').fill('BS4');
+  await page.getByRole('button',{name:'Search this area'}).click();
+  await expect(page.locator('.location-results .service-card').first()).toBeVisible();
+  const response = await page.request.get('/api/imports?area=BS4');
+  const results = await response.json(); expect(results.total).toBeGreaterThan(0);
+});
+test('current location uses real coordinates; denial is recoverable', async ({page, context}) => {
+  await context.grantPermissions(['geolocation']);
+  await context.setGeolocation({latitude:51.4288,longitude:-2.59625});
+  await page.goto('/');
+  await page.getByRole('button',{name:'Location Choose an area or use your location'}).click();
+  await page.getByRole('button',{name:'Use current location'}).click();
+  await expect(page.getByRole('heading',{name:'Support in Your current location'})).toBeVisible();
+  await expect(page.locator('.location-results .service-card').first()).toBeVisible();
+  const response = await page.request.get('/api/imports?lat=51.4288&lng=-2.59625');
+  const data = await response.json(); expect(data.records[0].distanceMiles).toBe(0);
+  expect(data.records.every((record: {distanceMiles:number | null}) => record.distanceMiles===null || record.distanceMiles<=10)).toBeTruthy();
+  await expect(page).not.toHaveURL(/lat=/);
+  await page.getByRole('button',{name:'Location Your current location'}).click();
+  await page.evaluate(() => {navigator.geolocation.getCurrentPosition = (_success, failure) => failure?.({code:1,message:'Denied',PERMISSION_DENIED:1,POSITION_UNAVAILABLE:2,TIMEOUT:3});});
+  await page.getByRole('button',{name:'Use current location'}).click();
+  await expect(page.getByRole('alert')).toContainText('Location access was declined');
+});

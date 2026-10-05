@@ -1,0 +1,54 @@
+{
+  "generatedAt": "2026-10-05T14:30:43.416Z",
+  "sources": [
+    {
+      "source": "bristol-oruk",
+      "status": "complete",
+      "expected": 874,
+      "fetched": 874,
+      "written": 874,
+      "skipped": 0,
+      "removed": 0
+    },
+    {
+      "source": "kingston-ck",
+      "status": "complete",
+      "expected": 354,
+      "fetched": 354,
+      "written": 354,
+      "skipped": 0,
+      "removed": 0
+    },
+    {
+      "source": "buckinghamshire-oruk",
+      "status": "complete",
+      "expected": 3873,
+      "fetched": 3873,
+      "written": 3873,
+      "skipped": 0,
+      "removed": 0
+    }
+  ],
+  "total": 5101,
+  "postcodes": {
+    "count": 3687,
+    "share": 0.7227994510880219
+  },
+  "assuredDates": {
+    "count": 873,
+    "share": 0.17114291315428348
+  },
+  "updatedDates": {
+    "count": 5101
+  },
+  "needs": {
+    "Childcare": 1103,
+    "Confidence": 526,
+    "Digital skills": 79,
+    "Housing": 188,
+    "Mental health": 645,
+    "Money and debt": 399,
+    "Physical health": 820,
+    "Skills and training": 1923
+  }
+}

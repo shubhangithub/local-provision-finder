@@ -1,0 +1,2 @@
+.directory-result-tags {display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0;padding:0;list-style:none;}
+.directory-result-tags li {max-width:100%;padding:3px 8px;background:#efe8f5;color:#4c2c92;border-left:3px solid #8064ac;font-size:14px;font-weight:700;line-height:1.4;overflow-wrap:anywhere;}
