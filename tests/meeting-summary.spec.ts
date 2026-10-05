@@ -59,7 +59,9 @@ test('after the meeting the next steps and actions fit on one screen, with detai
   await page.route('**/api/assistant',route=>route.fulfill({json:{mode:'local',summary:'Draft',answer:'',needs:[],nextSteps:[],citations:[],services:[],warnings:[]}}));
   await finishMeeting(page);
   const report=page.getByRole('region',{name:'Your next steps'});
-  await expect(report.getByRole('button',{name:'Print or save as PDF'})).toBeInViewport();
+  await expect(report.getByRole('heading',{name:'Your next steps'})).toBeInViewport();
+  await expect(report.getByRole('button',{name:'Print or save as PDF'})).toHaveCount(0);
+  await expect(page.getByRole('tab',{name:/More suggestions/})).toHaveCount(0);
   await expect(page.getByRole('tab',{name:'Summary'})).toHaveAttribute('aria-selected','true');
   await expect(page.getByRole('region',{name:'Transcript'})).toHaveCount(0);
   await page.getByRole('tab',{name:'Transcript'}).click();

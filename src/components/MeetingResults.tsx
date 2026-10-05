@@ -41,15 +41,14 @@ export default function MeetingResults(props: Props) {
   return <div className="meeting-results" ref={top}>
     <div className="meeting-heading">
       <div><h2>Meeting ended</h2><p className="meeting-meta">Length {length(seconds)} · {choices.length} {choices.length === 1 ? 'service' : 'services'} saved</p></div>
-      <div className="meeting-heading-actions"><span className="meeting-status">Microphone off</span>
-        {download && <a className="meeting-download" href={download} download="jobcentre-meeting.webm">Download meeting audio</a>}
-        <button type="button" className="button secondary meeting-start" onClick={onRestart}>Start another meeting</button></div>
+      <div className="meeting-heading-actions"><button type="button" className="button secondary meeting-start" onClick={onRestart}>Start another meeting</button></div>
     </div>
     <NextStepsReport choices={choices} fallback={fallback} topics={topics} endedAt={endedAt} />
     <ResultsTabs label="Meeting details" tabs={[
       { id: 'summary', label: 'Summary', panel: <Summary summary={props.summary} summarising={props.summarising} summaryError={props.summaryError} onSummarise={props.onSummarise} hasTranscript={!!transcript} /> },
       { id: 'transcript', label: 'Transcript', panel: <><div className="meeting-transcript" role="region" aria-label="Transcript" tabIndex={0}>{transcript || 'Nothing was transcribed.'}</div><p className="meeting-note">Machine-generated from the audio and may contain mistakes. Check it before relying on it.</p></> },
       { id: 'suggestions', label: `More suggestions${unsaved ? ` (${unsaved})` : ''}`, panel: <><p className="meeting-note">Tick a service to add it to the next steps above.</p><LiveServices concepts={concepts} dismissed={dismissed} onDismiss={onDismiss} shortlist={shortlist} /></> },
-    ]} />
+    ].filter(tab => tab.id !== 'suggestions' || concepts.length > 0)} />
+    {download && <p className="meeting-footer"><a className="meeting-download" href={download} download="jobcentre-meeting.webm">Download meeting audio</a></p>}
   </div>;
 }

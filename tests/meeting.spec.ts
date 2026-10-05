@@ -20,7 +20,7 @@ test('meeting is staff-only, shows live words and stops microphone', async ({ pa
   await expect(page.getByRole('region', { name: 'Transcript' })).toContainText('childcare after school');
   expect(requests[0]).toContain('staff=true');
   await page.getByRole('button', { name: 'Stop meeting', exact: true }).click();
-  await expect(page.getByText('Microphone off', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Meeting ended' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Download meeting audio' })).toBeVisible();
   expect(await mic(page)).toMatchObject({ stopped: 1, recording: false });
 });
@@ -93,7 +93,7 @@ test('live services can be saved or hidden and feed the next-steps report', asyn
   await expect(report).toContainText('Refer yourself');
   await expect(report).not.toContainText('Beta Club');
   await expect(report.getByRole('button', { name: 'Print or save as PDF' })).toBeVisible();
-  await report.getByRole('button', { name: 'Email these steps' }).click();
+  await report.getByRole('button', { name: 'Send a copy' }).click();
   await report.getByRole('button', { name: 'Send email' }).click();
   await expect(report.getByRole('alert')).toContainText('Enter an email address');
   await report.getByLabel('Email address').fill('sam@example.com');
