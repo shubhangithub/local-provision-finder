@@ -25,7 +25,7 @@ export function importsApi(): Plugin {
       try {
         if (url.pathname === '/api/imports/service') {
           const id = url.searchParams.get('id');
-          const row = db.prepare('SELECT record_json FROM services WHERE id=?').get(id ?? '');
+          const row = db.prepare('SELECT record_json FROM catalogue_services WHERE id=?').get(id ?? '');
           if (!row) return send(404, { error: 'Imported service not found.' });
           const record = JSON.parse(String(row.record_json));
           const { raw: _raw, ...readable } = record;
@@ -36,8 +36,8 @@ export function importsApi(): Plugin {
         const page = Math.max(1, Math.min(10000, Number(url.searchParams.get('page')) || 1));
         const pageSize = 20;
         const pattern = `%${q.replace(/[\\%_]/g, '\\$&')}%`;
-        const total = Number(db.prepare("SELECT COUNT(*) AS count FROM services WHERE availability != 'Removed at source' AND search_text LIKE ? ESCAPE '\\'").get(pattern)?.count ?? 0);
-        const records = db.prepare("SELECT record_json FROM services WHERE availability != 'Removed at source' AND search_text LIKE ? ESCAPE '\\' ORDER BY json_extract(record_json,'$.name') COLLATE NOCASE LIMIT ? OFFSET ?").all(pattern, pageSize, (page-1)*pageSize).map(row => {
+        const total = Number(db.prepare("SELECT COUNT(*) AS count FROM catalogue_services WHERE availability != 'Removed at source' AND search_text LIKE ? ESCAPE '\\'").get(pattern)?.count ?? 0);
+        const records = db.prepare("SELECT record_json FROM catalogue_services WHERE availability != 'Removed at source' AND search_text LIKE ? ESCAPE '\\' ORDER BY json_extract(record_json,'$.name') COLLATE NOCASE LIMIT ? OFFSET ?").all(pattern, pageSize, (page-1)*pageSize).map(row => {
           const record = JSON.parse(String(row.record_json));
           return { id: record.id, name: record.name, provider: record.provider, postcode: record.postcode, categories: record.categories, needs: record.needs, source: record.source, vetting: record.vetting, lastVerified: record.lastVerified, sourceUpdatedAt: record.sourceUpdatedAt, description: record.description.slice(0, 180), publicPhone: record.publicPhone, publicEmail: record.publicEmail };
         });

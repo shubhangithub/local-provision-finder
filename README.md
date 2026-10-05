@@ -23,7 +23,7 @@ The launcher downloads a checksum-verified, project-local Node runtime; it does 
 
 **Public search** uses the ten fictional services from the supplied DWP workbook, with demo postcode areas AB1–AB8. It matches needs, respects the supplied sample distances, excludes closed services and explains missing provision and conflicting information. Online delivery does not remove postcode coverage limits. Cost and hours are shown as unknown where the workbook supplies no values. No national records are invented. Synthetic publication approval is an explicit demo assumption.
 
-**Staff → Review → Imported services** reads the local SQLite database through a read-only, loopback-only API. The database contains 874 licensed Bristol Well Aware records, retained source JSON, full searchable free text and published charity contacts. All imports are internal and do not enter public search. Kingston upon Thames is reachable but is not populated because reuse permission is unresolved. See [ingestion documentation](docs/ingestion.md) for source terms, counts, schema and freshness rules.
+**Staff → Review → Imported services** reads the local SQLite database through a read-only, loopback-only API. The database contains 874 Bristol Well Aware records and 354 Kingston records, retained source JSON, full searchable free text and published charity contacts. All imports are internal and do not enter public search. Kingston upon Thames is imported under project reuse approval confirmed by the user. See [ingestion documentation](docs/ingestion.md) for source terms, counts, schema and freshness rules.
 
 A source assurance date and a source update date are separate. Neither the UI nor a recently fetched page guarantees current availability, suitability or eligibility.
 
@@ -47,6 +47,8 @@ npm run ingest -- --refresh      # re-fetch; mark vanished services after a comp
 ```
 
 Full imports take several minutes with a maximum of two requests per second. API failures do not partially publish a source or remove existing records. Published service contacts, source descriptions, list/detail objects and fetch provenance are preserved. Private audit metadata is excluded as documented in the source adapter.
+
+Combined CSV export: `npm run export:csv` writes `data/local-provision-services.csv` (862 Bristol + 351 Kingston listings). `npm run clean:data` consolidates matching service names and providers while preserving all contacts, locations, descriptions and source IDs. Original API records remain archived in `services.internal.json` and the database `services` table; the local browser reads the cleaned `catalogue_services` table. Min/max age fields and computed confidence/status are excluded from the cleaned output. Old source assurance dates remain unchanged and are not treated as data errors. Quality audit: `npm run audit:data`; results are saved as `data/quality-audit.json` and `data/quality-issues.csv`.
 
 ## Checks
 

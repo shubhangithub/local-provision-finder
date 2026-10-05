@@ -9,7 +9,7 @@ npm run ingest -- --refresh --source=bristol-oruk
 npm run test:ingest
 ```
 
-The default run imports Bristol and reports Kingston's licence gate. `--source=kingston-ck` reports the gate and exits unsuccessfully; it does not silently substitute Hull. Unknown source names and unknown arguments fail. No dependencies beyond Node are required.
+The default run imports Bristol and Kingston upon Thames. Kingston reuse was approved by the user on 5 October 2026 for this project; the adapter records that project permission rather than asserting a general open-data licence. It does not substitute Hull. Unknown source names and unknown arguments fail. No dependencies beyond Node are required.
 
 ## Outputs and access
 
@@ -24,7 +24,7 @@ Imported records start `internal`. A rerun preserves an existing human approval.
 
 **Bristol City Council / Well Aware**, including South Gloucestershire: [ORUK v3 root](https://bristol.openplace.directory/o/OpenReferralService/v3). Live listing reported **874** records. The root reports HSDS-UK-3.0 and links the [HSDS 3.0 OpenAPI schema](https://raw.githubusercontent.com/openreferral/specification/3.0/schema/openapi.json). [Well Aware directory account terms](https://www.wellaware.org.uk/terms-and-conditions-open-place-directory-account/) explicitly state the directory information is published as open data and available under the Open Government Licence. The terms do not identify an OGL version. Attribution: contains service directory information from Bristol City Council / Well Aware, licensed under the Open Government Licence. Do not imply council endorsement.
 
-**Kingston upon Thames / Connected Kingston**: API is reachable at [services](https://api.connectedkingston.uk/core/v1/services); probing with `per_page=1` returned a Laravel-style `data` / `links` / `meta` envelope, reporting **354** services. [Terms](https://connectedkingston.uk/terms-and-conditions) discuss open data but require respecting intellectual property rights and provide **no explicit reusable data licence**. Software being open source does not license directory content. The adapter is implemented and contract-tested but intentionally blocked before any bulk fetch or persistence. Confirm a data licence/permission, then set the source configuration `licensed` and record the granted terms. No HTML scraping, Hull substitution, or Hub of Hope ingestion.
+**Kingston upon Thames / Connected Kingston**: API at [services](https://api.connectedkingston.uk/core/v1/services), with 354 records. The user confirmed approval to reuse Kingston data on 5 October 2026; ingestion is enabled for this project. This is project-specific permission, not a claim that the source publishes under a general open licence. Original [terms](https://connectedkingston.uk/terms-and-conditions) are retained for reference. Related public organisation and service-location records are fetched too, including names, published contacts, addresses, access facilities and opening hours. The unfiltered service-location API sorts nullable names and was observed returning duplicate IDs across pages; the adapter instead retrieves each service's complete filtered location set with nested locations, checking totals and identity.
 
 ## Fidelity, free text and contacts
 
@@ -44,13 +44,13 @@ Requests are sequential, at least 510ms apart (under two per second), identified
 
 ## Validation
 
-Contract tests cover three representative shapes per adapter; fixtures are labelled synthetic so Kingston's restricted real content is not republished as test data. Additional live Bristol fixtures are retained under the Bristol OGL after the completed fetch. Tests cover contact preservation/private metadata exclusion, arbitrary detail retention in searchable prose, date semantics and boundaries, online locality, pagination count and identity failures, licence gating, cached fetch dates, source-isolated removals, transactional rollback, idempotent upsert and approval preservation.
+Contract tests cover three representative shapes per adapter; contract fixtures are synthetic; source records are preserved separately in the approved dataset. Additional live Bristol fixtures are retained under the Bristol OGL after the completed fetch. Tests cover contact preservation/private metadata exclusion, arbitrary detail retention in searchable prose, date semantics and boundaries, online locality, pagination count and identity failures, licence gating, cached fetch dates, source-isolated removals, transactional rollback, idempotent upsert and approval preservation.
 
 See `data/ingest-report.json` for the generated counts and coverage of the completed dataset. Need counts overlap because a service can match multiple needs.
 
 ## Completed import counts
 
-5 October 2026: **874 Bristol records**, 874/874 full detail endpoints fetched, 0 excluded as pure job listings, all 874 internal. Kingston: 0 imported; licence gate (354 observed at the API probe, not a bulk import count). SQLite integrity check: `ok`; cached rerun: 874 rows, no duplication, under one second.
+5 October 2026: **874 Bristol records**, 874/874 full detail endpoints fetched, 0 excluded as pure job listings, all 874 internal. Kingston: 354 full service records imported under user-confirmed project approval; related organisation/location enrichment is retained. SQLite integrity check: `ok`; cached rerun: 874 rows, no duplication, under one second.
 
 257/874 records have a structured postcode (**29.4%**), 873/874 have an explicit source assurance date (**99.9%**), all 874 have an administrative updated date, 87 have non-placeholder structured coordinates. An assurance date's presence does not imply freshness; use the calculated status. 695 records have a normalized publicly listed phone channel and 622 a normalized email; full published contact objects and original channels remain retained. Every service has searchable free text (minimum 486 characters).
 
@@ -64,3 +64,7 @@ See `data/ingest-report.json` for the generated counts and coverage of the compl
 | Money and debt | 75 |
 | Digital skills | 11 |
 | Confidence | 77 |
+
+## Cleaned combined catalogue
+
+`npm run export:csv` writes one `data/local-provision-services.csv`: 862 Bristol and 351 Kingston listings after consolidating 15 repeated service-name/provider rows. All contacts, locations, differing descriptions and original source IDs/URLs are retained. Full original source records stay in `services.internal.json` and `services`; cleaned listings use `services.cleaned.json` and the SQLite `catalogue_services` table. Min/max age metadata, raw JSON, computed confidence and verification-status fields are excluded from the cleaned CSV. Original source dates remain intact; age alone is not an error in the quality audit. The database retains both the original 1,228 records and 1,213 cleaned listings.

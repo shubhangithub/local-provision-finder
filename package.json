@@ -10,8 +10,11 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "check": "npm run test && npm run build",
-    "ingest": "node --experimental-strip-types ingest/run.ts",
-    "test:ingest": "node --experimental-strip-types --test ingest/*.test.ts"
+    "ingest": "node --experimental-strip-types ingest/run.ts && npm run clean:data",
+    "test:ingest": "node --experimental-strip-types --test ingest/*.test.ts",
+    "audit:data": "node --experimental-strip-types scripts/audit-data.ts",
+    "export:csv": "npm run clean:data && node --experimental-strip-types scripts/export-csv.ts",
+    "clean:data": "node --experimental-strip-types scripts/clean-data.ts"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",

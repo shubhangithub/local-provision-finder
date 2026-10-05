@@ -39,7 +39,7 @@ for(const [label,pages] of [
  ['wrong page',[page(2,1,1,['a'])]],
  ['empty intermediate',[page(1,2,2,[]),page(2,2,2,['b'])]],
 ] as any[])test(`reject ${label}`,async()=>{await assert.rejects(consume(new SourceAdapter(sources[0],clientFor(pages))));});
-test('Kingston licence gate prevents all HTTP access',async()=>{const adapter=new SourceAdapter(sources[1],{get(){throw new Error('must not fetch');}});await assert.rejects(consume(adapter),/reuse licence/);});
+test('Kingston licence gate prevents all HTTP access',async()=>{const adapter=new SourceAdapter({...sources[1],licensed:false,licence:'No reuse licence'}, {get(){throw new Error('must not fetch');}});await assert.rejects(consume(adapter),/reuse licence/);});
 test('transactional upsert, source isolation, removal only on explicit refresh, search text storage, approval preservation',()=>{
  const db=new Store(':memory:');const make=(id:string)=>normalise({id,name:`Housing ${id}`,description:'Housing assistance',custom_access_detail:'Bring the blue form'},sources[0],at);
  try{
@@ -69,4 +69,12 @@ test('six-month cutoff clamps to last day of shorter calendar month',()=>{
 test('cached source fetch timestamp never prevents trust ageing',()=>{
  const r=normalise({id:'old-cache',name:'Housing support',assured_date:'2026-01-01'},sources[0],'2026-01-02T00:00:00.000Z',new Date('2026-10-05T00:00:00Z'));
  assert.equal(r.fetchedAt,'2026-01-02T00:00:00.000Z');assert.equal(r.verificationStatus,'Review due');
+});
+test('Kingston enrichment retains linked provider, location, access and opening hours',()=>{
+ const record=normalise({id:'linked',name:'Charity service',contact_phone:'02081234567',organisation:{name:'Local charity',phone:'07749123456',email:'help@charity.org'},service_at_locations:[{regular_opening_hours:[{frequency:'weekly',weekday:1,opens_at:'09:00:00',closes_at:'17:00:00'}],location:{address_line_1:'12 High Street',city:'Kingston',postcode:'KT1 1AA',lat:51.4,lon:-0.3,has_wheelchair_access:true}}]},sources[1],at);
+ assert.equal(record.provider,'Local charity');assert.equal(record.postcode,'KT1 1AA');assert.equal(record.lat,51.4);assert.equal(record.lng,-0.3);assert.ok(record.address?.includes('12 High Street'));assert.ok(record.openingTimes?.includes('09:00:00'));assert.ok(record.accessibility.includes('Wheelchair access'));assert.equal(record.publicPhone,'02081234567');assert.ok(record.contacts.length>0);assert.ok(record.searchText.includes('12 High Street'));
+});
+test('Kingston source eligibility notes are retained without deciding eligibility',()=>{
+ const row=normalise({id:'eligibility',name:'Support',eligibility_types:{custom:{age_group:'Adults 18+',housing:'Kingston residents',gender:null},taxonomies:[{name:'People with caring responsibilities'}]}},sources[1],at);
+ assert.ok(row.eligibilitySummary?.includes('Adults 18+'));assert.ok(row.eligibilitySummary?.includes('Kingston residents'));assert.ok(row.eligibilitySummary?.includes('People with caring responsibilities'));
 });

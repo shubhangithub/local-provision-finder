@@ -10,7 +10,8 @@ test('staff can search full source text and inspect preserved contacts', async (
   expect(data.records.every((r: { vetting: string }) => r.vetting === 'internal')).toBe(true);
   await page.goto('/#/imports');
   await page.getByRole('button', { name: 'Enter staff demo' }).click();
-  await expect(page.getByText('874 source records', { exact: true })).toBeVisible();
+  const allRecords = await (await request.get('/api/imports')).json();
+  await expect(page.getByText(`${allRecords.total} source records`, { exact: true })).toBeVisible();
   await page.getByLabel('Search the full service text').fill('anxiety');
   await page.getByRole('button', { name: 'Search', exact: true }).click();
   await expect(page.getByText(`${data.total} source records matching “anxiety”`)).toBeVisible();
