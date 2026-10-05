@@ -5,17 +5,18 @@ export interface DirectoryLocation {
     addresses?: { postal_code?: unknown; address_1?: unknown }[];
   };
 }
+export interface AvailabilityConfirmation {status:'Open'|'Waiting list'|'Closed';confirmedAt:string}
 export interface DirectoryRecord {
   id: string; name: string; provider: string; description: string; searchText: string;
   source: string; postcode: string | null; lat: number | null; lng: number | null;
   address?: string | null; categories?: string[]; needs?: string[];
   eligibilitySummary?: string | null; accessibility?: string[]; cost?: string | null;
-  openingTimes?: string | null; tags?:string[]; availability?: string; locations?: DirectoryLocation[];
+  availabilityConfirmation?:AvailabilityConfirmation;openingTimes?: string | null; tags?:string[]; availability?: string; locations?: DirectoryLocation[];
 }
 export interface DirectorySite { lat: number | null; lng: number | null; postcode: string | null; label: string }
 export interface DirectorySummary {
   id: string; name: string; provider: string; postcode: string | null;
-  distanceMiles: number | null; sites: DirectorySite[]; snippet: string; tags: string[];
+  availabilityConfirmation?:AvailabilityConfirmation;distanceMiles: number | null; sites: DirectorySite[]; snippet: string; tags: string[];
 }
 export interface MapService { id: string; name: string; provider: string; sites: DirectorySite[] }
 export interface DirectoryResponse {
