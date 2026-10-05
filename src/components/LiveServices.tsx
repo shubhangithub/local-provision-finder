@@ -34,9 +34,9 @@ export function visibleServices(concept: LiveConcept, dismissed: Set<string>, ur
   return list.filter(service => !dismissed.has(service.id)).sort((a,b)=>urgent?Number(!!b.urgentSupportEvidence)-Number(!!a.urgentSupportEvidence):0).slice(0, VISIBLE);
 }
 
-export default function LiveServices({ concepts, dismissed, onDismiss, shortlist, urgent=false }: { urgent?:boolean; concepts: LiveConcept[]; dismissed: Set<string>; onDismiss: (id: string) => void; shortlist: ReturnType<typeof useMeetingShortlist> }) {
-  if (!concepts.length) return <p className="meeting-note" role="status">Suggested services appear here as the conversation moves to what is needed.</p>;
-  return <div className="live-services">{concepts.map(concept => {
+export default function LiveServices({ concepts, dismissed, onDismiss, shortlist, newestFirst, urgent=false }: { urgent?: boolean; concepts: LiveConcept[]; dismissed: Set<string>; onDismiss: (id: string) => void; shortlist: ReturnType<typeof useMeetingShortlist>; newestFirst?: boolean }) {
+  if (!concepts.length) return <div className="live-empty" role="status"><p><strong>Listening for what support is needed.</strong></p><p>Matching services appear here as the conversation moves to a topic, such as work, housing or childcare.</p></div>;
+  return <div className="live-services">{(newestFirst ? [...concepts].reverse() : concepts).map(concept => {
     const pending = concept.filtered.status === 'pending';
     const shown = visibleServices(concept, dismissed, urgent);
     return <section key={concept.label} className="live-concept" aria-label={concept.label}>
@@ -55,8 +55,8 @@ export default function LiveServices({ concepts, dismissed, onDismiss, shortlist
             {service.postcode && <p className="field-hint">{service.postcode}</p>}
           </div>
           <div className="live-vote">
-            <button type="button" className="live-yes" aria-pressed={isSaved} disabled={pending} onClick={() => shortlist.toggle(service, concept.label)}><Check size={22} aria-hidden="true"/><span className="visually-hidden">{isSaved ? 'Remove from shortlist' : 'Save'} {service.name}</span></button>
-            <button type="button" className="live-no" disabled={pending} onClick={() => onDismiss(service.id)}><X size={22} aria-hidden="true"/><span className="visually-hidden">Hide {service.name}, not relevant</span></button>
+            <button type="button" className="live-yes" aria-pressed={isSaved} disabled={pending} onClick={() => shortlist.toggle(service, concept.label)}><Check size={22} aria-hidden="true"/><span className="live-vote-label" aria-hidden="true">{isSaved ? 'Saved' : 'Save'}</span><span className="visually-hidden">{isSaved ? 'Remove from shortlist' : 'Save'} {service.name}</span></button>
+            <button type="button" className="live-no" disabled={pending} onClick={() => onDismiss(service.id)}><X size={22} aria-hidden="true"/><span className="live-vote-label" aria-hidden="true">Hide</span><span className="visually-hidden">Hide {service.name}, not relevant</span></button>
           </div>
         </li>;
       })}</ul>

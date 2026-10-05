@@ -17,11 +17,11 @@ async function finishMeeting(page: import('@playwright/test').Page, area?: strin
   await page.getByRole('button', { name: 'Start meeting', exact: true }).click();
   if (area) await page.getByLabel('Find support in',{exact:true}).selectOption(area);
   await page.getByRole('button',{name:'Start meeting',exact:true}).click();
-  await expect(page.getByRole('region',{name:'Transcript'})).toContainText('childcare after school');
+  await expect(page.getByText('13 words captured')).toBeVisible();
   await page.getByRole('button',{name:'Stop meeting',exact:true}).click();
 }
 
-test('staff summarises only the displayed transcript and gets grounded service links',async({page})=>{
+test('summary starts automatically from only the displayed transcript and links grounded evidence',async({page})=>{
   let sent:Record<string,unknown>={};
   await page.route('**/api/assistant',async route=>{
     sent=route.request().postDataJSON();
@@ -29,11 +29,11 @@ test('staff summarises only the displayed transcript and gets grounded service l
   });
   await finishMeeting(page);
   const transcript='I want to get back into work. I also need childcare after school.';
-  await page.getByRole('button',{name:'Summarise meeting',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Draft meeting summary'})).toBeVisible();
   expect(sent).toEqual({task:'meeting',transcript,search:{area:'Bristol',urgency:'normal'}});
   await expect(page.getByText('Local directory draft',{exact:true})).toBeVisible();
   await expect(page.getByRole('region',{name:'Meeting summary'})).toContainText('Check group opening times');
+  await page.getByText('Directory evidence',{exact:true}).click();
   await expect(page.getByRole('region',{name:'Meeting summary'}).getByRole('link',{name:'Confidence support'}).first()).toHaveAttribute('href','/#/directory/grounded-service');
   await page.getByRole('button',{name:'Staff demo',exact:true}).click();
   await expect(page.getByRole('region',{name:'Meeting summary'})).toHaveCount(0);
@@ -43,15 +43,32 @@ test('summary is scoped to the area chosen before the meeting',async({page})=>{
   let sent:Record<string,unknown>={};
   await page.route('**/api/assistant',async route=>{sent=route.request().postDataJSON();await route.fulfill({json:{mode:'local',summary:'Draft',answer:'',needs:[],nextSteps:[],citations:[],services:[],warnings:[]}});});
   await finishMeeting(page,'Kingston');
-  await page.getByRole('button',{name:'Summarise meeting',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Draft meeting summary'})).toBeVisible();
   expect(sent).toMatchObject({task:'meeting',search:{area:'Kingston'}});
 });
 
 test('summary failure allows staff to retry',async({page})=>{
-  await page.route('**/api/assistant',route=>route.fulfill({status:503,json:{error:'Unavailable'}}));
+  let fail=true;
+  await page.route('**/api/assistant',route=>fail?route.fulfill({status:503,json:{error:'Unavailable'}}):route.fulfill({json:{mode:'local',summary:'Second try worked.',answer:'',needs:[],nextSteps:[],citations:[],services:[],warnings:[]}}));
   await finishMeeting(page);
-  await page.getByRole('button',{name:'Summarise meeting',exact:true}).click();
   await expect(page.getByRole('alert')).toContainText('Unavailable');
-  await expect(page.getByRole('button',{name:'Summarise meeting',exact:true})).toBeEnabled();
+  fail=false;
+  await page.getByRole('button',{name:'Try again',exact:true}).click();
+  await expect(page.getByRole('region',{name:'Meeting summary'})).toContainText('Second try worked.');
+});
+
+test('after the meeting the next steps and actions fit on one screen, with details in tabs',async({page})=>{
+  await page.setViewportSize({width:1280,height:720});
+  await page.route('**/api/assistant',route=>route.fulfill({json:{mode:'local',summary:'Draft',answer:'',needs:[],nextSteps:[],citations:[],services:[],warnings:[]}}));
+  await finishMeeting(page);
+  const report=page.getByRole('region',{name:'Your next steps'});
+  await expect(report.getByRole('heading',{name:'Your next steps'})).toBeInViewport();
+  await expect(report.getByRole('button',{name:'Print or save as PDF'})).toHaveCount(0);
+  await expect(page.getByRole('tab',{name:/More suggestions/})).toHaveCount(0);
+  await expect(page.getByRole('tab',{name:'Summary'})).toHaveAttribute('aria-selected','true');
+  await expect(page.getByRole('region',{name:'Transcript'})).toHaveCount(0);
+  await page.getByRole('tab',{name:'Transcript'}).click();
+  await expect(page.getByRole('region',{name:'Transcript'})).toContainText('childcare after school');
+  await page.getByRole('tab',{name:'Transcript'}).press('ArrowLeft');
+  await expect(page.getByRole('tab',{name:'Summary'})).toBeFocused();
 });
