@@ -29,7 +29,7 @@ test('user report is reviewed and a checked field correction reaches service det
     await expect(page.getByText('Checked correction published. Other source dates are unchanged.')).toBeVisible();
     const updated=(await (await request.get(`/api/imports/service?id=${encodeURIComponent(summary.id)}`)).json()).record;
     expect(updated.cost).toBe('Free after eligibility check');expect(updated.lastVerified).toBe(original.lastVerified);expect(updated.sourceUpdatedAt).toBe(original.sourceUpdatedAt);
-    await page.getByRole('button',{name:'Review history'}).click();
+    await page.getByRole('button',{name:/History/}).click();
     await expect(page.locator('.review-card').filter({hasText:summary.name}).getByText('Corrected Cost')).toBeVisible();
     expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze()).violations).toEqual([]);
   } finally {
