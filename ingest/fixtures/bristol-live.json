@@ -1,0 +1,459 @@
+[
+  {
+    "source": "bristol-oruk",
+    "sourceUrl": "https://bristol.openplace.directory/o/OpenReferralService/v3/services/519416e6-6828-32f3-1949-cd869965d53a",
+    "fetchedAt": "2026-10-05T12:51:14.676Z",
+    "data": {
+      "id": "519416e6-6828-32f3-1949-cd869965d53a",
+      "name": "Cost of Living - Community Welcome Space- Helping Homeless Believe",
+      "description": "<p data-olk-copy-source=\"MessageBody\">Services; Free tea and coffee, Mental health support, Free wi-fi, Free charging points for phone and other devices, Budgeting advice on managing utility bills, Information, advice and guidance services, Activities such as cooking and budgeting courses, Mentoring , Job Club.<br></p><p data-olk-copy-source=\"MessageBody\">There is a main car park with disabled bays, its ground floor so no steps to the building and we have disabled toilet.</p><p>Individuals can use our WiFi and electricity to charge devices and access their universal credit journals and checking their home choice applications through our computers. We also have a shower facility for those that are street homeless.</p><p aria-hidden=\"true\"><br></p>",
+      "url": "http://www.example.com",
+      "email": "hhb@helpinghomelessbelieve.co.uk",
+      "status": "active",
+      "assured_date": "2024-10-29",
+      "service_areas": [
+        {
+          "id": "f4928d58-244d-4ac2-8143-1eb989bcfcac",
+          "name": "South Gloucestershire",
+          "serviceId": "519416e6-6828-32f3-1949-cd869965d53a",
+          "uri": "http://www.example.com"
+        },
+        {
+          "id": "d15f9318-6537-494a-9b8c-5fde26f48962",
+          "name": "Bristol",
+          "serviceId": "519416e6-6828-32f3-1949-cd869965d53a",
+          "uri": "http://www.example.com"
+        }
+      ],
+      "service_at_locations": [
+        {
+          "regular_schedule": [
+            {
+              "closes_at": "17:00",
+              "opens_at": "10:00",
+              "valid_from": "2025-02-28",
+              "valid_to": "2024-10-29",
+              "byday": "TU",
+              "description": "Weekly on Tuesday from 10:00 to 17:00",
+              "freq": "weekly",
+              "id": "9711ecb3-3b08-4fe6-9caa-a7a3af0de8ae",
+              "interval": "1"
+            }
+          ],
+          "id": "04c6c160-b523-48e5-8241-bd33627561a4",
+          "location": {
+            "accessibility": [
+              {
+                "accessibility": "false",
+                "id": "2bfa49de-7e2e-43aa-821d-2a8d86f708a3"
+              }
+            ],
+            "addresses": [
+              {
+                "address_1": "HHB Ground Floor, Mulberry House, Kingswood Estate",
+                "postal_code": "BS15 8DB",
+                "state_province": "N/A",
+                "address_type": "physical",
+                "city": "Bristol",
+                "country": "GB",
+                "id": "a7e0b6dc-9645-4f99-a4a5-fe0bd2955f5f"
+              }
+            ],
+            "id": "7ddef913-68f7-34f3-90fc-63f557a3a358",
+            "latitude": 0,
+            "location_type": "physical",
+            "longitude": 0,
+            "name": "Helping Homeless Believe"
+          }
+        },
+        {
+          "regular_schedule": [
+            {
+              "closes_at": "18:00",
+              "opens_at": "10:00",
+              "valid_from": "2024-10-29",
+              "valid_to": "2025-02-28",
+              "byday": "TH",
+              "description": "Weekly on Thursday from 10:00 to 18:00",
+              "freq": "weekly",
+              "id": "c06cac1b-953f-45c5-8337-3d9edbd66e5b",
+              "interval": "1"
+            }
+          ],
+          "id": "023e28a2-b80e-4016-9be5-230bedb0ad66",
+          "location": {
+            "accessibility": [
+              {
+                "accessibility": "false",
+                "id": "0b0bee0d-1666-4c40-a6be-d0cd298a6b40"
+              }
+            ],
+            "addresses": [
+              {
+                "address_1": "HHB Ground Floor, Mulberry House, Kingswood Estate",
+                "postal_code": "BS15 8DB",
+                "state_province": "N/A",
+                "address_type": "physical",
+                "city": "Bristol",
+                "country": "GB",
+                "id": "2fdbc179-d592-4b5d-8789-8c835e17c451"
+              }
+            ],
+            "id": "7ddef913-68f7-34f3-90fc-63f557a3a358",
+            "latitude": 0,
+            "location_type": "physical",
+            "longitude": 0,
+            "name": "Helping Homeless Believe"
+          }
+        }
+      ],
+      "organization": {
+        "description": "N/A",
+        "id": "7e984d84-a115-c261-e6f3-bf89e0ff48e7",
+        "name": "Cost of Living - Community Welcome Space- Helping Homeless Believe"
+      },
+      "contacts": [
+        {
+          "id": "4a41cea3-0189-4f56-8374-d3a019a0cbc2",
+          "phones": [
+            {
+              "number": "07704674241"
+            }
+          ]
+        }
+      ],
+      "pc_metadata": {
+        "date_assured": "2024-10-29",
+        "date_created": "2024-10-29",
+        "date_modified": "2024-10-29"
+      },
+      "last_modified": "2024-10-29T15:56:56.536",
+      "maximum_age": -1,
+      "minimum_age": -1,
+      "organization_id": "7e984d84-a115-c261-e6f3-bf89e0ff48e7"
+    }
+  },
+  {
+    "source": "bristol-oruk",
+    "sourceUrl": "https://bristol.openplace.directory/o/OpenReferralService/v3/services/640fb4b3-f3b4-8fd0-31dd-57ca288e8bd5",
+    "fetchedAt": "2026-10-05T12:51:18.770Z",
+    "data": {
+      "id": "640fb4b3-f3b4-8fd0-31dd-57ca288e8bd5",
+      "name": "Cost of Living - Community Welcome Space- The Beacon",
+      "description": "<p>A very warm welcome, pay-as-you-can caf\u00e9 serving great quality, locally sourced hot &amp; cold food, drinks, cake and snacks. <br></p><p>All donations are anonymous. <br></p><p>Companionship, support &amp; signposting. Separate indoor play area for children. On the first Tuesday of every month, we run a popular pay-as-you-can Eat &amp; Meet 2-course lunch. <br></p><p>Everyone is welcome and there are always several people to chat to and get to know. <br></p><p>Must be pre-booked on our website, by phone or in person. Whilst our indoor play area is open at all times, we run a Bumps, Babies &amp; Tots group every Friday between 10am and 12pm where users can meet other parents and have a safe space for their children to play. We host The Centre for Deaf once a month, new members are very welcome. Please check the latest dates at <a data-cke-saved-href=\"https://www.facebook.com/CfDHoH\" href=\"https://www.facebook.com/CfDHoH\">https://www.facebook.com/CfDHoH</a><br></p><p>Tuesday 12pm \u2013 2pm 1st Tuesday of every month, Eat &amp; Meet (must be booked in advance). Thursday and Friday 9am - 3pm (food until 2pm). Saturday 9am-2pm (food until 1.30pm).<br></p>",
+      "url": "http://www.example.com",
+      "email": "thebeacon@wearebs15.co.uk",
+      "status": "active",
+      "assured_date": "2024-03-04",
+      "service_areas": [
+        {
+          "id": "ead771be-6bda-4b5e-b719-82064c586ac7",
+          "name": "South Gloucestershire",
+          "serviceId": "640fb4b3-f3b4-8fd0-31dd-57ca288e8bd5",
+          "uri": "http://www.example.com"
+        },
+        {
+          "id": "c9cb3429-e2a5-45d4-84bc-f4b8cf43386d",
+          "name": "South Gloucestershire",
+          "serviceId": "640fb4b3-f3b4-8fd0-31dd-57ca288e8bd5",
+          "uri": "http://www.example.com"
+        }
+      ],
+      "service_at_locations": [
+        {
+          "regular_schedule": [
+            {
+              "closes_at": "15:00",
+              "opens_at": "09:00",
+              "valid_from": "2024-02-05",
+              "valid_to": "2024-02-05",
+              "byday": "TH",
+              "description": "Weekly on Thursday from 09:00 to 15:00",
+              "freq": "weekly",
+              "id": "58b46ee7-4083-44d8-8ce6-f61e651fd58f",
+              "interval": "1"
+            }
+          ],
+          "id": "03e41806-479b-416e-b184-d8aebfcf133c",
+          "location": {
+            "accessibility": [
+              {
+                "accessibility": "false",
+                "id": "720aefe4-fce4-4c13-88af-68c855211d68"
+              }
+            ],
+            "addresses": [
+              {
+                "address_1": "Hanham Methodist Church, Chapel Road",
+                "postal_code": "BS15 8SD",
+                "state_province": "N/A",
+                "address_type": "physical",
+                "city": "Bristol",
+                "country": "GB",
+                "id": "cd7d02ef-37b6-4fd2-aff7-94dda747f3da"
+              }
+            ],
+            "id": "4c4d1bb5-9588-2bfe-8d22-37bd6a17d4c4",
+            "latitude": 0,
+            "location_type": "physical",
+            "longitude": 0,
+            "name": "Hanham Methodist Church"
+          }
+        },
+        {
+          "regular_schedule": [
+            {
+              "closes_at": "15:00",
+              "opens_at": "09:00",
+              "valid_from": "2024-02-05",
+              "valid_to": "2024-02-05",
+              "byday": "FR",
+              "description": "Weekly on Friday from 09:00 to 15:00",
+              "freq": "weekly",
+              "id": "7ef69157-f92e-43ef-9d98-8d491aaac5da",
+              "interval": "1"
+            }
+          ],
+          "id": "0c97874f-2d41-471a-aca9-a0169733eaf5",
+          "location": {
+            "accessibility": [
+              {
+                "accessibility": "false",
+                "id": "ee908dd4-d08f-4b3f-881c-515ef9ad474f"
+              }
+            ],
+            "addresses": [
+              {
+                "address_1": "Hanham Methodist Church, Chapel Road",
+                "postal_code": "BS15 8SD",
+                "state_province": "N/A",
+                "address_type": "physical",
+                "city": "Bristol",
+                "country": "GB",
+                "id": "d6e5d9f1-4a1d-45ed-b68e-acdbf32cd4d9"
+              }
+            ],
+            "id": "4c4d1bb5-9588-2bfe-8d22-37bd6a17d4c4",
+            "latitude": 0,
+            "location_type": "physical",
+            "longitude": 0,
+            "name": "Hanham Methodist Church"
+          }
+        },
+        {
+          "regular_schedule": [
+            {
+              "closes_at": "14:00",
+              "opens_at": "09:00",
+              "valid_from": "2024-02-05",
+              "valid_to": "2024-02-05",
+              "byday": "SA",
+              "description": "Weekly on Saturday from 09:00 to 14:00",
+              "freq": "weekly",
+              "id": "70b6cbef-5633-4666-8d0a-9e4dbf2190fe",
+              "interval": "1"
+            }
+          ],
+          "id": "d21e433d-a1c4-4c9e-8e82-70086c330ad3",
+          "location": {
+            "accessibility": [
+              {
+                "accessibility": "false",
+                "id": "4f33ebf1-c4b8-4659-95cb-2a4ec4adf3b1"
+              }
+            ],
+            "addresses": [
+              {
+                "address_1": "Hanham Methodist Church, Chapel Road",
+                "postal_code": "BS15 8SD",
+                "state_province": "N/A",
+                "address_type": "physical",
+                "city": "Bristol",
+                "country": "GB",
+                "id": "2298c06b-a41e-41e6-ab58-5681be2877cc"
+              }
+            ],
+            "id": "4c4d1bb5-9588-2bfe-8d22-37bd6a17d4c4",
+            "latitude": 0,
+            "location_type": "physical",
+            "longitude": 0,
+            "name": "Hanham Methodist Church"
+          }
+        },
+        {
+          "regular_schedule": [
+            {
+              "closes_at": "14:00",
+              "opens_at": "12:00",
+              "valid_from": "2024-03-04",
+              "valid_to": "2024-03-04",
+              "byday": "1:TU",
+              "description": "Monthly on the First Tuesday from 12:00 to 14:00",
+              "freq": "monthly",
+              "id": "2696511d-e049-4b9a-a181-b624c6416115",
+              "interval": "1"
+            }
+          ],
+          "id": "e9470789-577b-46bd-b0df-21a8a7e64976",
+          "location": {
+            "accessibility": [
+              {
+                "accessibility": "false",
+                "id": "38697adf-d493-4187-87b8-91114c01252c"
+              }
+            ],
+            "addresses": [
+              {
+                "address_1": "Hanham Methodist Church, Chapel Road",
+                "postal_code": "BS15 8SD",
+                "state_province": "N/A",
+                "address_type": "physical",
+                "city": "Bristol",
+                "country": "GB",
+                "id": "34b97c06-d0fa-43ee-a1e6-23b4ffa77c98"
+              }
+            ],
+            "id": "4c4d1bb5-9588-2bfe-8d22-37bd6a17d4c4",
+            "latitude": 0,
+            "location_type": "physical",
+            "longitude": 0,
+            "name": "Hanham Methodist Church"
+          }
+        }
+      ],
+      "organization": {
+        "description": "N/A",
+        "id": "3a891b7c-17ea-3042-bc1b-a3e0b7a85ad5",
+        "name": "Cost of living- Community Warm Space: We are BS15 CIC-  -The Beacon Cafe"
+      },
+      "contacts": [
+        {
+          "id": "cc7040aa-0907-423a-a337-d08674e956d7",
+          "phones": [
+            {
+              "number": "01454 300186"
+            }
+          ]
+        }
+      ],
+      "pc_metadata": {
+        "date_assured": "2024-03-04",
+        "date_created": "2024-02-05",
+        "date_modified": "2024-03-04"
+      },
+      "last_modified": "2024-03-04T13:10:51.756",
+      "maximum_age": -1,
+      "minimum_age": -1,
+      "organization_id": "3a891b7c-17ea-3042-bc1b-a3e0b7a85ad5"
+    }
+  },
+  {
+    "source": "bristol-oruk",
+    "sourceUrl": "https://bristol.openplace.directory/o/OpenReferralService/v3/services/3c15eeec-61ca-4776-88f2-30cfdc0301e6",
+    "fetchedAt": "2026-10-05T12:54:45.773Z",
+    "data": {
+      "id": "3c15eeec-61ca-4776-88f2-30cfdc0301e6",
+      "name": "Overcoming prescription drug dependence",
+      "description": "<p style=\"margin-bottom:12px\"><span style=\"font-size:12pt\"><span style=\"line-height:107%\"><span style=\"font-family:Arial,sans-serif\">PostScript360 are committed to supporting individuals to reduce the harms caused by prescription drugs (benzodiazepines and similar drugs), associated with dependence and withdrawal through a wrap-around service of one-to-one therapy, group therapy and a telephone support service. We train health professions, promote awareness and prevention, as well as support people through an advocacy service liaising on behalf of the client to their GP and other health services.</span></span></span></p><p style=\"margin-bottom:12px\">We also offer an online service of one-to-one and/or group therapy&nbsp;via social media platforms, please get in touch for more information.&nbsp;</p>",
+      "url": "https://postscript360.org.uk/",
+      "email": "info@postscript360.org.uk",
+      "status": "active",
+      "assured_date": "2023-12-19",
+      "service_areas": [
+        {
+          "id": "860a95d6-d9ca-499f-bcf8-cd608bfa03bc",
+          "name": "Bristol",
+          "serviceId": "3c15eeec-61ca-4776-88f2-30cfdc0301e6",
+          "uri": "http://www.example.com"
+        },
+        {
+          "id": "ea1d49ce-01a9-45f0-82c6-630b795ad813",
+          "name": "Bristol",
+          "serviceId": "3c15eeec-61ca-4776-88f2-30cfdc0301e6",
+          "uri": "http://www.example.com"
+        },
+        {
+          "id": "9af12109-0e78-4a64-95d4-c06feff8db16",
+          "name": "Bristol",
+          "serviceId": "3c15eeec-61ca-4776-88f2-30cfdc0301e6",
+          "uri": "http://www.example.com"
+        },
+        {
+          "id": "10dc613f-3d6e-4c75-9046-c48287ec7561",
+          "name": "Bristol",
+          "serviceId": "3c15eeec-61ca-4776-88f2-30cfdc0301e6",
+          "uri": "http://www.example.com"
+        },
+        {
+          "id": "2f6c9ffb-b043-4ee5-a929-600e30a4d795",
+          "name": "South Gloucestershire",
+          "serviceId": "3c15eeec-61ca-4776-88f2-30cfdc0301e6",
+          "uri": "http://www.example.com"
+        },
+        {
+          "id": "820cf26b-5e5c-4edb-b08b-a01534d96adf",
+          "name": "South Gloucestershire",
+          "serviceId": "3c15eeec-61ca-4776-88f2-30cfdc0301e6",
+          "uri": "http://www.example.com"
+        },
+        {
+          "id": "bc50b5b9-00d4-4911-ac9e-1fccaacc10bc",
+          "name": "Bristol",
+          "serviceId": "3c15eeec-61ca-4776-88f2-30cfdc0301e6",
+          "uri": "http://www.example.com"
+        },
+        {
+          "id": "32c92fc8-8c48-448d-bc5a-e947d5b340cb",
+          "name": "Bristol",
+          "serviceId": "3c15eeec-61ca-4776-88f2-30cfdc0301e6",
+          "uri": "http://www.example.com"
+        }
+      ],
+      "cost_options": [
+        {
+          "amount": 0,
+          "id": "2a773d29-f6b3-4748-9902-081199ba333f",
+          "option": "Contribution toward therapy"
+        }
+      ],
+      "organization": {
+        "description": "We are committed to supporting individuals to reduce the harms caused by prescription drugs (benzodiazepines and similar drugs), associated with dependence and withdrawal through a wrap-around service of one to one therapy, group therapy and a telephone support service.\nWe train health professions, promote awareness and prevention, as well as support people through advocacy.",
+        "id": "90af388a-6bc7-34e9-d915-2b0972b1c19f",
+        "name": "PostScript360",
+        "uri": "https://postscript360.org.uk/",
+        "website": "https://postscript360.org.uk/"
+      },
+      "contacts": [
+        {
+          "id": "35118ca9-8c01-4910-9a51-014fc63e8ea5",
+          "name": "Terri McDonald",
+          "phones": [
+            {
+              "number": "0117 966 3629"
+            }
+          ],
+          "title": "CEO"
+        }
+      ],
+      "pc_metadata": {
+        "date_assured": "2023-12-19",
+        "date_created": "2021-09-23",
+        "date_modified": "2023-12-19"
+      },
+      "pc_targetAudience": [
+        {
+          "audienceType": "Drug and Alcohol Misuse",
+          "id": "35506"
+        },
+        {
+          "audienceType": "Mental Health",
+          "id": "35507"
+        }
+      ],
+      "last_modified": "2023-12-19T15:44:10.713",
+      "maximum_age": -1,
+      "minimum_age": -1,
+      "organization_id": "90af388a-6bc7-34e9-d915-2b0972b1c19f"
+    }
+  }
+]

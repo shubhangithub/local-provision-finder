@@ -1,3 +1,16 @@
 .DS_Store
+node_modules/
+dist/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+playwright-report/
+test-results/
 __pycache__/
 *.pyc
+
+data/ingest-cache/
+data/*.sqlite-wal
+data/*.sqlite-shm
+.tools/

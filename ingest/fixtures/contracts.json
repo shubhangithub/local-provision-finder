@@ -1,0 +1,262 @@
+{
+  "bristol": [
+    {
+      "id": "bristol-fixture-0",
+      "name": "Synthetic bristol housing support 0",
+      "description": "<p>Support with housing and mental health</p>",
+      "custom_access_detail": "Access instruction outside structured columns",
+      "assured_date": "2026-09-12",
+      "last_modified": "2026-10-01",
+      "organization": {
+        "name": "Synthetic Charity"
+      },
+      "contacts": [
+        {
+          "name": "Professional Contact",
+          "phones": [
+            {
+              "number": "07749633973"
+            }
+          ]
+        }
+      ],
+      "contact_phone": null,
+      "attending_type": [
+        "venue"
+      ],
+      "service_at_locations": [],
+      "service_taxonomy": [
+        {
+          "taxonomy_term": {
+            "name": "Housing"
+          }
+        }
+      ],
+      "category_taxonomies": [
+        {
+          "name": "Housing"
+        }
+      ]
+    },
+    {
+      "id": "bristol-fixture-1",
+      "name": "Synthetic bristol housing support 1",
+      "description": "<p>Support with housing and mental health</p>",
+      "custom_access_detail": "Access instruction outside structured columns",
+      "assured_date": null,
+      "last_modified": "2026-10-01",
+      "organization": {
+        "name": "Synthetic Charity"
+      },
+      "contacts": [
+        {
+          "name": "Professional Contact",
+          "phones": [
+            {
+              "number": "07749633973"
+            }
+          ]
+        }
+      ],
+      "contact_phone": null,
+      "attending_type": [
+        "venue"
+      ],
+      "service_at_locations": [
+        {
+          "location": {
+            "latitude": 51.45,
+            "longitude": -2.58,
+            "physical_addresses": [
+              {
+                "address_1": "1 Example Street",
+                "city": "Bristol",
+                "postal_code": "BS1 1AA"
+              }
+            ]
+          }
+        }
+      ],
+      "service_taxonomy": [
+        {
+          "taxonomy_term": {
+            "name": "Housing"
+          }
+        }
+      ],
+      "category_taxonomies": [
+        {
+          "name": "Housing"
+        }
+      ]
+    },
+    {
+      "id": "bristol-fixture-2",
+      "name": "Synthetic bristol housing support 2",
+      "description": "<p>Support with housing and mental health</p>",
+      "custom_access_detail": "Access instruction outside structured columns",
+      "assured_date": null,
+      "last_modified": "2026-10-01",
+      "organization": {
+        "name": "Synthetic Charity"
+      },
+      "contacts": [
+        {
+          "name": "Professional Contact",
+          "phones": [
+            {
+              "number": "07749633973"
+            }
+          ]
+        }
+      ],
+      "contact_phone": null,
+      "attending_type": [
+        "venue"
+      ],
+      "service_at_locations": [],
+      "service_taxonomy": [
+        {
+          "taxonomy_term": {
+            "name": "Housing"
+          }
+        }
+      ],
+      "category_taxonomies": [
+        {
+          "name": "Housing"
+        }
+      ]
+    }
+  ],
+  "kingston": [
+    {
+      "id": "kingston-fixture-0",
+      "name": "Synthetic kingston housing support 0",
+      "description": "<p>Support with housing and mental health</p>",
+      "custom_access_detail": "Access instruction outside structured columns",
+      "assured_date": "2026-09-12",
+      "last_modified": "2026-10-01",
+      "organization": {
+        "name": "Synthetic Charity"
+      },
+      "contacts": [
+        {
+          "name": "Professional Contact",
+          "phones": [
+            {
+              "number": "07749633973"
+            }
+          ]
+        }
+      ],
+      "contact_phone": "07749633973",
+      "attending_type": [
+        "venue"
+      ],
+      "service_at_locations": [],
+      "service_taxonomy": [
+        {
+          "taxonomy_term": {
+            "name": "Housing"
+          }
+        }
+      ],
+      "category_taxonomies": [
+        {
+          "name": "Housing"
+        }
+      ]
+    },
+    {
+      "id": "kingston-fixture-1",
+      "name": "Synthetic kingston housing support 1",
+      "description": "<p>Support with housing and mental health</p>",
+      "custom_access_detail": "Access instruction outside structured columns",
+      "assured_date": null,
+      "last_modified": "2026-10-01",
+      "organization": {
+        "name": "Synthetic Charity"
+      },
+      "contacts": [
+        {
+          "name": "Professional Contact",
+          "phones": [
+            {
+              "number": "07749633973"
+            }
+          ]
+        }
+      ],
+      "contact_phone": "07749633973",
+      "attending_type": [
+        "venue"
+      ],
+      "service_at_locations": [
+        {
+          "location": {
+            "latitude": 51.45,
+            "longitude": -2.58,
+            "physical_addresses": [
+              {
+                "address_1": "1 Example Street",
+                "city": "Bristol",
+                "postal_code": "BS1 1AA"
+              }
+            ]
+          }
+        }
+      ],
+      "service_taxonomy": [
+        {
+          "taxonomy_term": {
+            "name": "Housing"
+          }
+        }
+      ],
+      "category_taxonomies": [
+        {
+          "name": "Housing"
+        }
+      ]
+    },
+    {
+      "id": "kingston-fixture-2",
+      "name": "Synthetic kingston housing support 2",
+      "description": "<p>Support with housing and mental health</p>",
+      "custom_access_detail": "Access instruction outside structured columns",
+      "assured_date": null,
+      "last_modified": "2026-10-01",
+      "organization": {
+        "name": "Synthetic Charity"
+      },
+      "contacts": [
+        {
+          "name": "Professional Contact",
+          "phones": [
+            {
+              "number": "07749633973"
+            }
+          ]
+        }
+      ],
+      "contact_phone": "07749633973",
+      "attending_type": [
+        "venue"
+      ],
+      "service_at_locations": [],
+      "service_taxonomy": [
+        {
+          "taxonomy_term": {
+            "name": "Housing"
+          }
+        }
+      ],
+      "category_taxonomies": [
+        {
+          "name": "Housing"
+        }
+      ]
+    }
+  ]
+}

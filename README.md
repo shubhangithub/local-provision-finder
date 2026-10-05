@@ -1,17 +1,74 @@
 # Local Provision Finder
 
-Search UI mockup showing three design options: one-box search, a work-coach staff view, and a mobile claimant flow.
+A React and TypeScript DWP hackathon prototype for searching support, understanding information gaps, saving a shortlist and reviewing proposed changes. The interface follows the original GOV.UK-style mockup with compact mobile cards, plain headings, blue links, green buttons and yellow keyboard focus.
 
 ## Run locally
 
-Requires Python 3. No package installation is needed.
-
 ```sh
-python3 -m http.server 8000 --bind 127.0.0.1 --directory .
+npm ci
+npm run dev
 ```
 
-Open http://localhost:8000 in a browser. Run the command from this repository's folder. Press Ctrl+C to stop the server.
+Open **http://127.0.0.1:8000**. Requires Node.js 22.13 or newer (22.23.3 tested). The server binds to loopback only.
 
-## Files
+If Node.js is not installed:
 
-`index.html` is the original self-contained “Local Provision Finder - Search UI Options” HTML export, including its bundled assets. This is a visual mockup; the sample search and service cards are illustrative.
+```sh
+./scripts/dev.sh
+```
+
+The launcher downloads a checksum-verified, project-local Node runtime; it does not change your system installation.
+
+## Two catalogues
+
+**Public search** uses the ten fictional services from the supplied DWP workbook, with demo postcode areas AB1–AB8. It matches needs, respects the supplied sample distances, excludes closed services and explains missing provision and conflicting information. Online delivery does not remove postcode coverage limits. Cost and hours are shown as unknown where the workbook supplies no values. No national records are invented. Synthetic publication approval is an explicit demo assumption.
+
+**Staff → Review → Imported services** reads the local SQLite database through a read-only, loopback-only API. The database contains 874 licensed Bristol Well Aware records, retained source JSON, full searchable free text and published charity contacts. All imports are internal and do not enter public search. Kingston upon Thames is reachable but is not populated because reuse permission is unresolved. See [ingestion documentation](docs/ingestion.md) for source terms, counts, schema and freshness rules.
+
+A source assurance date and a source update date are separate. Neither the UI nor a recently fetched page guarantees current availability, suitability or eligibility.
+
+## Working flows
+
+- Search circumstances and postcode; optional topics, distance, delivery and access needs.
+- View a service's checks, access route and source evidence.
+- Save and print a shortlist. Saved IDs persist in this browser.
+- Enter staff demo; publish a specifically checked change, reject it or hold it. Publishing one field preserves whole-record confidence and verification dates.
+- Browse imported services and search their full source text; inspect their published contacts.
+
+Staff sign-in is a demo toggle, not authentication. Review decisions persist locally; feedback stays in the browser session. No referrals, messaging, live maps, arbitrary-question AI or production permissions are implemented. Raw data is retained for future grounded question answering; full-text search is implemented now.
+
+The imported catalogue API is supplied by the local Vite server and local preview server. A standalone static `dist/` deployment has no database API. The production browser bundle contains only fictional public records; imported source JSON and SQLite are never copied into `dist/`.
+
+## Ingestion
+
+```sh
+npm run ingest                  # cached, idempotent upsert
+npm run ingest -- --refresh      # re-fetch; mark vanished services after a complete successful run
+```
+
+Full imports take several minutes with a maximum of two requests per second. API failures do not partially publish a source or remove existing records. Published service contacts, source descriptions, list/detail objects and fetch provenance are preserved. Private audit metadata is excluded as documented in the source adapter.
+
+## Checks
+
+```sh
+npm run check                   # matching/review tests + TypeScript + production build
+npm run test:ingest              # normalisation, contact fidelity and database tests
+npx playwright install chromium
+npm run test:e2e                 # desktop/mobile journeys and automated WCAG checks
+```
+
+Automated accessibility checks cover the main pages and review dialog; they are not a full manual WCAG audit.
+
+## Structure
+
+```text
+src/components/   Compact cards and imported-service browser
+src/data/         Fictional workbook sheets and normalised catalogue
+src/lib/          Matching, guarded updates and browser storage
+server/           Read-only local imported-catalogue API
+ingest/          Source adapters, normalisation, full text, SQLite upserts
+data/            Populated SQLite, internal JSON export and ingestion report
+tests/           Browser journeys and accessibility checks
+```
+
+The original self-contained design document is preserved at `/original-mockup.html`.
