@@ -473,3 +473,9 @@ button:disabled {opacity:.55;}
  box-shadow:0 3px 0 #0b0c0c;
  text-decoration:none;
 }
+.site-header .header-inner nav .nav-link.active:hover {
+ text-decoration:none;
+}
+.site-header .header-inner nav .nav-link:focus-visible {
+ border-bottom-color:transparent;
+}
