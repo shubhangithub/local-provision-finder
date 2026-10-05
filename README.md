@@ -1,3 +1,5 @@
+The application includes the directory agent, staff sign-in and editable customer summary exports, backed by the shared directory APIs and live meeting implementation.
+
 # Local Provision Finder
 
 React and TypeScript support finder with GOV.UK styling, compact cards and real local directory data.
