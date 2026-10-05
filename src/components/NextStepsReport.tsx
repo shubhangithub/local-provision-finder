@@ -33,7 +33,9 @@ export default function NextStepsReport({ choices, fallback, topics, endedAt }: 
   const usingFallback = !choices.length;
   const steps = usingFallback ? fallback : choices;
   const [details, setDetails] = useState<Record<string, Detail>>({});
-  const [panel, setPanel] = useState<'email' | 'phone' | null>(null);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [panel, setPanel] = useState<'email' | 'phone'>('email');
+  const [sharing, setSharing] = useState(false);
   const [value, setValue] = useState('');
   const [sent, setSent] = useState('');
   const [fieldError, setFieldError] = useState('');
@@ -52,37 +54,44 @@ export default function NextStepsReport({ choices, fallback, topics, endedAt }: 
   function send(event: FormEvent) {
     event.preventDefault();
     if (!value.trim()) { setFieldError(panel === 'email' ? 'Enter an email address' : 'Enter a mobile phone number'); return; }
-    setFieldError(''); setSent(`${panel === 'email' ? 'Email' : 'Text message'} to ${value.trim()}`); setPanel(null); setValue('');
+    setFieldError(''); setSent(`${panel === 'email' ? 'Email' : 'Text message'} to ${value.trim()}`); setSharing(false); setValue('');
   }
   return <section className="ns-report" aria-labelledby="ns-heading">
     <p className="ns-print-head">Your next steps · {longDate(endedAt)}</p>
-    <h3 id="ns-heading">Your next steps</h3>
+    <div className="ns-top">
+      <h3 id="ns-heading">Your next steps</h3>
+      {steps.length > 0 && <div className="ns-actions no-print">
+        <button type="button" className="button primary" onClick={() => window.print()}>Print or save as PDF</button>
+        <button type="button" className="button secondary" aria-expanded={sharing} onClick={() => { setSharing(!sharing); setSent(''); setFieldError(''); }}>Send a copy</button>
+      </div>}
+    </div>
+    {sharing && <form className="ns-share no-print" onSubmit={send} noValidate>
+      <fieldset><legend>Send these steps by</legend>
+        <label className="ns-choice"><input type="radio" name="ns-via" checked={panel === 'email'} onChange={() => { setPanel('email'); setFieldError(''); }} /> Email</label>
+        <label className="ns-choice"><input type="radio" name="ns-via" checked={panel === 'phone'} onChange={() => { setPanel('phone'); setFieldError(''); }} /> Text message</label>
+      </fieldset>
+      <label htmlFor="ns-share">{panel === 'email' ? 'Email address' : 'Mobile phone number'}</label>
+      {fieldError && <p className="ns-error" role="alert">Error: {fieldError}</p>}
+      <input id="ns-share" type={panel === 'email' ? 'email' : 'tel'} autoComplete={panel === 'email' ? 'email' : 'tel'} value={value} onChange={event => setValue(event.target.value)} autoFocus />
+      <button className="button primary">{panel === 'email' ? 'Send email' : 'Send text message'}</button> <button type="button" className="text-button" onClick={() => setSharing(false)}>Cancel</button>
+    </form>}
     <p className="ns-lead">{steps.length ? `You talked about ${topics.map(topic => topic.toLowerCase()).join(' and ') || 'support'}. Here ${steps.length === 1 ? 'is the service' : `are ${steps.length} services`} to contact.` : 'No services were suggested during the conversation.'}</p>
     {sent && <div className="ns-banner no-print" role="status"><strong>Not sent (prototype)</strong><p>{sent} is not wired up yet, so nothing was sent. Use “Print or save as PDF” to keep a copy.</p></div>}
     {usingFallback && steps.length > 0 && <p className="ns-inset">No services were saved, so these are the top suggestions from the conversation.</p>}
     <ol className="ns-steps">{steps.map(({ service, concept }, index) => {
       const { action, rows } = stepRows(details[service.id], service.postcode);
+      const open = expanded.has(service.id);
       return <li key={service.id} className="ns-step">
         <span className="ns-num" aria-hidden="true">{index + 1}</span>
         <div className="ns-body">
           <h4>Contact {service.name}</h4>
           <p className="ns-action">{action}</p>
           <p className="ns-why">{service.provider && service.provider !== service.name ? `${service.provider} · ` : ''}For: {concept}</p>
-          <dl className="ns-facts">{rows.map(([label, text]) => <div key={label}><dt>{label}</dt><dd>{text}</dd></div>)}</dl>
+          {!!rows.length && <button type="button" className="text-button ns-toggle no-print" aria-expanded={open} aria-controls={`ns-facts-${service.id}`} onClick={() => setExpanded(previous => { const next = new Set(previous); if (open) next.delete(service.id); else next.add(service.id); return next; })}>{open ? 'Hide details' : 'Show details'}<span className="visually-hidden"> for {service.name}</span></button>}
+          <dl id={`ns-facts-${service.id}`} className={open ? 'ns-facts' : 'ns-facts is-collapsed'}>{rows.map(([label, text]) => <div key={label}><dt>{label}</dt><dd>{text}</dd></div>)}</dl>
         </div>
         <span className="ns-check" aria-hidden="true" />
       </li>;
     })}</ol>
-    <div className="ns-actions no-print">
-      <button type="button" className="button primary" onClick={() => window.print()}>Print or save as PDF</button>
-      <button type="button" className="button secondary" onClick={() => { setPanel('email'); setSent(''); }}>Email these steps</button>
-      <button type="button" className="button secondary" onClick={() => { setPanel('phone'); setSent(''); }}>Send to my phone</button>
-    </div>
-    {panel && <form className="ns-share no-print" onSubmit={send} noValidate>
-      <label htmlFor="ns-share">{panel === 'email' ? 'Email address' : 'Mobile phone number'}</label>
-      {fieldError && <p className="ns-error" role="alert">Error: {fieldError}</p>}
-      <input id="ns-share" type={panel === 'email' ? 'email' : 'tel'} autoComplete={panel === 'email' ? 'email' : 'tel'} value={value} onChange={event => setValue(event.target.value)} autoFocus />
-      <button className="button primary">{panel === 'email' ? 'Send email' : 'Send text message'}</button> <button type="button" className="text-button" onClick={() => setPanel(null)}>Cancel</button>
-    </form>}
   </section>;
 }

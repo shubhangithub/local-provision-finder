@@ -34,3 +34,18 @@ test('read-only catalogue API rejects mutations and missing IDs', async ({ reque
   const escaped = await request.get('/api/imports?q=%25');
   expect(escaped.ok()).toBe(true);
 });
+
+test('missing service shows a useful recovery page without retrying a permanent 404',async({page})=>{
+ let calls=0;
+ await page.route('**/api/imports/service?id=missing-service',route=>{calls++;return route.fulfill({status:404,json:{error:'Imported service not found.'}});});
+ await page.goto('/#/directory/missing-service');
+ await expect(page.getByRole('heading',{name:'Service not found',exact:true})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Local knowledge, kept in full.'})).toHaveCount(0);
+ await expect(page.getByRole('button',{name:'Try again'})).toHaveCount(0);
+ await expect(page.getByRole('button',{name:'Ask agent for alternatives'})).toBeVisible();
+ const initialCalls=calls;
+ await page.waitForTimeout(650);
+ expect(calls).toBe(initialCalls);
+ await page.getByRole('button',{name:'Back to results'}).first().click();
+ await expect(page).toHaveURL(/#\/$/);
+});
