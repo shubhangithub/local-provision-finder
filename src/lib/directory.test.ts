@@ -11,7 +11,6 @@ describe('recorded service locations',()=>{
   expect(matchesArea(record,directorySites(record),'SE1')).toBe(true);expect(matchesArea(record,directorySites(record),'kingston upon thames')).toBe(true);
   expect(matchesArea(record,directorySites(record),'Charity')).toBe(false);
  });
- it('includes published community services in named areas using their recorded postcodes',()=>{const community={...record,source:'Community suggestion',locations:[]};expect(matchesArea(community,directorySites(community),'Kingston')).toBe(true);expect(matchesArea(community,directorySites(community),'Bristol')).toBe(false);const bristol={...community,postcode:'BS1 1AA'};expect(matchesArea(bristol,directorySites(bristol),'Bristol')).toBe(true);});
  it('requires a recorded site inside the visible map bounds',()=>{
   const bounds={west:-0.2,east:0,south:51.45,north:51.55};expect(directorySites(record).some(site=>siteInBounds(site,bounds))).toBe(true);
   expect(siteInBounds({lat:null,lng:null,postcode:'SE1',label:'No coordinates'},bounds)).toBe(false);

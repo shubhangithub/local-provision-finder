@@ -1,5 +1,7 @@
-import { ArrowUpRight, Bookmark, CheckCircle2, CircleAlert, HeartHandshake, GraduationCap, Monitor, Wallet, Languages, BriefcaseBusiness, MapPin, Globe } from 'lucide-react';
+import SaveServiceButton from './SaveServiceButton';
+import { ArrowUpRight, CheckCircle2, CircleAlert, HeartHandshake, GraduationCap, Monitor, Wallet, Languages, BriefcaseBusiness, MapPin, Globe } from 'lucide-react';
 import { effectiveStatus, isRemote, practicalLabels } from '../lib/search';
+import { askAgent } from '../lib/agent';
 import type { Service, ServiceMatch } from '../types';
 
 export function serviceIcon(service: Service) {
@@ -19,21 +21,23 @@ export function TrustLine({ service }: { service: Service }) {
   const Icon = warning ? CircleAlert : CheckCircle2;
   return <span className={`trust-line ${warning ? 'needs-check' : ''}`}><Icon size={14} aria-hidden="true" /><span>{warning || 'Checked'}{warning ? ' · ' : ' '}{formatDate(service.lastVerified)}</span></span>;
 }
-export default function ServiceCard({ match, saved, toggleSaved, onNavigate }: {
-  match: ServiceMatch; saved: boolean; toggleSaved: (id: string) => void; onNavigate: (route: string) => void;
+export default function ServiceCard({ match, saved, toggleSaved, onNavigate, headingLevel=3 }: {
+  headingLevel?:2|3; match: ServiceMatch; saved: boolean; toggleSaved: (id: string) => void; onNavigate: (route: string) => void;
 }) {
   const { service } = match;
+  const Heading=headingLevel===2?'h2':'h3';
   const Icon = serviceIcon(service);
   const remoteOutside = isRemote(service) && service.delivery !== 'In person';
   const snippet = match.reasons.slice(0, 2).join(' · ');
   return <article className="service-card">
     <div className="service-icon"><Icon size={23} strokeWidth={1.6} aria-hidden="true" /></div>
     <div className="service-card-body">
-      <div className="card-title-row"><h3><a href={`#/service/${service.id}`} onClick={e => { e.preventDefault(); onNavigate(`/service/${service.id}`); }}>{service.name}<ArrowUpRight size={16} aria-hidden="true" /></a></h3>
-        <button type="button" className={`icon-button bookmark ${saved ? 'is-saved' : ''}`} aria-label={`${saved ? 'Unsave' : 'Save'} ${service.name}`} aria-pressed={saved} onClick={() => toggleSaved(service.id)}><Bookmark size={19} fill={saved ? 'currentColor' : 'none'} /></button>
+      <div className="card-title-row"><Heading><a href={`#/service/${service.id}`} onClick={e => { e.preventDefault(); onNavigate(`/service/${service.id}`); }}>{service.name}<ArrowUpRight size={16} aria-hidden="true" /></a></Heading>
+        <SaveServiceButton compact saved={saved} name={service.name} onToggle={()=>toggleSaved(service.id)}/>
       </div>
       <p className="match-snippet">{snippet}</p>
       <div className="card-foot"><span className="delivery"><span>{service.delivery}</span><span className="meta-dot">·</span>{service.delivery === 'Online' ? <><Globe size={12} aria-hidden="true" /><span>{service.postcodePrefixes.join(', ')}</span></> : <><MapPin size={12} aria-hidden="true" /><span>{service.distanceMiles} mi{remoteOutside ? ' / remote' : ''}</span></>}</span><TrustLine service={service} /></div>
+      <button className="text-button agent-inline-link" onClick={()=>askAgent({question:'Explain this service',context:{title:service.name,searchText:service.category+' '+service.needs.join(' '),facts:[`${service.name}: ${service.category}.`, `Who it is for: ${service.eligibilitySummary}.`, `Availability: ${service.availability}. Area: ${service.postcodePrefixes.join(', ')}.`, `Access: ${service.referralRoute}. Record status: ${effectiveStatus(service)}.`,...match.missingPractical.map(need=>`Check ${practicalLabels[need].toLowerCase()} with the provider.`)],prompts:['Explain this service','What details need checking?','Find similar provision']}})}>Ask agent about this service</button>
       {!!match.missingPractical.length && <p className="unknown-access">Check {match.missingPractical.map(n => practicalLabels[n].toLowerCase()).join(', ')} with the provider.</p>}
     </div>
   </article>;

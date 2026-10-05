@@ -1,5 +1,6 @@
+import {completeStaffSignIn} from './helpers/staff-sign-in';
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from './fixtures';
+import { expect, test } from '@playwright/test';
 
 test('staff can search full source text and inspect preserved contacts', async ({ page, request }) => {
   const response = await request.get('/api/imports?q=anxiety');
@@ -9,7 +10,7 @@ test('staff can search full source text and inspect preserved contacts', async (
   expect(data.records.length).toBeLessThanOrEqual(20);
   expect(data.records.every((r: { vetting: string }) => r.vetting === 'internal')).toBe(true);
   await page.goto('/#/imports');
-  await page.getByRole('button', { name: 'Enter staff demo' }).click();
+  await page.getByRole('button', { name: 'Enter staff demo' }).click();await completeStaffSignIn(page);
   const allRecords = await (await request.get('/api/imports')).json();
   await expect(page.getByText(`${allRecords.total} source records`, { exact: true })).toBeVisible();
   await page.getByLabel('Search the full service text').fill('anxiety');

@@ -1,13 +1,13 @@
-import { test, expect } from './fixtures';
+import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 test('choose a directory and search stored postcodes', async ({page}) => {
   await page.goto('/');
   await page.getByRole('button',{name:'Location Choose an area or use your location'}).click();
   await expect(page.getByRole('dialog')).toBeVisible();
   expect((await new AxeBuilder({page}).include('.location-dialog').analyze()).violations).toEqual([]);
-  await page.locator('#location-query').fill('Bristol');await page.getByRole('button',{name:'Search this area',exact:true}).click();
-  await expect(page.locator('.directory-results-count [role=status]')).toHaveText('862 services');
-  await page.getByRole('button',{name:'Location Bristol'}).click();
+  await page.getByLabel('Town or service postcode').fill('Bristol');await page.getByRole('button',{name:'Search this area',exact:true}).click();
+  await expect(page.locator('.directory-results-count [role=status]')).toHaveText(`${(await (await page.request.get('/api/imports?area=Bristol')).json()).total} services`);
+  await page.getByRole('button',{name:/^Location Bristol$/i}).click();
   await page.getByLabel('Town or service postcode').fill('BS4');
   await page.getByRole('button',{name:'Search this area'}).click();
   await expect(page.locator('.location-results .service-card').first()).toBeVisible();

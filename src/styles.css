@@ -158,11 +158,6 @@ main:has(.directory-service-detail)>.hero {display:none;}
 .location-destinations button:nth-child(2) {background:#eef6ee;border-color:#b8d1be;}
 .location-destinations button:nth-child(3) {background:#f3eef9;border-color:#cec0e5;}
 @media(max-width:600px) {.location-destinations {grid-template-columns:1fr;}.location-destinations button {display:grid;grid-template-columns:28px 1fr;gap:5px 12px;}.location-destinations button span {grid-column:2;}.location-destinations button svg {grid-row:1 / 3;align-self:center;}}
-.suggest-service-entry {display:flex;align-items:center;gap:18px;padding-top:24px;border-top:1px solid #ccdbe7;margin-top:28px;color:#505a5f;}
-.workspace-nav {display:flex;align-items:center;gap:24px;flex-wrap:wrap;padding:20px 0 12px;border-bottom:1px solid #b1b4b6;}
-.workspace-nav a {font-size:17px;color:#1d70b8;text-decoration:underline;}
-.workspace-nav a[aria-current=page] {color:#4c2c92;font-weight:700;}
-@media(max-width:650px) {.suggest-service-entry {display:block;}.suggest-service-entry .text-button {margin-top:8px;}.workspace-nav {gap:16px;}.workspace-nav a {font-size:15px;}}
 
 /* Keep the site title and staff navigation usable at every viewport width. */
 .header-inner {flex-wrap:wrap;}

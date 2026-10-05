@@ -5,17 +5,18 @@ export interface DirectoryLocation {
     addresses?: { postal_code?: unknown; address_1?: unknown }[];
   };
 }
+export interface AvailabilityConfirmation {status:'Open'|'Waiting list'|'Closed';confirmedAt:string}
 export interface DirectoryRecord {
   id: string; name: string; provider: string; description: string; searchText: string;
   source: string; postcode: string | null; lat: number | null; lng: number | null;
   address?: string | null; categories?: string[]; needs?: string[];
   eligibilitySummary?: string | null; accessibility?: string[]; cost?: string | null;
-  openingTimes?: string | null; tags?:string[]; availability?: string; locations?: DirectoryLocation[];
+  availabilityConfirmation?:AvailabilityConfirmation;openingTimes?: string | null; tags?:string[]; availability?: string; locations?: DirectoryLocation[];
 }
 export interface DirectorySite { lat: number | null; lng: number | null; postcode: string | null; label: string }
 export interface DirectorySummary {
   id: string; name: string; provider: string; postcode: string | null;
-  distanceMiles: number | null; sites: DirectorySite[]; snippet: string; tags: string[];
+  availabilityConfirmation?:AvailabilityConfirmation;distanceMiles: number | null; sites: DirectorySite[]; snippet: string; tags: string[];
 }
 export interface MapService { id: string; name: string; provider: string; sites: DirectorySite[] }
 export interface DirectoryResponse {
@@ -51,10 +52,9 @@ export function normaliseArea(area: string): string { return area.trim().toLower
 export function matchesArea(record: DirectoryRecord, sites: DirectorySite[], area: string): boolean {
   const normal = normaliseArea(area);
   if (!normal) return true;
-  const community=record.source==='Community suggestion';const postcodes=[record.postcode,...sites.map(site=>site.postcode)].filter((value):value is string=>!!value).map(normaliseArea);
-  if (normal === 'buckinghamshire' || normal === 'bucks') return record.source.includes('Buckinghamshire') || community && postcodes.some(value=>/^(hp|mk)/.test(value));
-  if (normal === 'bristol') return record.source.includes('Bristol') || community && postcodes.some(value=>/^bs/.test(value));
-  if (normal === 'kingston' || normal === 'kingstonuponthames') return record.source.includes('Kingston') || community && postcodes.some(value=>/^kt/.test(value));
+  if (normal === 'buckinghamshire' || normal === 'bucks') return record.source.includes('Buckinghamshire');
+  if (normal === 'bristol') return record.source.includes('Bristol');
+  if (normal === 'kingston' || normal === 'kingstonuponthames') return record.source.includes('Kingston');
   return [record.postcode,...sites.map(site => site.postcode)].some(postcode => postcode && normaliseArea(postcode).startsWith(normal));
 }
 export interface MapBounds {west:number;south:number;east:number;north:number}

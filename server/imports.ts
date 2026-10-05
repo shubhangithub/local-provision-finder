@@ -1,3 +1,4 @@
+import {readAvailability,availabilityOverlay} from './availability.ts';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createRequire } from 'node:module';
@@ -28,9 +29,9 @@ export function importsApi(): Plugin {
       const db = new DatabaseSync(resolve(directory, 'services.sqlite'), { readOnly: true });
       db.exec('PRAGMA busy_timeout=5000');
       const feedback = existsSync(resolve(directory,'feedback.sqlite')) ? new FeedbackStore(resolve(directory,'feedback.sqlite')) : null;
-      const tags = readServiceTags();
+      const tags = readServiceTags();const availability=readAvailability(directory);
       const corrected = <T extends FeedbackService>(record:T):T => {
-        const updated = feedback ? feedback.corrected(record) : record;
+        const updated = availabilityOverlay(feedback ? feedback.corrected(record) : record,availability);
         const serviceTags = tags.get(record.id) ?? [];
         return serviceTags.length ? {...updated,tags:serviceTags,searchText:`Tags: ${serviceTags.join(', ')}\n${updated.searchText ?? ''}`} : {...updated,tags:[]};
       };

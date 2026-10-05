@@ -1,0 +1,9 @@
+.availability-stamp{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;font-size:14px;color:#505a5f;margin:12px 0}.availability-status{padding:3px 7px;background:#f3f2f1;color:#505a5f;font-weight:700}.availability-status[data-status=Open]{background:#e0f0e6;color:#005a30}.availability-status[data-status="Waiting list"]{background:#fff1cf;color:#594d00}.service-availability h2{margin-top:0}.availability-form{display:grid;gap:16px;margin-top:20px}.availability-form input,.availability-form select,.availability-form textarea{width:100%;border:2px solid #0b0c0c;padding:8px;font:inherit}.availability-history{margin-top:20px}.availability-history summary{color:#1d70b8;cursor:pointer}.availability-history li{padding:12px 0;border-bottom:1px solid #d6e1e9}.availability-history p{margin:6px 0!important;font-size:16px!important}
+
+.service-availability {margin:16px 0;}
+.availability-bar {display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 14px;background:#f3f8fc;border-left:3px solid #1d70b8;}
+.availability-bar .availability-stamp {margin:0;}
+.availability-bar .text-button {font-size:14px;text-decoration:underline;}
+.availability-unconfirmed {font-size:14px;color:#505a5f;}
+.availability-form {padding:16px;border:1px solid #d6e1e9;}
+.availability-history {font-size:14px;}

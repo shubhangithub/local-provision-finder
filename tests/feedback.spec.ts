@@ -1,4 +1,5 @@
-import { test,expect } from './fixtures';
+import {completeStaffSignIn} from './helpers/staff-sign-in';
+import { test,expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { DatabaseSync } from 'node:sqlite';
 test('user report is reviewed and a checked field correction reaches service details',async ({page,request},testInfo)=>{
@@ -17,7 +18,7 @@ test('user report is reviewed and a checked field correction reaches service det
     await expect(page.getByText('Thank you. Your feedback is in the review queue.')).toBeVisible();
     const entries=(await (await request.get('/api/feedback')).json()).entries;
     reportId=entries.find((entry:{note:string})=>entry.note===note).id;
-    await page.getByRole('button',{name:'Staff sign in',exact:true}).click();
+    await page.getByRole('button',{name:'Staff sign in',exact:true}).click();await completeStaffSignIn(page);
     await page.getByRole('link',{name:'Review feedback',exact:true}).click();
     await page.locator('.review-card').filter({hasText:summary.name}).getByRole('button',{name:'Review report'}).click();
     await page.getByLabel('Detail to correct').selectOption('cost');
@@ -29,7 +30,7 @@ test('user report is reviewed and a checked field correction reaches service det
     await expect(page.getByText('Checked correction published. Other source dates are unchanged.')).toBeVisible();
     const updated=(await (await request.get(`/api/imports/service?id=${encodeURIComponent(summary.id)}`)).json()).record;
     expect(updated.cost).toBe('Free after eligibility check');expect(updated.lastVerified).toBe(original.lastVerified);expect(updated.sourceUpdatedAt).toBe(original.sourceUpdatedAt);
-    await page.getByRole('button',{name:/History/}).click();
+    await page.getByRole('button',{name:'Review history'}).click();
     await expect(page.locator('.review-card').filter({hasText:summary.name}).getByText('Corrected Cost')).toBeVisible();
     expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa']).analyze()).violations).toEqual([]);
   } finally {
@@ -37,7 +38,7 @@ test('user report is reviewed and a checked field correction reaches service det
   }
 });
 test('feedback notification opens the prompt and real services can be saved',async ({page,request})=>{
-  await page.goto('/');await page.getByRole('button',{name:/^Location /}).click();await page.locator('#location-query').fill('Bristol');await page.getByRole('button',{name:'Search this area',exact:true}).click();
+  await page.goto('/');await page.getByRole('button',{name:/^Location /}).click();await page.getByLabel('Town or service postcode').fill('Bristol');await page.getByRole('button',{name:'Search this area',exact:true}).click();
   const first=page.locator('.directory-results-list .service-card').first();await expect(first).toBeVisible();
   const name=await first.locator('.import-service-link').innerText();
   await first.getByRole('button',{name:/^Save /}).click();

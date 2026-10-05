@@ -18,3 +18,7 @@ data/*.sqlite-shm
 # Databases, snapshots, recordings and exports remain local.
 data/*
 !data/.gitkeep
+
+# Local customer submissions and availability confirmations
+data/suggestions.sqlite*
+data/availability.sqlite*

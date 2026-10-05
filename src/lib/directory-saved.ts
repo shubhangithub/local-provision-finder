@@ -1,4 +1,3 @@
-import { notifySaved } from './notifications';
 export interface SavedDirectoryService {id:string;name:string;provider:string;postcode:string | null}
 const key='lp-directory-saved-v1';
 export function readDirectorySaved():SavedDirectoryService[] {
@@ -7,6 +6,5 @@ export function readDirectorySaved():SavedDirectoryService[] {
 export function toggleDirectorySaved(service:SavedDirectoryService) {
   const previous=readDirectorySaved();const next=previous.some(item => item.id===service.id) ? previous.filter(item => item.id!==service.id) : [...previous,service].slice(0,100);
   try {localStorage.setItem(key,JSON.stringify(next));} catch {/* Browser storage may be disabled. */}
-  if (next.some(item=>item.id===service.id)) notifySaved(service.id,service.name);
   window.dispatchEvent(new Event('directory-saved-changed'));
 }

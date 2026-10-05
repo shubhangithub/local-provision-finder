@@ -1,4 +1,4 @@
-import {test,expect} from './fixtures';
+import {test,expect} from '@playwright/test';
 test('semantic retrieval finds support without an exact phrase and keeps area filters',async ({request})=>{
   const q='I feel anxious and need someone to talk to';
   const response=await request.get('/api/imports',{params:{q,area:'Bristol',mode:'semantic'}});expect(response.ok()).toBe(true);
