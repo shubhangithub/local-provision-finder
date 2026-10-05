@@ -5,7 +5,7 @@ test('choose a directory and search stored postcodes', async ({page}) => {
   await page.getByRole('button',{name:'Location Choose an area or use your location'}).click();
   await expect(page.getByRole('dialog')).toBeVisible();
   expect((await new AxeBuilder({page}).include('.location-dialog').analyze()).violations).toEqual([]);
-  await page.getByRole('button',{name:'Bristol Well Aware directory'}).click();
+  await page.locator('#location-query').fill('Bristol');await page.getByRole('button',{name:'Search this area',exact:true}).click();
   await expect(page.locator('.directory-results-count [role=status]')).toHaveText('862 services');
   await page.getByRole('button',{name:'Location Bristol'}).click();
   await page.getByLabel('Town or service postcode').fill('BS4');

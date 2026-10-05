@@ -18,7 +18,7 @@ test('staff tags rank first in both search modes and display safely on public ca
     await page.goto('/');
     await page.getByLabel('What do you need help with?', {exact:true}).fill(tag);
     await page.getByRole('button', {name:/^Location /}).click();
-    await page.getByRole('button', {name:'Bristol Well Aware directory'}).click();
+    await page.locator('#location-query').fill('Bristol');await page.getByRole('button',{name:'Search this area',exact:true}).click();
     const first = page.locator('.directory-results-list .service-card').first();
     await expect(first.locator('.import-service-link')).toHaveText(service.name);
     await expect(first.locator('.directory-result-tags li').filter({hasText:tag})).toHaveText(tag);

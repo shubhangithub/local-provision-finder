@@ -37,7 +37,7 @@ test('user report is reviewed and a checked field correction reaches service det
   }
 });
 test('feedback notification opens the prompt and real services can be saved',async ({page,request})=>{
-  await page.goto('/');await page.getByRole('button',{name:/^Location /}).click();await page.getByRole('button',{name:'Bristol Well Aware directory'}).click();
+  await page.goto('/');await page.getByRole('button',{name:/^Location /}).click();await page.locator('#location-query').fill('Bristol');await page.getByRole('button',{name:'Search this area',exact:true}).click();
   const first=page.locator('.directory-results-list .service-card').first();await expect(first).toBeVisible();
   const name=await first.locator('.import-service-link').innerText();
   await first.getByRole('button',{name:/^Save /}).click();
