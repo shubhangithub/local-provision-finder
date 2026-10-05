@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { openRegionMenu, showView } from './region-helpers';
+import { chooseArea, chooseRegion, openRegionMenu, showView } from './region-helpers';
 
 async function openPicker(page: Page) {
   const panel = await openRegionMenu(page);
@@ -115,4 +115,60 @@ test('service links inside the region map picker open their service details',asy
  await expect(page.getByRole('region',{name:'Region settings'})).toBeHidden();
  await expect(page.getByRole('heading',{name,exact:true})).toBeVisible();await expect(page.getByRole('heading',{name:'About this service',exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Back to results',exact:true}).click();await expect(page.getByRole('heading',{name:'What do you need help with?'})).toBeVisible();
+});
+
+async function visiblePins(page: Page) {
+  return page.evaluate(() => {
+    const box = document.querySelector('.directory-results-map .services-map')!.getBoundingClientRect();
+    return [...document.querySelectorAll('.directory-results-map .service-map-pin')].filter(pin => {
+      const rect = pin.getBoundingClientRect();
+      return rect.right > box.left && rect.left < box.right && rect.bottom > box.top && rect.top < box.bottom;
+    }).length;
+  });
+}
+async function search(page: Page, text = 'support') {
+  await page.getByLabel('What do you need help with?', { exact: true }).fill(text);
+  await page.getByRole('button', { name: 'Find support', exact: true }).click();
+  await showView(page, 'Map');
+}
+
+test('pins are in view on first render with no region, without sending a bounds search', async ({ page }) => {
+  const bounded: string[] = [];
+  page.on('request', request => { const url = new URL(request.url()); if (url.pathname === '/api/imports' && url.searchParams.has('bounds')) bounded.push(url.search); });
+  await page.goto('/');
+  await search(page);
+  await expect.poll(() => visiblePins(page)).toBeGreaterThan(0);
+  await page.waitForTimeout(1000);
+  expect(await visiblePins(page)).toBeGreaterThan(0);
+  expect(bounded).toEqual([]);
+});
+
+test('pins are in view after the region changes to somewhere the old view did not cover', async ({ page }) => {
+  await page.goto('/');
+  await chooseArea(page, 'Bristol');
+  await search(page);
+  await expect.poll(() => visiblePins(page)).toBeGreaterThan(0);
+  await showView(page, 'List');
+  await chooseArea(page, 'Kingston');
+  await showView(page, 'Map');
+  await expect.poll(() => visiblePins(page)).toBeGreaterThan(0);
+  await showView(page, 'List');
+  await chooseRegion(page, 'KT1');
+  await showView(page, 'Map');
+  await expect.poll(() => visiblePins(page)).toBeGreaterThan(0);
+});
+
+test('pins are in view after choosing a map area from the header', async ({ page }) => {
+  await page.goto('/');
+  await chooseArea(page, 'Bristol');
+  await search(page);
+  await expect.poll(() => visiblePins(page)).toBeGreaterThan(0);
+  await showView(page, 'List');
+  await openPicker(page);
+  await page.getByLabel('Start the map at').selectOption('Kingston');
+  const pending = mapResponse(page);
+  await page.getByRole('button', { name: 'Use this map area' }).click();
+  await pending;
+  await showView(page, 'Map');
+  await expect.poll(() => visiblePins(page)).toBeGreaterThan(0);
 });

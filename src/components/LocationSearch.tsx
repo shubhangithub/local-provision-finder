@@ -68,10 +68,10 @@ export default function LocationSearch({staff=false,onStartMeeting}:{staff?:bool
   },[state]);
   const searchForm=<form className="directory-search-form" onSubmit={e => {e.preventDefault();search(words.trim());}}>
     <div className="directory-search-row">
-      <SearchAutocomplete value={words} onChange={value=>{setWords(value);setUrgency('auto');}} params={searchParams()} onChoose={value=>{setWords(value);setUrgency(urgent?'today':'normal');search(value);}}/>
+      <SearchAutocomplete value={words} onChange={value=>{setWords(value);setUrgency('auto');}} area={region?.area} onChoose={value=>{setWords(value);setUrgency(urgent?'today':'normal');search(value);}}/>
       <button className="button primary" type="submit">Find support<ArrowRight size={18}/></button>
     </div>
-    <p className="region-line">Searching in <strong>{region?.label ?? 'all areas'}</strong> <span aria-hidden="true">·</span> <button type="button" className="text-button" onClick={openRegionMenu}>Change<span className="visually-hidden"> region</span></button></p>
+    {region && <p className="region-line">Searching in <strong>{region.label}</strong> <span aria-hidden="true">·</span> <button type="button" className="text-button" onClick={openRegionMenu}>Change<span className="visually-hidden"> region</span></button></p>}
   </form>;
   const urgencyNotice=<UrgencyNotice text={words} mode={urgency} onChange={mode=>{setUrgency(mode);setPage(1);}}/>;
   if (state==='detail') return <div className="location-search directory-home" data-state="detail"><section className="page-wrap finder-section directory-service-detail" aria-label="Real directory results"><button className="back-link" type="button" onClick={() => setSelected(null)}><ArrowLeft size={16}/>Back to results</button><ImportedServices key={selected!} initialId={selected!} directoryView staff={staff} enableStaff={() => {}} onNavigate={() => setSelected(null)}/></section></div>;
@@ -85,7 +85,7 @@ export default function LocationSearch({staff=false,onStartMeeting}:{staff?:bool
       <ResizableResults view={view}>
         <div className="directory-results-list">
           <div className="results-head">
-            <div className="results-head-title"><h2 ref={heading} tabIndex={-1}>Support in {mapBounds ? 'this map area' : region?.label ?? 'all areas'}</h2>{searchText && <p className="field-hint">Results for “{searchText}”</p>}</div>
+            <div className="results-head-title"><h2 ref={heading} tabIndex={-1}>{mapBounds ? 'Support in this map area' : region ? `Support in ${region.label}` : 'Search results'}</h2>{searchText && <p className="field-hint">Results for “{searchText}”</p>}</div>
             <div className="results-head-meta"><p role="status" className="results-count">{data?.total ?? 0} services</p>{data?.searchMode==='keyword' && searchText && <span className="field-hint">Keyword results · meaning-based search is unavailable</span>}</div>
             {(region?.lat!==undefined || bounds) && <div className="nearby-options"><p className="field-hint">{bounds ? 'Services inside the visible map area.' : 'Recorded sites within 10 miles. Distances are straight line.'}</p><label className="checkbox-label"><input type="checkbox" checked={includeUnknown} onChange={e => {setIncludeUnknown(e.target.checked);setPage(1);}}/><span>{bounds ? 'Include services without map locations' : 'Also show services with unknown distance'}</span></label></div>}
             {mapBounds && <button type="button" className="text-button" onClick={() => {setMapBounds(null);setPage(1);setIncludeUnknown(!region?.bounds);}}>Reset to selected location</button>}

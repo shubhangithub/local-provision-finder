@@ -8,7 +8,7 @@ test('the header cog opens region settings and Escape or an outside click closes
   await expect(trigger(page)).toHaveAttribute('aria-expanded', 'false');
   const panel = await openRegionMenu(page);
   await expect(trigger(page)).toHaveAttribute('aria-expanded', 'true');
-  await expect(panel).toContainText('Searching all areas');
+  await expect(panel).toContainText('No region set');
   await page.keyboard.press('Escape');
   await expect(panel).toBeHidden();
   await expect(trigger(page)).toBeFocused();
@@ -35,19 +35,19 @@ test('a region is shown, persists across a reload and can be cleared', async ({ 
   await page.reload();
   await expect(trigger(page)).toHaveAccessibleName(/Kingston upon Thames/);
   const panel = await openRegionMenu(page);
-  await panel.getByRole('button', { name: 'Clear region (search all areas)' }).click();
-  await expect(trigger(page)).toHaveAccessibleName(/All areas/);
+  await panel.getByRole('button', { name: 'Clear region', exact: true }).click();
+  await expect(trigger(page)).toHaveAccessibleName('Region settings');
   await page.reload();
-  await expect(trigger(page)).toHaveAccessibleName(/All areas/);
+  await expect(trigger(page)).toHaveAccessibleName('Region settings');
 });
 
-test('searching without a region covers all areas and changing region re-runs the search', async ({ page }) => {
+test('searching without a region covers all areas without mentioning them, and changing region re-runs the search', async ({ page }) => {
   const requests: URLSearchParams[] = [];
   page.on('request', request => { const url = new URL(request.url()); if (url.pathname === '/api/imports' && url.searchParams.get('mode') === 'semantic' && url.searchParams.has('page')) requests.push(url.searchParams); });
   await page.goto('/');
   await page.getByLabel('What do you need help with?', { exact: true }).fill('food');
   await page.getByRole('button', { name: 'Find support', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Support in all areas' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Search results' })).toBeVisible();
   await expect.poll(() => requests.some(params => params.get('q') === 'food' && !params.has('area'))).toBe(true);
   await chooseArea(page, 'Bristol');
   await expect(page.getByRole('heading', { name: 'Support in Bristol' })).toBeVisible();
@@ -56,8 +56,13 @@ test('searching without a region covers all areas and changing region re-runs th
   await expect(page.getByRole('heading', { name: 'Support in Kingston upon Thames' })).toBeVisible();
 });
 
-test('the region indicator beside the search opens the header settings', async ({ page }) => {
+test('the region indicator appears only when a region is set and opens the header settings', async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByText(/Searching in/)).toHaveCount(0);
+  await expect(page.getByText(/all areas/i)).toHaveCount(0);
+  await expect(trigger(page)).toHaveAccessibleName('Region settings');
+  await chooseArea(page, 'Bristol');
+  await expect(page.getByText('Searching in Bristol')).toBeVisible();
   await page.getByRole('button', { name: 'Change region' }).click();
   await expect(page.getByRole('region', { name: 'Region settings' })).toBeVisible();
 });

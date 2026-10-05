@@ -6,6 +6,12 @@ interface Props {
   services:MapService[];area?:string;origin?:{lat:number;lng:number};onSelect:(id:string)=>void;
   activeId?:string|null;onHighlight?:(id:string)=>void;onBoundsChange?:(bounds:MapBounds)=>void;bounds?:MapBounds | null;picker?:boolean;
 }
+// A few records carry stray coordinates; frame the bulk of the pins (2nd-98th percentile) rather than every outlier.
+function framingBounds(points:[number,number][]):[[number,number],[number,number]] {
+  const trimmed=(values:number[]) => {const sorted=[...values].sort((a,b) => a-b);return [sorted[Math.floor((sorted.length-1)*0.02)],sorted[Math.ceil((sorted.length-1)*0.98)]];};
+  const [south,north]=trimmed(points.map(point => point[0]));const [west,east]=trimmed(points.map(point => point[1]));
+  return [[south,west],[north,east]];
+}
 export default function ServicesMap({services,area,origin,onSelect,onBoundsChange,bounds,picker=false,activeId,onHighlight}:Props) {
   const container=useRef<HTMLDivElement>(null);const map=useRef<LeafletMap | null>(null);const markers=useRef<LayerGroup | null>(null);
   const callbacks=useRef({onSelect,onBoundsChange,onHighlight});callbacks.current={onSelect,onBoundsChange,onHighlight};
@@ -13,8 +19,9 @@ export default function ServicesMap({services,area,origin,onSelect,onBoundsChang
   const initial=useRef({area,origin,bounds});
   const [loaded,setLoaded]=useState(false);const [error,setError]=useState(false);const [autoSearch,setAutoSearch]=useState(true);
   const automatic=useRef(true);automatic.current=autoSearch;
-  const ignoreMove=useRef(false);const userMovement=useRef(false);const timer=useRef<ReturnType<typeof setTimeout> | null>(null);
+  const ignoreMove=useRef(false);const userMovement=useRef(false);const hasInteracted=useRef(false);const ensureVisible=useRef<(()=>void)|null>(null);const frame=useRef({fixed:false,hasBounds:false});const latest=useRef({area,origin,bounds});latest.current={area,origin,bounds};const hidden=useRef(false);const timer=useRef<ReturnType<typeof setTimeout> | null>(null);
   const [pendingBounds,setPendingBounds]=useState<MapBounds | null>(null);
+  frame.current={fixed:!!(area || origin || bounds),hasBounds:!!bounds};
   const viewKey=`${area}:${origin?.lat}:${origin?.lng}`;const lastView=useRef(viewKey);
   useEffect(() => {
     let cancelled=false;if (!container.current) return;
@@ -29,7 +36,7 @@ export default function ServicesMap({services,area,origin,onSelect,onBoundsChang
       const tiles=L.tileLayer(import.meta.env.VITE_MAP_TILE_URL || 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:import.meta.env.VITE_MAP_ATTRIBUTION || '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(instance);
       let failures=0;tiles.on('tileerror',() => {if (++failures>=3 && !cancelled) setError(true);});
       markers.current=L.layerGroup().addTo(instance);
-      const interacted=()=>{userMovement.current=true;};
+      const interacted=()=>{userMovement.current=true;hasInteracted.current=true;};
       container.current.addEventListener('pointerdown',interacted);container.current.addEventListener('wheel',interacted);container.current.addEventListener('keydown',interacted);
       instance.on('dragstart',interacted);
       instance.on('moveend',() => {
@@ -42,26 +49,51 @@ export default function ServicesMap({services,area,origin,onSelect,onBoundsChang
       });
       const resize=new ResizeObserver(() => {
         instance.invalidateSize({pan:true,animate:false});
+        const shown=!!container.current && container.current.clientWidth>0 && container.current.clientHeight>0;
+        if (!shown) hidden.current=true;
+        else if (hidden.current && visibleOnce) {
+          // Shown again after being hidden (e.g. the mobile list/map switch): apply the view that changed meanwhile.
+          hidden.current=false;ignoreMove.current=true;
+          const current=latest.current;
+          if (current.bounds) instance.fitBounds([[current.bounds.south,current.bounds.west],[current.bounds.north,current.bounds.east]],{animate:false});
+          else {const place=current.origin ?? areaCentre(current.area);instance.setView([place.lat,place.lng],12,{animate:false});}
+          setTimeout(() => {ignoreMove.current=false;},0);
+          ensureVisible.current?.();
+        }
         if (!visibleOnce && container.current && container.current.clientWidth>0 && container.current.clientHeight>0) {
           visibleOnce=true;ignoreMove.current=true;
           if (value.bounds) instance.fitBounds([[value.bounds.south,value.bounds.west],[value.bounds.north,value.bounds.east]],{animate:false});else instance.setView(centre,12,{animate:false});
           // setView may not emit moveend when the centre/zoom are unchanged.
           setTimeout(() => {ignoreMove.current=false;},0);
+          ensureVisible.current?.();
         }
       });resize.observe(container.current);instance.on('unload',() => resize.disconnect());
       setLoaded(true);
+      // The container may only get its final size after this frame (sticky/flex layout).
+      requestAnimationFrame(() => {if (!cancelled && map.current===instance) instance.invalidateSize({animate:false});});
       if (picker) {const viewport=instance.getBounds();callbacks.current.onBoundsChange?.({west:viewport.getWest(),south:viewport.getSouth(),east:viewport.getEast(),north:viewport.getNorth()});}
     }).catch(() => {if (!cancelled) setError(true);});
     return () => {cancelled=true;if (timer.current) clearTimeout(timer.current);map.current?.remove();map.current=null;markers.current=null;};
   },[]);
   useEffect(() => {
     if (!loaded || !map.current || lastView.current===viewKey) return;
-    lastView.current=viewKey;
+    lastView.current=viewKey;hasInteracted.current=false;
     const areaLocation=areaCentre(area);
     const centre:[number,number]=origin ? [origin.lat,origin.lng] : [areaLocation.lat,areaLocation.lng];
     ignoreMove.current=true;map.current.setView(centre,12,{animate:false});
     if (picker) {const viewport=map.current.getBounds();callbacks.current.onBoundsChange?.({west:viewport.getWest(),south:viewport.getSouth(),east:viewport.getEast(),north:viewport.getNorth()});}
   },[loaded,viewKey]);
+  // A new region bounds (e.g. a chosen map area) must move the view; a bounds change that just mirrors the viewport, from the user's own panning, must not.
+  const boundsKey=bounds ? `${bounds.west},${bounds.south},${bounds.east},${bounds.north}` : '';
+  useEffect(() => {
+    const instance=map.current;if (!loaded || !instance || !bounds || picker) return;
+    const box=container.current;if (!box || box.clientWidth===0 || box.clientHeight===0) return;
+    const view=instance.getBounds();
+    const same=['west','south','east','north'].every(key => {const current={west:view.getWest(),south:view.getSouth(),east:view.getEast(),north:view.getNorth()}[key as keyof MapBounds];return Math.abs(current-bounds[key as keyof MapBounds])<0.0005;});
+    if (same) return;
+    ignoreMove.current=true;instance.fitBounds([[bounds.south,bounds.west],[bounds.north,bounds.east]],{animate:false});
+    setTimeout(() => {ignoreMove.current=false;},0);
+  },[loaded,boundsKey]);
   useEffect(() => {
     if (!loaded || !map.current || !markers.current) return;
     let cancelled=false;
@@ -84,6 +116,22 @@ export default function ServicesMap({services,area,origin,onSelect,onBoundsChang
         const ids=group.entries.map(entry=>entry.id);serviceMarkers.current.push({marker,ids});
         marker.getElement()?.classList.toggle('is-highlighted',ids.includes(highlighted.current??''));
       }
+      ensureVisible.current=() => {
+        const instance=map.current;const box=container.current;
+        if (picker || !instance || !box || box.clientWidth===0 || box.clientHeight===0) return;
+        // Some records carry 0,0 ("null island") instead of a location; never frame the view around those.
+        const points=services.flatMap(service => service.sites.filter(site => site.lat!==null && site.lng!==null && !(site.lat===0 && site.lng===0)).map(site => [site.lat!,site.lng!] as [number,number]));
+        if (!points.length) return;
+        instance.invalidateSize({animate:false});
+        const view=instance.getBounds();
+        // Frame the pins when nothing fixes the view and the user has not moved it, or when none of them are in view.
+        const noneInView=!points.some(([lat,lng]) => view.contains([lat,lng]));
+        if ((frame.current.fixed || hasInteracted.current) && !(noneInView && !frame.current.hasBounds)) return;
+        ignoreMove.current=true;instance.fitBounds(framingBounds(points),{padding:[40,40],maxZoom:13,animate:false});
+        // fitBounds may not emit moveend when the view is unchanged.
+        setTimeout(() => {ignoreMove.current=false;},0);
+      };
+      ensureVisible.current();
       if (origin) L.marker([origin.lat,origin.lng],{title:'Your current location',alt:'Your current location',icon:L.divIcon({className:'current-map-pin',html:'<span></span>',iconSize:[20,20],iconAnchor:[10,10]})}).addTo(layer).bindPopup('Your current location');
     });
     return () => {cancelled=true;};

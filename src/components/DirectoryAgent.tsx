@@ -62,7 +62,7 @@ export default function DirectoryAgent({route,staff,context,onNavigate}:{route:s
       let text=data.records.length ? 'Matching directory services are listed below.' : 'No matching directory services were found.';let mode:Message['mode']='local';let sources:Message['sources']=[];let records=data.records.slice(0,3);
       try{const response=await fetch('/api/assistant',{method:'POST',headers:{'Content-Type':'application/json'},signal:abort.signal,body:JSON.stringify({task:'search',question:clean,search:{q:query.slice(0,250),...regionSearch(region)}})});if(response.ok){const answer=await response.json();if(answer.mode==='openai'){mode='openai';text=[answer.summary,answer.answer!==answer.summary?answer.answer:'',...(answer.nextSteps??[])].filter(Boolean).join('\n\n');}sources=answer.citations??[];if(answer.services?.length)records=answer.services.slice(0,3);}}catch{if(abort.signal.aborted)return;}
       if(request!==generation.current||abort.signal.aborted)return;
-      if(mentionedElsewhere)text+=`\n\nI searched ${region?.label??'all areas'}. To search ${mentionedElsewhere.label}, change the region in the header settings.`;
+      if(mentionedElsewhere)text+=`\n\n${region?`I searched ${region.label}.`:'I searched without a region.'} To search ${mentionedElsewhere.label}, change the region in the header settings.`;
       setMessages(previous=>[...previous,{role:'agent',page:page.title,text,records,sources,mode}]);
     }catch{if(request===generation.current && !abort.signal.aborted)setMessages(previous=>[...previous,{role:'agent',page:page.title,text:'I couldn’t load the directory just now. Please try again.',failed:true}]);}
     finally{if(request===generation.current)setBusy(false);}

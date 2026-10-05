@@ -47,13 +47,13 @@ export default function RegionMenu() {
     const area=resolveArea(text);const named=directoryAreas.find(item=>item.id===area);
     setDraft('');choose({label:named?named.label:text.toUpperCase(),area});
   }
-  const summary=region?.label ?? 'All areas';
+  
   return <div className="region-menu" ref={container}>
-    <button ref={trigger} type="button" className="notification-trigger region-trigger" aria-label={`Region settings, ${summary}`} aria-haspopup="true" aria-expanded={open} aria-controls="region-menu-panel" onClick={()=>open?close():setOpen(true)}><Settings size={18} aria-hidden="true"/><span className="region-trigger-label">{summary}</span></button>
+    <button ref={trigger} type="button" className="notification-trigger region-trigger" aria-label={region ? `Region settings, ${region.label}` : 'Region settings'} aria-haspopup="true" aria-expanded={open} aria-controls="region-menu-panel" onClick={()=>open?close():setOpen(true)}><Settings size={18} aria-hidden="true"/>{region && <span className="region-trigger-label">{region.label}</span>}</button>
     {open && <section id="region-menu-panel" className="region-panel" aria-label="Region settings">
       <div className="region-panel-heading"><h2>Search region</h2><button type="button" className="icon-button" aria-label="Close region settings" onClick={()=>close()}><X size={19}/></button></div>
-      <p className="region-current" role="status">{region ? <>Searching in <strong>{region.label}</strong></> : <>Searching <strong>all areas</strong></>}</p>
-      <div className="field"><label htmlFor="region-area">Area</label><select id="region-area" value={selectedArea} onChange={event=>{const value=event.target.value;if(!value){if(region)choose(null);return;}const area=directoryAreas.find(item=>item.id===value)!;choose({label:area.label,area:area.id});}}><option value="">All areas</option>{directoryAreas.map(area=><option key={area.id} value={area.id}>{area.label}</option>)}</select></div>
+      <p className="region-current" role="status">{region ? <>Searching in <strong>{region.label}</strong></> : <>No region set</>}</p>
+      <div className="field"><label htmlFor="region-area">Area</label><select id="region-area" value={selectedArea} onChange={event=>{const value=event.target.value;if(!value){if(region)choose(null);return;}const area=directoryAreas.find(item=>item.id===value)!;choose({label:area.label,area:area.id});}}><option value="">No region</option>{directoryAreas.map(area=><option key={area.id} value={area.id}>{area.label}</option>)}</select></div>
       <form className="region-text" onSubmit={submitText}><label htmlFor="region-query">Town or postcode</label><div><input id="region-query" value={draft} onChange={event=>setDraft(event.target.value)} placeholder="Town or postcode" maxLength={80} autoComplete="off"/><button className="button primary" type="submit" aria-label="Use this area" disabled={!draft.trim()}>Use<ArrowRight size={16}/></button></div></form>
       <button type="button" className="location-current" disabled={locating} onClick={currentLocation}><Navigation size={19}/>{locating?'Finding your location…':'Use current location'}</button>
       {locationError && <p role="alert" className="form-error">{locationError}</p>}
@@ -62,7 +62,7 @@ export default function RegionMenu() {
           <ServicesMap picker services={mapServices} area={mapArea} bounds={region?.bounds} onSelect={id=>{const area=directoryAreas.find(item=>item.id===mapArea)!;choose({label:area.label,area:area.id});window.location.hash=`/directory/${encodeURIComponent(id)}`;}} onBoundsChange={setMapBounds}/>
           <button type="button" className="button primary" disabled={!mapBounds} onClick={()=>{if(mapBounds)choose({label:'Selected map area',bounds:mapBounds});}}>Use this map area<ArrowRight size={16}/></button></div>}
       </details>
-      {region && <button type="button" className="text-button region-clear" onClick={()=>choose(null)}>Clear region (search all areas)</button>}
+      {region && <button type="button" className="text-button region-clear" onClick={()=>choose(null)}>Clear region</button>}
     </section>}
   </div>;
 }
