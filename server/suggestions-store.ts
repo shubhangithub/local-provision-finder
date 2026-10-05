@@ -22,7 +22,7 @@ export class SuggestionsStore {
  get(id:string):SuggestionEntry {const row=this.db.prepare('SELECT entry_json FROM suggestions WHERE id=?').get(id);if (!row) throw new SuggestionError('Suggestion not found.',404);return JSON.parse(String(row.entry_json));}
  private write(entry:SuggestionEntry) {this.db.prepare('INSERT INTO suggestions VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET status=excluded.status,updated_at=excluded.updated_at,entry_json=excluded.entry_json').run(entry.id,entry.status,entry.createdAt,entry.updatedAt,JSON.stringify(entry));return entry;}
  submit(input:unknown) {const now=new Date().toISOString();return this.write({id:randomUUID(),status:'submitted',createdAt:now,updatedAt:now,fields:validateSuggestion(input),draft:null,reviewNote:null,serviceId:null});}
- enqueueDiscovery(fields:SuggestionFields,discovery:{query:string;area:string;sourceUrls:string[]},website:{text:string;contacts:{phone?:string;email?:string}[];url:string;fetchedAt:string}) {
+ enqueueDiscovery(fields:SuggestionFields,discovery:{query:string;area:string;sourceUrls:string[];scope?:string;coverageQuote?:string;providerType?:string;providerQuote?:string},website:{text:string;contacts:{phone?:string;email?:string}[];url:string;fetchedAt:string}) {
   const key=(value:string)=>{try{const url=new URL(value);url.hash='';url.search='';return url.href.replace(/\/$/,'').toLowerCase();}catch{return value.toLowerCase();}};
   const existing=this.list().find(entry=>key(entry.fields.website)===key(fields.website)&&entry.fields.name.toLowerCase()===fields.name.toLowerCase());
   if(existing)return ['submitted','draft'].includes(existing.status)?existing:null;

@@ -15,6 +15,16 @@ const dirs:string[]=[];afterEach(()=>{for(const path of dirs.splice(0))rmSync(pa
 describe('directory assistance',()=>{
  it('generates workspace guidance from current page evidence',async()=>{const fetcher=vi.fn(async()=>response({...blank,claims:[{text:'Add an owner and date to the current next steps.',evidenceId:'workspace',quote:'Next steps: Call provider'}]}));const result=await assist({task:'guidance',question:'What needs improving?',pageContext:'Current summary. Next steps: Call provider'},{records:[],config:{apiKey:'test'},fetcher});expect(result.mode).toBe('openai');expect(result.answer).toContain('owner and date');expect(fetcher).toHaveBeenCalled();expect(result.services).toEqual([]);expect(()=>validateAssistantRequest({task:'guidance',question:'help'})).toThrow();});
 
+ it('repairs a first search overview once when all generated quotes fail source validation',async()=>{
+  const fetcher=vi.fn().mockResolvedValueOnce(response({...blank,claims:[{text:'Open tonight.',evidenceId:record.id,quote:'Invented opening times.'}]})).mockResolvedValueOnce(response({...blank,claims:[{text:'Anxiety support offers free counselling.',evidenceId:record.id,quote:'Free anxiety counselling.'}]}));
+  const result=await assist({task:'search',question:'anxiety',search:{q:'anxiety',area:'Kingston'}},{records:[record],config:{apiKey:'test'},fetcher});
+  expect(fetcher).toHaveBeenCalledTimes(2);expect(result.summary).toContain('free counselling');expect(result.answer).not.toContain('Open tonight');expect(result.citations.map(item=>item.id)).toEqual([record.id]);
+ });
+ it('does not loop when repaired search quotes also fail validation',async()=>{
+  const fetcher=vi.fn(async()=>response({...blank,claims:[{text:'Open tonight.',evidenceId:record.id,quote:'Invented opening times.'}]}));
+  const result=await assist({task:'search',question:'anxiety',search:{q:'anxiety',area:'Kingston'}},{records:[record],config:{apiKey:'test'},fetcher});
+  expect(fetcher).toHaveBeenCalledTimes(2);expect(result.answer).not.toContain('Open tonight');expect(result.warnings.join(' ')).toContain('omitted');
+ });
  it('validates required fields and bounds input types',()=>{expect(()=>validateAssistantRequest({task:'publish'})).toThrow();expect(()=>validateAssistantRequest({task:'service',question:'cost?'})).toThrow();expect(()=>validateAssistantRequest({task:'search',question:'help',search:{lat:'NaN'}})).toThrow();expect(()=>validateAssistantRequest({task:'meeting',transcript:'x'.repeat(20001)})).toThrow();});
  it('locks the user geography when tool queries change',()=>{const params=assistantSearchParams({q:'old',bounds:'-1,50,0,52',area:'Kingston',unknown:'0'},'anxiety');expect(params.get('bounds')).toBe('-1,50,0,52');expect(params.get('area')).toBe('Kingston');expect(params.get('q')).toBe('anxiety');});
  it('uses real structured fields without a key and does not invoke the model',async()=>{const fetcher=vi.fn();const result=await assist({task:'service',serviceId:record.id,question:'What does it cost?'},{records:[record],config:{apiKey:''},fetcher});expect(result.mode).toBe('local');expect(result.answer).toContain('Cost: Free');expect(fetcher).not.toHaveBeenCalled();expect(result.citations[0].id).toBe(record.id);});
