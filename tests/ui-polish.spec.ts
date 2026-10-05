@@ -1,0 +1,11 @@
+import {test,expect} from './fixtures';
+test('hovering a listing highlights its marker and selecting a pin highlights the listing',async({page})=>{
+ test.skip(test.info().project.name==='mobile','Hover is desktop only');
+ const records=[{id:'one',name:'Counselling support',provider:'Local charity',postcode:'BS1 1AA',distanceMiles:null,snippet:'Support',tags:[],sites:[{lat:51.4545,lng:-2.5879,label:'Bristol'}]},{id:'two',name:'Peer support',provider:'Local group',postcode:'BS2 1AA',distanceMiles:null,snippet:'Support',tags:[],sites:[{lat:51.46,lng:-2.58,label:'Bristol'}]}];
+ await page.route('**/api/imports?*',route=>route.fulfill({json:{total:2,records,mapRecords:records,mappedCount:2,unmappedCount:0,page:1,pageSize:20,searchMode:'browse'}}));
+ await page.goto('/');await page.getByRole('button',{name:'Location Choose an area or use your location'}).click();await page.locator('#location-query').fill('Bristol');await page.getByRole('button',{name:'Search this area'}).click();
+ const first=page.locator('[data-service-id="one"]');await first.hover();await expect(page.locator('.service-map-pin[title="Counselling support"]')).toHaveClass(/is-highlighted/);await page.locator('.service-map-pin[title="Peer support"]').click();await expect(page.locator('[data-service-id="two"]')).toHaveClass(/is-highlighted/);
+});
+test('staff navigation displays queue counts and an active section',async({page})=>{
+ await page.route('**/api/feedback',route=>route.fulfill({json:{entries:[{status:'pending'},{status:'checking'},{status:'resolved'}]}}));await page.route('**/api/suggestions',route=>route.fulfill({json:{entries:[{status:'draft'},{status:'published'}]}}));await page.goto('/');await page.getByRole('button',{name:'Staff sign in',exact:true}).click();const nav=page.getByRole('navigation',{name:'Staff workspace'});await expect(nav.getByRole('link',{name:/Service reports/}).locator('.workspace-count')).toHaveText('2');await expect(nav.getByRole('link',{name:/New listings to approve/}).locator('.workspace-count')).toHaveText('1');await nav.getByRole('link',{name:/Add provision/}).click();await expect(nav.getByRole('link',{name:'Add provision',exact:true})).toHaveAttribute('aria-current','page');
+});

@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { areaCentre, type MapService, type MapBounds } from '../lib/directory';
-import type { Map as LeafletMap, LayerGroup } from 'leaflet';
+import type { Map as LeafletMap, LayerGroup, Marker } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 interface Props {
   services:MapService[];area?:string;origin?:{lat:number;lng:number};onSelect:(id:string)=>void;
-  onBoundsChange?:(bounds:MapBounds)=>void;bounds?:MapBounds | null;picker?:boolean;
+  activeId?:string|null;onHighlight?:(id:string)=>void;onBoundsChange?:(bounds:MapBounds)=>void;bounds?:MapBounds | null;picker?:boolean;
 }
-export default function ServicesMap({services,area,origin,onSelect,onBoundsChange,bounds,picker=false}:Props) {
+export default function ServicesMap({services,area,origin,onSelect,onBoundsChange,bounds,picker=false,activeId,onHighlight}:Props) {
   const container=useRef<HTMLDivElement>(null);const map=useRef<LeafletMap | null>(null);const markers=useRef<LayerGroup | null>(null);
-  const callbacks=useRef({onSelect,onBoundsChange});callbacks.current={onSelect,onBoundsChange};
+  const callbacks=useRef({onSelect,onBoundsChange,onHighlight});callbacks.current={onSelect,onBoundsChange,onHighlight};
+  const serviceMarkers=useRef<{marker:Marker;ids:string[]}[]>([]);const highlighted=useRef(activeId);highlighted.current=activeId;
   const initial=useRef({area,origin,bounds});
   const [loaded,setLoaded]=useState(false);const [error,setError]=useState(false);const [autoSearch,setAutoSearch]=useState(true);
   const automatic=useRef(true);automatic.current=autoSearch;
@@ -66,7 +67,7 @@ export default function ServicesMap({services,area,origin,onSelect,onBoundsChang
     let cancelled=false;
     void import('leaflet').then(L => {
       if (cancelled || !markers.current) return;
-      const layer=markers.current;layer.clearLayers();
+      const layer=markers.current;layer.clearLayers();serviceMarkers.current=[];
       const groups=new Map<string,{lat:number;lng:number;entries:MapService[];label:string}>();
       for (const service of services) for (const site of service.sites) {
         if (site.lat===null || site.lng===null) continue;
@@ -78,12 +79,16 @@ export default function ServicesMap({services,area,origin,onSelect,onBoundsChang
         const popup=document.createElement('div');popup.className='map-popup';const heading=document.createElement('strong');heading.textContent=group.label;popup.appendChild(heading);
         for (const service of group.entries) {const button=document.createElement('button');button.type='button';button.className='map-service-link';button.textContent=service.name;button.addEventListener('click',() => callbacks.current.onSelect(service.id));popup.appendChild(button);}
         const title=group.entries.length===1 ? group.entries[0].name : `${group.entries.length} services at ${group.label}`;
-        L.marker([group.lat,group.lng],{title,alt:title,icon:L.divIcon({className:'service-map-pin',html:`<span>${group.entries.length>1 ? group.entries.length : '•'}</span>`,iconSize:[32,40],iconAnchor:[16,40],popupAnchor:[0,-36]})}).addTo(layer).bindPopup(popup,{maxHeight:240});
+        const marker=L.marker([group.lat,group.lng],{title,alt:title,icon:L.divIcon({className:'service-map-pin',html:`<span>${group.entries.length>1 ? group.entries.length : '•'}</span>`,iconSize:[32,40],iconAnchor:[16,40],popupAnchor:[0,-36]})}).addTo(layer).bindPopup(popup,{maxHeight:240});
+        marker.on('click',()=>callbacks.current.onHighlight?.(group.entries[0].id));
+        const ids=group.entries.map(entry=>entry.id);serviceMarkers.current.push({marker,ids});
+        marker.getElement()?.classList.toggle('is-highlighted',ids.includes(highlighted.current??''));
       }
       if (origin) L.marker([origin.lat,origin.lng],{title:'Your current location',alt:'Your current location',icon:L.divIcon({className:'current-map-pin',html:'<span></span>',iconSize:[20,20],iconAnchor:[10,10]})}).addTo(layer).bindPopup('Your current location');
     });
     return () => {cancelled=true;};
   },[loaded,services,origin?.lat,origin?.lng]);
+  useEffect(()=>{for(const {marker,ids} of serviceMarkers.current){const active=ids.includes(activeId??'');marker.getElement()?.classList.toggle('is-highlighted',active);marker.setZIndexOffset(active?1000:0);}},[activeId]);
   return <div className={`services-map-panel ${picker ? 'picker-map-panel' : ''}`}>
     {!picker && onBoundsChange && <div className="map-search-controls"><label><input type="checkbox" checked={autoSearch} onChange={e => {setAutoSearch(e.target.checked);if (e.target.checked && pendingBounds) callbacks.current.onBoundsChange?.(pendingBounds);}}/>Search as I move the map</label>{!autoSearch && <button className="button secondary small" disabled={!pendingBounds} onClick={() => {if (pendingBounds) callbacks.current.onBoundsChange?.(pendingBounds);}}>Search this map area</button>}</div>}
     <div ref={container} className="services-map" role="region" aria-label={picker ? 'Choose a search area on the map' : 'Map of service locations'}/>
