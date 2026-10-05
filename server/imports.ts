@@ -1,5 +1,5 @@
 import {readAvailability,availabilityOverlay} from './availability.ts';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createRequire } from 'node:module';
 import type { IncomingMessage, ServerResponse } from 'node:http';
@@ -16,6 +16,9 @@ export function importsApi(): Plugin {
   const directory = resolve(process.cwd(), 'data');
   const require = createRequire(import.meta.url);
   // Term suggestions come from a vocabulary built once and refreshed shortly after catalogue or tag changes.
+  // Parsing and overlaying every catalogue record is the dominant cost per request, so keep the result until a data file changes.
+  let cached: { signature: string; records: DirectoryRecord[] } | null = null;
+  const signature = () => ['services','feedback','tags','availability'].flatMap(name => ['.sqlite','.sqlite-wal'].map(ext => { try { const stat = statSync(resolve(directory, name + ext)); return `${stat.mtimeMs}:${stat.size}`; } catch { return '-'; } })).join('|');
   let vocabulary: { built: number; value: Vocabulary } | null = null;
   const handler = async (request: IncomingMessage, response: ServerResponse, next: () => void) => {
     const url = new URL(request.url ?? '/', 'http://localhost');
@@ -38,10 +41,15 @@ export function importsApi(): Plugin {
         const serviceTags = tags.get(record.id) ?? [];
         return serviceTags.length ? {...updated,tags:serviceTags,searchText:`Tags: ${serviceTags.join(', ')}\n${updated.searchText ?? ''}`} : {...updated,tags:[]};
       };
+      const liveRecords = (): (DirectoryRecord & Record<string, any>)[] => {
+        const current = signature();
+        if (cached?.signature !== current) cached = { signature: current, records: db.prepare("SELECT record_json FROM catalogue_services WHERE availability != 'Removed at source'").all().map(row => corrected(JSON.parse(String(row.record_json))) as DirectoryRecord) };
+        return cached.records;
+      };
       try {
         if (url.pathname === '/api/suggest') {
           if (!vocabulary || Date.now() - vocabulary.built > 30_000) {
-            const rows = db.prepare("SELECT record_json FROM catalogue_services WHERE availability != 'Removed at source'").all().map(row => corrected(JSON.parse(String(row.record_json))) as DirectoryRecord);
+            const rows = liveRecords();
             const curated = (require('../src/data/workbook.json')['Search Terms'] as { Search_Term?: string }[]).map(row => row.Search_Term ?? '');
             vocabulary = { built: Date.now(), value: buildVocabulary(rows, curated) };
           }
@@ -57,13 +65,13 @@ export function importsApi(): Plugin {
         }
         if (url.pathname !== '/api/imports') return send(404, { error: 'Endpoint not found.' });
         if (url.searchParams.has('area') || url.searchParams.has('lat') || url.searchParams.get('mode') === 'semantic') {
-          const records = db.prepare("SELECT record_json FROM catalogue_services WHERE availability != 'Removed at source'").all().map(row => corrected(JSON.parse(String(row.record_json))) as DirectoryRecord);
+          const records = liveRecords();
           return send(200, await searchDirectory(records,url.searchParams));
         }
         const q = (url.searchParams.get('q') ?? '').slice(0, 200).trim();
         const page = Math.max(1, Math.min(10000, Number(url.searchParams.get('page')) || 1));
         const pageSize = 20;
-        const matching = db.prepare("SELECT record_json FROM catalogue_services WHERE availability != 'Removed at source'").all().map(row=>corrected(JSON.parse(String(row.record_json)))).filter(record=>!q || record.searchText.toLowerCase().includes(q.toLowerCase())).sort((a,b)=>a.name.localeCompare(b.name));
+        const matching = liveRecords().filter(record=>!q || record.searchText.toLowerCase().includes(q.toLowerCase())).sort((a,b)=>a.name.localeCompare(b.name));
         const total=matching.length;
         const records=matching.slice((page-1)*pageSize,page*pageSize).map(record=>({id:record.id,name:record.name,provider:record.provider,postcode:record.postcode,categories:record.categories,needs:record.needs,source:record.source,vetting:record.vetting,lastVerified:record.lastVerified,sourceUpdatedAt:record.sourceUpdatedAt,description:record.description.slice(0,180),publicPhone:record.publicPhone,publicEmail:record.publicEmail,tags:record.tags}));
         const reportPath = resolve(directory, 'ingest-report.json');
