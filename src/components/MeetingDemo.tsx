@@ -1,42 +1,91 @@
 import { useEffect, useRef, useState } from 'react';
 import '../styles/meeting.css';
-import { askAssistant, type AssistantResult } from '../lib/assistant';
-import { directoryAreas } from '../lib/directory';
+import { ArrowLeft, FileText, Mic, Square, Clock3, MessageSquare } from 'lucide-react';
+import MeetingAssist from './MeetingAssist';
+import { useLiveMeeting } from '../lib/live-meeting';
 import { startPcmCapture, type PcmCapture } from '../lib/mic';
-import { transcriptText, useLiveMeeting } from '../lib/live-meeting';
-import Waveform from './Waveform';
-import LiveServices, { useMeetingShortlist, visibleServices, type MeetingChoice } from './LiveServices';
-import NextStepsReport from './NextStepsReport';
+import LiveServices, { useMeetingShortlist } from './LiveServices';
+import { createCustomerDocument, type CustomerDocument, type MeetingTurn, type MeetingProvision } from '../lib/meeting';
 
+const SCRIPT = 'Advisor: Thanks for coming in today. What would help you most over the next few weeks? Customer: I want to get back into work, but I feel anxious about interviews. I also need childcare after school and help with the bus fare. Advisor: We can look for a local confidence group, interview support and childcare options together. Would you prefer something nearby or online? Customer: Nearby would be good, especially somewhere quiet. Tuesday mornings are easiest for me. Advisor: Let us check the opening times, costs and how to contact each service before we choose the next step.';
+const TURNS = SCRIPT.split(/(?=Advisor:|Customer:)/).map(turn => { const [speaker, ...text] = turn.trim().split(':'); return { speaker, words: text.join(':').trim().split(' ') }; });
+const WORDS = TURNS.flatMap(turn => turn.words);
 const DURATION = 600;
+const EXTENSION = 300;
+const WARNING = 120;
+interface Recognition {
+  continuous: boolean; interimResults: boolean; lang: string;
+  onresult: ((event: { resultIndex: number; results: { length: number; [index:number]: { isFinal: boolean; [index:number]: { transcript: string } } } }) => void) | null;
+  onerror: ((event: { error: string }) => void) | null;
+  onend: (() => void) | null;
+  start(): void; stop(): void; abort(): void;
+}
 
 
-export default function MeetingDemo({ enabled, onEnd, area }: { enabled: boolean; onEnd?: () => void; area?: string }) {
+export default function MeetingDemo({ enabled, autoStart=true, onNotify, onBack, onProduce, onNewMeeting }: { enabled: boolean; autoStart?:boolean; onNotify: (message: string) => void; onBack: () => void; onProduce: (document: CustomerDocument) => void; onNewMeeting: () => void }) {
   const [phase, setPhase] = useState<'idle' | 'requesting' | 'recording' | 'finishing' | 'finished'>('idle');
+  const live=useLiveMeeting();
+  const liveCapture=useRef<PcmCapture|null>(null);
+  const liveSpeakers=useRef(new Map<string,MeetingTurn['speaker']>());
+  const shortlist=useMeetingShortlist();
+  const [dismissed,setDismissed]=useState<Set<string>>(new Set());
   const [error, setError] = useState('');
   const [remaining, setRemaining] = useState(DURATION);
-  const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
-  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
-  const [endedAt, setEndedAt] = useState(0);
-  const live = useLiveMeeting();
-  const shortlist = useMeetingShortlist();
-  const capture = useRef<PcmCapture | null>(null);
+  const deadline = useRef(0);
+  const [wordCount, setWordCount] = useState(0);
   const [download, setDownload] = useState('');
-  const [meetingArea, setMeetingArea] = useState('Bristol');
-  const [summary, setSummary] = useState<AssistantResult | null>(null);
-  const [summarising, setSummarising] = useState(false);
-  const [summaryError, setSummaryError] = useState('');
-  const summaryRequest = useRef<AbortController | null>(null);
+  const [sample, setSample] = useState(false);
+  const [turns, setTurns] = useState<MeetingTurn[]>([]);
+  const [interim, setInterim] = useState('');
+  const [speaker, setSpeaker] = useState<MeetingTurn['speaker']>('Customer');
+  const speakerRef = useRef(speaker); speakerRef.current = speaker;
+  const [note, setNote] = useState('');
+  const [transcriptionError, setTranscriptionError] = useState('');
+  const [selectedProvisions, setSelectedProvisions] = useState<MeetingProvision[]>([]);
+  const recognition = useRef<Recognition | null>(null);
+  const sampleRef = useRef(sample); sampleRef.current = sample;
+  const transcriptRef = useRef<HTMLDivElement>(null);
+  const displayTurns: MeetingTurn[] = sample ? TURNS.flatMap((turn,index) => {
+    const before = TURNS.slice(0,index).reduce((total,item)=>total+item.words.length,0);
+    const shown = Math.min(turn.words.length,wordCount-before);
+    return shown > 0 ? [{speaker:turn.speaker as MeetingTurn['speaker'],text:turn.words.slice(0,shown).join(' ')}] : [];
+  }) : [...turns,...live.lines.map(line=>{if(!liveSpeakers.current.has(line.id))liveSpeakers.current.set(line.id,speakerRef.current);return {speaker:liveSpeakers.current.get(line.id)!,text:line.text};})];
+  const customerText = displayTurns.filter(turn=>turn.speaker==='Customer').map(turn=>turn.text).join(' ') + (speaker === 'Customer' ? ` ${interim}` : '');
+  const autoStartRef=useRef(autoStart);autoStartRef.current=autoStart;
+  useEffect(() => { if (transcriptRef.current) transcriptRef.current.scrollTop = transcriptRef.current.scrollHeight; }, [wordCount, turns, interim]);
+  const audioContext = useRef<AudioContext | null>(null);
+  function cue(message: string, stopping = false) {
+    const context = audioContext.current;
+    if (context && context.state === 'running') {
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      oscillator.connect(gain); gain.connect(context.destination);
+      oscillator.frequency.setValueAtTime(stopping ? 660 : 440, context.currentTime);
+      oscillator.frequency.setValueAtTime(stopping ? 440 : 660, context.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.12, context.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.25);
+      oscillator.start(); oscillator.stop(context.currentTime + 0.26);
+    }
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const speech = new SpeechSynthesisUtterance(message);
+      speech.lang = 'en-GB';
+      window.speechSynthesis.speak(speech);
+    }
+  }
   const stream = useRef<MediaStream | null>(null);
   const recorder = useRef<MediaRecorder | null>(null);
   const generation = useRef(0);
   const resultGeneration = useRef(0);
   const downloadRef = useRef('');
-  const finishRef = useRef<() => void>(() => {});
-  const onEndRef = useRef(onEnd);
-  onEndRef.current = onEnd;
+  const finishRef = useRef<(automatic?: boolean) => void>(() => {});
+  const notifyRef = useRef(onNotify);
+  notifyRef.current = onNotify;
 
   const release = (keepRecording: boolean) => {
+    liveCapture.current?.stop();liveCapture.current=null;
+    if(!keepRecording)live.close();
+    const engine = recognition.current;recognition.current = null;engine?.abort();
     generation.current += 1;
     if (!keepRecording) resultGeneration.current += 1;
     const recording = recorder.current;
@@ -45,34 +94,28 @@ export default function MeetingDemo({ enabled, onEnd, area }: { enabled: boolean
       if (!keepRecording) recording.onstop = null;
       if (recording.state !== 'inactive') recording.stop();
     }
-    capture.current?.stop();
-    capture.current = null;
-    setAnalyser(null);
     stream.current?.getTracks().forEach(track => track.stop());
     stream.current = null;
   };
-  const finish = async () => {
+  const finish = async (automatic = false) => {
+    if (!recorder.current) return;
     release(true);
-    setEndedAt(Date.now());
+    cue('Recording stopped', true);
+    if (!sample && interim.trim()) setTurns(previous=>[...previous,{speaker,text:interim.trim()}]);
+    setInterim('');
     setPhase('finishing');
-    await live.finish(); // flush the last utterance and let topic tracking settle
+    await live.finish();
     setPhase('finished');
-    onEndRef.current?.();
+    notifyRef.current?.(automatic ? 'Recording stopped. Meeting time ended.' : 'Recording stopped.');
+
   };
   finishRef.current = finish;
 
   useEffect(() => {
-    if (!enabled) {
+    if (enabled) { if(autoStartRef.current)void start(); } else {
       release(false);
-      summaryRequest.current?.abort();
-      setSummary(null);
-      setSummaryError('');
-      setSummarising(false);
-      live.close();
-      live.reset();
-      shortlist.clear();
-      setDismissed(new Set());
       setPhase('idle');
+      setWordCount(0);
       if (downloadRef.current) URL.revokeObjectURL(downloadRef.current);
       downloadRef.current = '';
       setDownload('');
@@ -80,27 +123,25 @@ export default function MeetingDemo({ enabled, onEnd, area }: { enabled: boolean
   }, [enabled]);
   useEffect(() => () => {
     release(false);
-    live.close();
-    summaryRequest.current?.abort();
+    void audioContext.current?.close();
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
     if (downloadRef.current) URL.revokeObjectURL(downloadRef.current);
   }, []);
   useEffect(() => {
     if (phase !== 'recording') return;
-    const started = Date.now();
+
     const clock = window.setInterval(() => {
-      const seconds = Math.max(0, DURATION - Math.floor((Date.now() - started) / 1000));
+      const seconds = Math.max(0, Math.ceil((deadline.current - Date.now()) / 1000));
       setRemaining(seconds);
-      if (!seconds) finishRef.current();
+      if (!seconds) finishRef.current(true);
     }, 250);
-    return () => window.clearInterval(clock);
+    const words = window.setInterval(() => { if (sampleRef.current) setWordCount(count => Math.min(count + 1, WORDS.length)); }, 350);
+    return () => { window.clearInterval(clock); window.clearInterval(words); };
   }, [phase]);
 
   async function start() {
-    summaryRequest.current?.abort();
-    setSummary(null);
-    setSummaryError('');
-    setSummarising(false);
-    setError('');
+    onNewMeeting();live.close();live.reset();liveSpeakers.current.clear();shortlist.clear();setDismissed(new Set());
+    setError('');setSample(false);sampleRef.current=false;setTurns([]);setInterim('');setSelectedProvisions([]);setNote('');setTranscriptionError('');
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
       setError('Recording is unavailable in this browser. Try a current browser on localhost or HTTPS.');
       return;
@@ -108,9 +149,10 @@ export default function MeetingDemo({ enabled, onEnd, area }: { enabled: boolean
     if (downloadRef.current) URL.revokeObjectURL(downloadRef.current);
     downloadRef.current = '';
     setDownload('');
-    live.reset();
-    shortlist.clear();
-    setDismissed(new Set());
+    try {
+      audioContext.current ??= new AudioContext();
+      void audioContext.current.resume().catch(() => {});
+    } catch { /* Recording remains available when audio output is unsupported. */ }
     setPhase('requesting');
     const request = ++generation.current;
     let timeout: number | undefined;
@@ -123,12 +165,6 @@ export default function MeetingDemo({ enabled, onEnd, area }: { enabled: boolean
       ]);
       if (request !== generation.current) return;
       stream.current = audio;
-      await live.open(area || meetingArea).catch(error => { throw Object.assign(error instanceof Error ? error : new Error('Live transcription could not start.'), { live: true }); }); // must be ready before audio is sent
-      if (request !== generation.current) { live.close(); return; }
-      const pcm = await startPcmCapture(audio, live.sendAudio);
-      if (request !== generation.current) { pcm.stop(); live.close(); return; }
-      capture.current = pcm;
-      setAnalyser(pcm.analyser);
       const recording = new MediaRecorder(audio);
       const chunks: Blob[] = [];
       const resultToken = ++resultGeneration.current;
@@ -142,79 +178,94 @@ export default function MeetingDemo({ enabled, onEnd, area }: { enabled: boolean
       recording.onerror = () => {
         release(false);
         setPhase('finished');
+        cue('Recording stopped', true);
+        notifyRef.current?.('Recording stopped unexpectedly.');
         setError('Recording stopped unexpectedly. You can start a new meeting.');
       };
       recorder.current = recording;
       recording.start(1000);
+      deadline.current = Date.now() + DURATION * 1000;
       setRemaining(DURATION);
+      setWordCount(0);
       setPhase('recording');
+      cue('Start recording');
+      notifyRef.current?.('Recording started.');
+      void live.open('Bristol').then(async()=>{
+        if(request!==generation.current){live.close();return;}
+        const pcm=await startPcmCapture(audio,live.sendAudio);
+        if(request!==generation.current){pcm.stop();live.close();return;}
+        liveCapture.current=pcm;
+      }).catch(()=>{if(request===generation.current){live.close();startTranscription();}});
     } catch (cause) {
       if (request !== generation.current) return;
       release(false);
-      live.close();
       setPhase('idle');
       const name = cause instanceof Error ? cause.name : '';
-      setError(name === 'NotAllowedError' ? 'Microphone permission was not granted. Allow access in your browser to start a meeting.' : (cause as { live?: boolean }).live ? (cause as Error).message : cause instanceof Error && cause.message === 'timeout' ? 'Microphone access took too long. Please try again.' : 'Could not start the microphone. Check that it is connected and available.');
+      setError(name === 'NotAllowedError' ? 'Microphone permission was not granted. Allow access in your browser to start a meeting.' : cause instanceof Error && cause.message === 'timeout' ? 'Microphone access took too long. Please try again.' : 'Could not start the microphone. Check that it is connected and available.');
     } finally {
       window.clearTimeout(timeout);
     }
   }
 
-  async function summarise() {
-    summaryRequest.current?.abort();
-    const controller = new AbortController();
-    summaryRequest.current = controller;
-    setSummarising(true);
-    setSummaryError('');
-    try {
-      const result = await askAssistant({ task: 'meeting', transcript: transcriptText(live.lines), search: { area: area || meetingArea } }, controller.signal);
-      if (typeof result.summary !== 'string' || !Array.isArray(result.nextSteps) || !Array.isArray(result.services)) throw new Error('The meeting summary could not be read. Please try again.');
-      if (!controller.signal.aborted) setSummary(result);
-    } catch (cause) {
-      if (!controller.signal.aborted) setSummaryError(cause instanceof Error ? cause.message : 'Could not summarise this meeting. Please try again.');
-    } finally {
-      if (!controller.signal.aborted) setSummarising(false);
-    }
+  function startTranscription() {
+    const browser = window as unknown as { SpeechRecognition?: new () => Recognition; webkitSpeechRecognition?: new () => Recognition };
+    const Constructor = browser.SpeechRecognition ?? browser.webkitSpeechRecognition;
+    if (!Constructor) { setTranscriptionError('Live transcription is unavailable in this browser. Add conversation notes below.'); return; }
+    const engine = new Constructor(); recognition.current = engine;
+    engine.continuous = true; engine.interimResults = true; engine.lang = 'en-GB';
+    engine.onresult = event => {
+      if (recognition.current !== engine || sampleRef.current) return;
+      let pending = '';
+      const completed: MeetingTurn[] = [];
+      for (let index=event.resultIndex;index<event.results.length;index++) {
+        const result = event.results[index];const text=result[0].transcript.trim();
+        if (!text) continue;
+        if (result.isFinal) completed.push({speaker:speakerRef.current,text}); else pending += text+' ';
+      }
+      if (completed.length) setTurns(previous=>[...previous,...completed]);
+      setInterim(pending.trim());
+    };
+    engine.onerror = event => {
+      if (recognition.current !== engine || sampleRef.current) return;
+      if (event.error !== 'no-speech') { recognition.current=null;engine.abort();setTranscriptionError('Live transcription paused. Add conversation notes below.');setInterim(''); }
+    };
+    engine.onend = () => {
+      if (recognition.current===engine && recorder.current?.state==='recording' && !sampleRef.current) {
+        try {engine.start();} catch {recognition.current=null;setTranscriptionError('Live transcription paused. Add conversation notes below.');}
+      }
+    };
+    try {engine.start();} catch {recognition.current=null;setTranscriptionError('Live transcription is unavailable. Add conversation notes below.');}
+  }
+  function trySample() {
+    liveCapture.current?.stop();liveCapture.current=null;live.close();live.reset();
+    const engine=recognition.current;recognition.current=null;engine?.abort();setInterim('');setWordCount(0);setSample(true);sampleRef.current=true;setTranscriptionError('');
+  }
+  function addNote() {
+    if (!note.trim()) return;
+    if (sample) {setTurns(displayTurns);setSample(false);sampleRef.current=false;}
+    setTurns(previous=>[...previous,{speaker,text:note.trim()}]);setNote('');
+  }
+
+  function extend() {
+    if (!recorder.current || deadline.current <= Date.now()) return;
+    deadline.current += EXTENSION * 1000;
+    setRemaining(Math.max(0, Math.ceil((deadline.current - Date.now()) / 1000)));
+    notifyRef.current?.('Meeting extended by 5 minutes.');
   }
 
   if (!enabled) return null;
-  const transcript = transcriptText(live.lines);
-  const choices: MeetingChoice[] = shortlist.picked;
-  const fallback: MeetingChoice[] = live.concepts.flatMap(concept => visibleServices(concept, dismissed).slice(0, 2).map(service => ({ service, concept: concept.label })));
-  const topics = live.concepts.map(concept => concept.label);
-  const dismiss = (id: string) => setDismissed(previous => new Set(previous).add(id));
-  const active = phase === 'recording' || phase === 'finishing' || phase === 'finished';
-  return <section className="meeting-demo" aria-label="Staff meeting">
-    {(phase === 'idle' || phase === 'finished') && <div className="meeting-setup">
-      {phase === 'idle' && !area && <div className="meeting-location"><label htmlFor="meeting-area">Find support in</label><select id="meeting-area" value={meetingArea} onChange={event => setMeetingArea(event.target.value)}>{directoryAreas.map(location => <option key={location.id} value={location.id}>{location.label}</option>)}</select></div>}
-      {phase === 'idle' && <p className="meeting-consent">Starting a meeting streams the microphone audio to Azure OpenAI to write live notes and find matching services. This app does not store the audio. The audio download stays in this browser. Tell everyone in the room before you start.</p>}
-      <button className="button primary meeting-start" onClick={start}>{phase === 'finished' ? 'Start another meeting' : 'Start meeting'}</button>
-    </div>}
-    {phase === 'requesting' && <div className="meeting-permission"><p role="status">Allow microphone access to start your meeting.</p><button className="button secondary" onClick={() => { release(false); live.close(); setPhase('idle'); }}>Cancel</button></div>}
+  return <section className="meeting-workspace" aria-label="Staff meeting">
+    <div className="meeting-page-top"><button className="text-button" onClick={onBack}><ArrowLeft size={16}/>Back to workspace</button><span className="meeting-workspace-tag">CASEWORKER WORKSPACE</span></div>
+    <div className="meeting-page-heading"><div><p className="meeting-eyebrow">Customer conversation</p><h1>{phase==='finished' ? 'Meeting complete' : 'Customer meeting'}</h1><p>{phase==='finished' ? 'Review the conversation and prepare the customer’s next steps.' : 'Listen, explore support and build a plan together.'}</p></div><span className={`meeting-status ${phase === 'recording' ? 'is-recording' : ''}`}><span className="meeting-record-dot"/>{phase === 'recording' ? 'Recording' : phase==='requesting' ? 'Connecting microphone' : 'Microphone off'}</span></div>
     {error && <p className="meeting-error" role="alert">{error}</p>}
-    {live.error && active && <p className="meeting-error" role="alert">{live.error}</p>}
-    {active && <div className="meeting-session">
-      <div className="meeting-heading"><h2>{phase === 'recording' ? 'Meeting in progress' : phase === 'finishing' ? 'Finishing notes' : 'Meeting ended'}</h2><span className={`meeting-status ${phase === 'recording' ? 'is-recording' : ''}`}>{phase === 'recording' ? 'Recording' : 'Microphone off'}</span></div>
-      {phase === 'recording' && <div className="meeting-controls"><p>Time remaining <strong aria-label="Time remaining">{Math.floor(remaining / 60)}:{String(remaining % 60).padStart(2, '0')}</strong></p><Waveform analyser={analyser} /><button className="button meeting-stop" onClick={finish}>Stop meeting</button></div>}
-      {phase === 'finishing' && <p role="status">Finishing the transcript and checking the last suggestions…</p>}
-      <p className="meeting-note">Audio is sent to Azure OpenAI to create the transcript, which is machine-generated and may contain mistakes. Check it before relying on it.</p>
-      <div className="meeting-workspace">
-        <div><h3>Transcript</h3><div className="meeting-transcript" role="region" aria-label="Transcript" aria-live="polite" tabIndex={0}>{transcriptText(live.lines, true) || 'Start talking. The transcript appears here.'}</div></div>
-        <div><h3>Suggested services</h3><LiveServices concepts={live.concepts} dismissed={dismissed} onDismiss={dismiss} shortlist={shortlist} /></div>
-      </div>
-      {phase === 'finished' && <NextStepsReport choices={choices} fallback={fallback} topics={topics} endedAt={endedAt} />}
-      {phase === 'finished' && transcript && <div className="meeting-summary-controls"><button className="button secondary" disabled={summarising} onClick={summarise}>{summarising ? 'Summarising meeting…' : 'Summarise meeting'}</button><p className="meeting-note">Create a draft from the transcript and relevant directory entries. Review it before using it.</p></div>}
-      {summarising && <p role="status">Preparing a meeting summary and possible next steps.</p>}
-      {summaryError && <p className="meeting-error" role="alert">{summaryError}</p>}
-      {summary && <section className="meeting-summary" aria-label="Meeting summary"><h3>Draft meeting summary</h3><p className="meeting-summary-mode">{summary.mode === 'openai' ? 'AI-assisted draft' : 'Local directory draft'}</p><p>{summary.summary}</p>
-        {!!summary.needs?.length && <><h4>Support discussed</h4><ul className="meeting-needs">{summary.needs.map((need, index) => <li key={`${need}-${index}`}>{need.replace(/-/g, ' ')}</li>)}</ul></>}
-        {!!summary.nextSteps.length && <><h4>Possible next steps</h4><ol>{summary.nextSteps.map((step, index) => <li key={index}>{step}</li>)}</ol></>}
-        {!!summary.services.length && <><h4>Services to explore</h4><ul>{summary.services.map(service => <li key={service.id}><a href={`/#/directory/${encodeURIComponent(service.id)}`}>{service.name}</a>{service.provider ? ` · ${service.provider}` : ''}</li>)}</ul></>}
-        {!!summary.citations?.length && <details><summary>Directory evidence</summary>{summary.citations.map((citation, index) => <blockquote key={`${citation.id}-${index}`}><a href={`/#/directory/${encodeURIComponent(citation.id)}`}>{citation.name}</a><p>{citation.excerpt}</p></blockquote>)}</details>}
-        {!!summary.warnings?.length && <div className="meeting-summary-warnings">{summary.warnings.map((warning, index) => <p key={index}>{warning}</p>)}</div>}
-      </section>}
-      {!!live.debug.length && <details className="meeting-dev"><summary>Developer view: API traffic ({live.debug.length})</summary><div className="meeting-dev-log">{live.debug.filter(entry => !entry.eventType.endsWith('.delta')).slice(-120).reverse().map(entry => <div key={entry.key}>{new Date(entry.ts).toLocaleTimeString('en-GB')} {entry.dir === 'out' ? 'sent' : 'received'} {entry.source} {entry.eventType}</div>)}</div></details>}
-      {download && <a className="meeting-download" href={download} download="jobcentre-meeting.webm">Download meeting audio</a>}
-    </div>}
+    {phase==='requesting' && <div className="meeting-permission"><p role="status">Allow microphone access to start your meeting.</p><button className="button secondary" onClick={()=>{release(false);setPhase('idle');}}>Cancel</button></div>}
+    <div className="meeting-actionbar"><div className="meeting-clock"><Clock3 size={19}/><span>Time remaining</span><strong aria-label="Time remaining">{Math.floor(remaining/60)}:{String(remaining%60).padStart(2,'0')}</strong></div><div className="meeting-actions">{phase==='recording' ? <><button className="text-button" onClick={extend}>Add 5 minutes</button><button className="button meeting-stop" onClick={()=>finish()}><Square size={15}/>Stop meeting</button></> : phase==='finished' ? <button className="button primary" onClick={()=>onProduce(createCustomerDocument(displayTurns,[...selectedProvisions,...shortlist.picked.filter(choice=>!selectedProvisions.some(item=>item.id===choice.service.id)).map(choice=>({...choice.service,reason:choice.concept}))]))}><FileText size={18}/>Produce customer summary</button> : phase==='finishing' ? <span role="status">Finishing the transcript…</span> : phase==='idle' ? <button className="button primary" onClick={start}><Mic size={17}/>Start recording</button> : null}</div></div>
+    {phase==='recording' && remaining<=WARNING && remaining>0 && <div className="meeting-time-alert"><p role="alert"><strong>Meeting time is nearly up.</strong> Recording stops when the timer reaches zero.</p><button className="button secondary" onClick={extend}>Extend by 5 minutes</button></div>}
+    <div className="meeting-grid"><div className="meeting-conversation"><div className="conversation-heading"><div><MessageSquare size={19}/><h2>Conversation</h2></div>{phase==='recording' && <button className="text-button" disabled={sample} onClick={trySample}>{sample ? 'Sample conversation' : 'Try sample conversation'}</button>}</div>
+      <div ref={transcriptRef} className="meeting-transcript" role="region" aria-label="Transcript" tabIndex={0}>{displayTurns.length ? displayTurns.map((turn,index)=><div className={`meeting-turn ${turn.speaker.toLowerCase()}`} key={index}><span className="meeting-speaker-avatar">{turn.speaker==='Advisor' ? 'A' : 'C'}</span><div><strong>{turn.speaker}</strong><p>{turn.text}</p></div></div>) : <div className="conversation-empty"><Mic size={30}/><h3>{phase==='recording' ? 'Listening to the conversation' : 'Your conversation appears here'}</h3><p>Customer needs and useful provision will appear alongside your notes.</p></div>}{interim && <div className={`meeting-turn ${speaker.toLowerCase()} interim`}><span className="meeting-speaker-avatar">{speaker[0]}</span><div><strong>{speaker}</strong><p>{interim}</p></div></div>}</div>
+      {phase==='recording' && <form className="meeting-note-form" onSubmit={event=>{event.preventDefault();addNote();}}><div className="meeting-note-top"><label htmlFor="meeting-note">Add conversation note</label><div className="speaker-picker" role="group" aria-label="Current speaker">{(['Customer','Advisor'] as const).map(value=><button key={value} type="button" aria-pressed={speaker===value} onClick={()=>setSpeaker(value)}>{value}</button>)}</div></div>{transcriptionError && <p className="transcription-status" role="status">{transcriptionError}</p>}<div className="meeting-note-input"><textarea id="meeting-note" rows={2} value={note} onChange={event=>setNote(event.target.value)} placeholder="Capture a need, preference or agreed action…" maxLength={4000}/><button className="button secondary" disabled={!note.trim()} type="submit">Add note</button></div></form>}
+      {phase==='finished' && <div className="meeting-finished"><div><CheckMark/><strong>Recording stopped</strong></div>{download && <a className="meeting-download" href={download} download="customer-meeting.webm">Download meeting audio</a>}<button className="text-button" onClick={start}>Start another meeting</button></div>}
+    </div>{!sample&&live.concepts.length>0 ? <aside className="meeting-assist"><h2>Suggested support</h2><LiveServices concepts={live.concepts} dismissed={dismissed} onDismiss={id=>setDismissed(previous=>new Set([...previous,id]))} shortlist={shortlist}/></aside> : <MeetingAssist customerText={customerText} selected={selectedProvisions} onToggle={provision=>setSelectedProvisions(previous=>previous.some(item=>item.id===provision.id) ? previous.filter(item=>item.id!==provision.id) : [...previous,provision])}/>}</div>
   </section>;
 }
+function CheckMark(){return <span aria-hidden="true" className="meeting-checkmark">✓</span>;}

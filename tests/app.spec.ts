@@ -1,4 +1,5 @@
-import { expect, test } from './fixtures';
+import {completeStaffSignIn} from './helpers/staff-sign-in';
+import { expect, test } from '@playwright/test';
 
 test('search, radius boundary, shortlist and persisted detail', async ({ page }) => {
   await page.goto('/#/demo');
@@ -23,11 +24,15 @@ test('search, radius boundary, shortlist and persisted detail', async ({ page })
 
 test('staff mode preserves results and requires checked evidence before publishing', async ({ page }) => {
   await page.goto('/?q=anxiety&postcode=AB4&radius=3&remote=1');
-  const publicTitles = await page.locator('.service-card h3').allTextContents();
-  await page.getByRole('button', { name: 'Staff sign in', exact: true }).click();
-  expect(await page.locator('.service-card h3').allTextContents()).toEqual(publicTitles);
+  const publicTitles = await page.locator('.service-card :is(h2,h3)').allTextContents();
+  await page.getByRole('button', { name: 'Staff sign in', exact: true }).click();await completeStaffSignIn(page);
+  expect(await page.locator('.service-card :is(h2,h3)').allTextContents()).toEqual(publicTitles);
   await page.evaluate(() => {location.hash='/review';});
   const venueCard = page.locator('.review-card').filter({ hasText: 'Community Confidence Circle' });
+  await expect(venueCard.getByRole('complementary', { name: 'AI-assisted review guidance' })).toContainText('Generate AI review');
+  const cards = page.locator('.review-list .review-card');
+  await expect(cards.first()).toBeVisible();
+  expect(await cards.locator('.review-advisor').count()).toBe(await cards.count());
   await venueCard.getByRole('button', { name: 'Review change' }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog.getByRole('button', { name: 'Publish checked change' })).toBeDisabled();
