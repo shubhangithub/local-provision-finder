@@ -479,3 +479,24 @@ button:disabled {opacity:.55;}
 .site-header .header-inner nav .nav-link:focus-visible {
  border-bottom-color:transparent;
 }
+/* Use a single background treatment instead of lines in the header. */
+.site-header .header-inner nav :is(.nav-link,.agent-header-trigger,.notification-trigger,.staff-toggle) {
+ text-decoration:none;
+}
+.site-header .header-inner nav .nav-link {
+ border-bottom-color:transparent;
+ padding:2px 8px 0;
+}
+.site-header .header-inner nav .nav-link.active {
+ background:#252626;
+ color:#fff;
+ border-bottom-color:transparent;
+}
+.site-header .header-inner nav :is(.nav-link,.agent-header-trigger,.notification-trigger,.staff-toggle):hover {
+ background:#333434;
+ text-decoration:none;
+}
+.site-header .header-inner nav :is(.nav-link,.agent-header-trigger,.notification-trigger,.staff-toggle):focus-visible {
+ background:#ffdd00;
+ color:#0b0c0c;
+}
