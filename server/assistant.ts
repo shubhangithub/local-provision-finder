@@ -12,11 +12,12 @@ export class AssistantInputError extends Error {constructor(message:string,publi
 export function agentConfig():AgentConfig{const env=loadEnv('development',process.cwd(),'OPENAI_');return {apiKey:process.env.OPENAI_API_KEY||env.OPENAI_API_KEY,model:process.env.OPENAI_MODEL||env.OPENAI_MODEL||'gpt-4.1-mini'};}
 export function validateAssistantRequest(value:unknown):AssistantRequest{
  if(!value||typeof value!=='object'||Array.isArray(value))throw new AssistantInputError('Enter a request.');const input=value as Record<string,unknown>;
- if(!['search','service','suggestion','feedback','meeting','tags'].includes(String(input.task)))throw new AssistantInputError('Unknown assistance task.');
+ if(!['search','service','suggestion','feedback','meeting','tags','guidance'].includes(String(input.task)))throw new AssistantInputError('Unknown assistance task.');
  const out:AssistantRequest={task:input.task as AssistantRequest['task']};
- for(const [key,max] of [['question',2000],['transcript',20000],['serviceId',200],['suggestionId',200],['feedbackId',200]] as const){if(input[key]!==undefined){if(typeof input[key]!=='string'||(input[key] as string).length>max)throw new AssistantInputError(`Check the ${key}.`);out[key]=(input[key] as string).trim();}}
- if(['search','service'].includes(out.task)&&!out.question)throw new AssistantInputError('Enter a question.');
+ for(const [key,max] of [['question',2000],['transcript',20000],['pageContext',20000],['serviceId',200],['suggestionId',200],['feedbackId',200]] as const){if(input[key]!==undefined){if(typeof input[key]!=='string'||(input[key] as string).length>max)throw new AssistantInputError(`Check the ${key}.`);out[key]=(input[key] as string).trim();}}
+ if(['search','service','guidance'].includes(out.task)&&!out.question)throw new AssistantInputError('Enter a question.');
  if(['service','tags'].includes(out.task)&&!out.serviceId||out.task==='suggestion'&&!out.suggestionId||out.task==='feedback'&&!out.feedbackId||out.task==='meeting'&&!out.transcript)throw new AssistantInputError('Required details are missing.');
+ if(out.task==='guidance'&&!out.pageContext)throw new AssistantInputError('Page context is required.');
  if(input.search!==undefined){if(!input.search||typeof input.search!=='object'||Array.isArray(input.search))throw new AssistantInputError('Check the search area.');const search=input.search as Record<string,unknown>;out.search={};for(const key of ['q','area','bounds','unknown'] as const){if(search[key]!==undefined){if(typeof search[key]!=='string'||(search[key] as string).length>250)throw new AssistantInputError('Check the search area.');(out.search as Record<string,unknown>)[key]=search[key];}}
   for(const key of ['lat','lng'] as const)if(search[key]!==undefined){if(typeof search[key]!=='number'||!Number.isFinite(search[key]))throw new AssistantInputError('Check the coordinates.');out.search[key]=search[key] as number;}
  }
@@ -32,7 +33,9 @@ export async function assist(input:AssistantRequest,options:{directory?:string;c
  const result:AssistantResult={mode:'local',summary:'',answer:'',needs:[],nextSteps:[],citations:[],services:[],warnings:[],proposedFields:{},suggestedTags:[],duplicates:[]};
  const addEvidence=(record:AssistantRecord)=>{const citation=evidenceFor(record,question);evidence.set(record.id,citation);return citation;};
  const query=async (words:string)=>{const found=await searchDirectory(records as DirectoryRecord[],assistantSearchParams(input.search,words.slice(0,250)));const picked=found.records.slice(0,6);for(const summary of picked){const record=byId.get(summary.id);if(record)addEvidence(record);}services=[...new Map([...services,...picked].map(record=>[record.id,record])).values()].slice(0,12);return {total:found.total,services:picked,evidence:picked.map(record=>evidence.get(record.id))};};
- if(input.task==='service'||input.task==='tags'){
+ if(input.task==='guidance'){
+  evidence.set('workspace',{id:'workspace',name:'Current workspace',url:'',excerpt:input.pageContext!});result.summary='Workspace assistance';result.answer='AI assistance is unavailable. Please try again.';reviewContext={pageContext:input.pageContext};
+ }else if(input.task==='service'||input.task==='tags'){
   const record=byId.get(input.serviceId!);if(!record)throw new AssistantInputError('Service not found.',404);addEvidence(record);result.summary=input.task==='tags'?`Suggested tags for ${record.name}`:`Question about ${record.name}`;
   if(input.task==='tags'){question='Suggest concise discoverability tags supported by the service evidence.';result.suggestedTags=[...(record.needs??[]),...(record.categories??[])].filter(tag=>typeof tag==='string'&&tag.length<=40).slice(0,8);}
   const terms=question.toLowerCase();
@@ -71,7 +74,7 @@ export async function assist(input:AssistantRequest,options:{directory?:string;c
   if(input.task==='suggestion'||input.task==='tags')result.suggestedTags=list(answer.suggestedTags,10).map(tag=>tag.slice(0,40));
   if(input.task==='search'&&claims.length)result.summary=claims.slice(0,2).map(claim=>claim.text).join(' ').slice(0,450);
   if(claims.length!==answer.claims.length)result.warnings.push('Some generated claims were omitted because their source quotes could not be matched.');
- }catch(error){if(options.signal?.aborted)throw error;result.warnings.push('OpenAI assistance is temporarily unavailable; showing local directory checks instead.');}
+ }catch(error){if(options.signal?.aborted)throw error;result.warnings.push(input.task==='guidance'?'AI assistance is temporarily unavailable. Please try again.':'OpenAI assistance is temporarily unavailable; showing local directory checks instead.');}
  if(input.task==='search'&&!result.services.length&&config.apiKey&&!options.signal?.aborted){
   try{result.discoveries=await discoverSupport(input.search?.q||question,input.search,{config,directory,records,signal:options.signal,fetcher:options.fetcher});if(result.discoveries.length){result.mode='openai';result.summary='No matches in the directory yet. Here are relevant services found on the web.';result.answer='These services have been sent to staff for review. Their details have not yet been checked.';}}catch{result.warnings.push('Web discovery could not complete. Try another search or suggest a service.');}
  }
