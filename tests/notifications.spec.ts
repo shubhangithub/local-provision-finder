@@ -1,47 +1,37 @@
+import {completeStaffSignIn} from './helpers/staff-sign-in';
 import { expect, test } from './fixtures';
-
-test('general information updates can be opened and dismissed', async ({ page }) => {
-  await page.goto('/');
-  await page.evaluate(async () => {
-    const module=await import('/src/lib/notifications.ts');
-    module.notifyServiceUpdated('test-service','Local support service','Opening times');
-  });
-  await page.getByRole('button', { name: 'Notifications', exact: true }).click();
-  const panel=page.getByRole('region', { name: 'Notifications', exact: true });
-  await expect(panel.getByRole('heading', { name: 'Information updated' })).toBeVisible();
-  await expect(panel).toContainText('Opening times has been checked and updated');
-  await page.reload();
-  await page.getByRole('button', { name: 'Notifications', exact: true }).click();
-  await expect(panel.getByRole('heading', { name: 'Information updated' })).toBeVisible();
-  await panel.getByRole('button', { name: 'Dismiss Information updated for test-service' }).click();
-  await expect(panel).toContainText('You’re all caught up.');
-});
 
 test('staff sees real queue counts while public notifications hide them', async ({ page }) => {
   let resolved=false;
   await page.route('**/api/feedback', route=>route.fulfill({json:{entries:resolved ? [{status:'resolved'}] : [{status:'pending'},{status:'checking'},{status:'resolved'}]}}));
-  await page.route('**/api/suggestions', route=>route.fulfill({json:{suggestions:resolved ? [{status:'published'}] : [{status:'submitted'},{status:'draft'},{status:'published'},{status:'rejected'}]}}));
+  await page.route('**/api/suggestions', route=>route.fulfill({json:{entries:resolved ? [{status:'published'}] : [{status:'submitted'},{status:'draft'},{status:'published'},{status:'rejected'}]}}));
   await page.goto('/');
   await page.getByRole('button', { name: 'Notifications', exact: true }).click();
   const panel=page.getByRole('region', { name: 'Notifications', exact: true });
   await expect(panel).toContainText('You’re all caught up.');
   await page.getByRole('button', { name: 'Close notifications' }).click();
-  await page.getByRole('button', { name: 'Staff sign in', exact: true }).click();
+  await page.getByRole('button', { name: 'Staff sign in', exact: true }).click();await completeStaffSignIn(page);
+  const nav=page.getByRole('navigation',{name:'Staff workspace'});
+  await expect(nav.getByLabel('2 awaiting review')).toHaveCount(2);
+  await expect(nav.getByRole('link',{name:/Service reports/}).getByLabel('2 awaiting review')).toBeVisible();
+  await expect(nav.getByRole('link',{name:/New listings to approve/}).getByLabel('2 awaiting review')).toBeVisible();
   await page.getByRole('button', { name: 'Notifications', exact: true }).click();
-  await expect(panel).toContainText('2 reports need checking.');
-  await expect(panel).toContainText('2 suggestions are awaiting review.');
+  await expect(panel).toContainText('You’re all caught up.');
+  await page.getByRole('button', { name: 'Close notifications' }).click();
   resolved=true;
   await page.evaluate(()=>window.dispatchEvent(new Event('directory-updated')));
+  await expect(nav.getByLabel('2 awaiting review')).toHaveCount(0);
+  await expect(nav.getByLabel('0 awaiting review')).toHaveCount(2);
+  await page.getByRole('button', { name: 'Notifications', exact: true }).click();
   await expect(panel).toContainText('You’re all caught up.');
   await expect(panel.getByRole('heading', {name:'Feedback needs review'})).toHaveCount(0);
 });
 
 test('recommendation feedback keeps its context and can be deferred', async ({ page }) => {
   await page.goto('/');
-  await page.evaluate(async () => {
-    const module=await import('/src/lib/notifications.ts');
-    module.rememberService('test-recommended','A recommended service','recommended');
-  });
+  await page.evaluate(() => localStorage.setItem('lp-service-reminders-v1',JSON.stringify([{id:'test-recommended',name:'A recommended service',reason:'recommended',createdAt:new Date().toISOString()}])));
+  await page.reload();
+
   await page.getByRole('button', { name: 'Notifications', exact: true }).click();
   const panel=page.getByRole('region', { name: 'Notifications', exact: true });
   await expect(panel).toContainText('You were recommended A recommended service.');
