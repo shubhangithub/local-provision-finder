@@ -7,7 +7,7 @@ import { needMapping } from '../ingest/needs.ts';
 import type { AssistantRequest, AssistantResult, AssistantSearch, AssistantCitation } from '../src/lib/assistant.ts';
 import type { DirectoryRecord, DirectorySummary } from '../src/lib/directory.ts';
 import { loadAssistantRecords, evidenceFor, duplicateCandidates, feedbackForAssistant, suggestionForAssistant, type AssistantRecord } from './assistant-catalogue.ts';
-import { runModelAgent, validatedClaims, type AgentConfig, type AgentTool } from './assistant-model.ts';
+import { runModelAgent, validatedClaims, AgentUnavailable, type AgentConfig, type AgentTool } from './assistant-model.ts';
 export class AssistantInputError extends Error {constructor(message:string,public status=400){super(message);}}
 export function agentConfig():AgentConfig{const env=loadEnv('development',process.cwd(),'OPENAI_');return {apiKey:process.env.OPENAI_API_KEY||env.OPENAI_API_KEY,model:process.env.OPENAI_MODEL||env.OPENAI_MODEL||'gpt-4.1-mini'};}
 export function validateAssistantRequest(value:unknown):AssistantRequest{
@@ -74,7 +74,7 @@ export async function assist(input:AssistantRequest,options:{directory?:string;c
   if(input.task==='suggestion'||input.task==='tags')result.suggestedTags=list(answer.suggestedTags,10).map(tag=>tag.slice(0,40));
   if(input.task==='search'&&claims.length)result.summary=claims.slice(0,2).map(claim=>claim.text).join(' ').slice(0,450);
   if(claims.length!==answer.claims.length)result.warnings.push('Some generated claims were omitted because their source quotes could not be matched.');
- }catch(error){if(options.signal?.aborted)throw error;result.warnings.push(input.task==='guidance'?'AI assistance is temporarily unavailable. Please try again.':'OpenAI assistance is temporarily unavailable; showing local directory checks instead.');}
+ }catch(error){if(options.signal?.aborted)throw error;if(error instanceof AgentUnavailable)result.warnings.push(error.message);result.warnings.push(input.task==='guidance'?'AI assistance is temporarily unavailable. Please try again.':'OpenAI assistance is temporarily unavailable; showing local directory checks instead.');}
  if(input.task==='search'&&!result.services.length&&config.apiKey&&!options.signal?.aborted){
   try{result.discoveries=await discoverSupport(input.search?.q||question,input.search,{config,directory,records,signal:options.signal,fetcher:options.fetcher});if(result.discoveries.length){result.mode='openai';result.summary='No matches in the directory yet. Here are relevant services found on the web.';result.answer='These services have been sent to staff for review. Their details have not yet been checked.';}}catch{result.warnings.push('Web discovery could not complete. Try another search or suggest a service.');}
  }
