@@ -2,6 +2,7 @@ import '../styles/location-tags.css';
 import { useEffect, useRef, useState } from 'react';
 import { MapPin, Navigation, X, ArrowLeft, ArrowRight, Search, Map as MapIcon, List, Bookmark } from 'lucide-react';
 import ImportedServices from './ImportedServices';
+import PublicAssistant from './PublicAssistant';
 import ServicesMap from './ServicesMap';
 import { readDirectorySaved, toggleDirectorySaved } from '../lib/directory-saved';
 import { rememberService } from '../lib/notifications';
@@ -22,6 +23,7 @@ export default function LocationSearch({staff=false}:{staff?:boolean}) {
   const [draft,setDraft]=useState('');
   const [words,setWords]=useState('');
   const [searchText,setSearchText]=useState('');
+  const [assistantSearch,setAssistantSearch]=useState(0);const assistantStarted=useRef(0);
   const [error,setError]=useState('');
   const [locationError,setLocationError]=useState('');
   const [locating,setLocating]=useState(false);
@@ -35,7 +37,7 @@ export default function LocationSearch({staff=false}:{staff?:boolean}) {
   const [includeUnknown,setIncludeUnknown]=useState(true);
   const geoRequest=useRef(0);
   function close() {geoRequest.current++;setLocating(false);setPickerOpen(false);dialog.current?.close();trigger.current?.focus();}
-  function choose(next:Place) {setBounds(next.bounds ?? null);setIncludeUnknown(!next.bounds);setPlace(next);setPage(1);setSelected(null);setSearchText(words.trim());setError('');close();}
+  function choose(next:Place) {setBounds(next.bounds ?? null);setIncludeUnknown(!next.bounds);setPlace(next);setPage(1);setSelected(null);setSearchText(words.trim());if(words.trim())setAssistantSearch(value=>value+1);setError('');close();}
   function currentLocation() {
     if (!navigator.geolocation) {setLocationError('Your browser does not support location. Choose an area or enter a postcode.');return;}
     setLocating(true);setLocationError('');const request=++geoRequest.current;
@@ -57,7 +59,7 @@ export default function LocationSearch({staff=false}:{staff?:boolean}) {
   useEffect(() => {if (!bounds && searchText && data?.searchMode==='semantic') data.records.slice(0,1).forEach(record => rememberService(record.id,record.name,'recommended'));},[data,searchText]);
   function select(id:string) {setSelected(id);window.scrollTo({top:0});}
   return <div className="location-search">
-    {!selected && <form className="directory-search-form" onSubmit={e => {e.preventDefault();if (!place) {setLocationError('Choose an area to search.');setPickerOpen(true);dialog.current?.showModal();return;}setSearchText(words.trim());setPage(1);}}>
+    {!selected && <form className="directory-search-form" onSubmit={e => {e.preventDefault();if (!place) {setLocationError('Choose an area to search.');setPickerOpen(true);dialog.current?.showModal();return;}setSearchText(words.trim());setPage(1);if(words.trim())setAssistantSearch(value=>value+1);}}>
       <label htmlFor="support-query" className="visually-hidden">What do you need help with?</label>
       <div className="input-wrap directory-query"><Search size={20} aria-hidden="true"/><input id="support-query" value={words} onChange={e => setWords(e.target.value)} placeholder="For example, I’m feeling anxious or need help finding work" maxLength={250} autoComplete="off"/></div>
       <div className="directory-search-controls"><button ref={trigger} type="button" className="location-trigger" aria-haspopup="dialog" onClick={() => {setLocationError('');setPickerOpen(true);dialog.current?.showModal();}}><MapPin size={20} aria-hidden="true"/><span><strong>Location</strong><span>{place?.label ?? 'Choose an area or use your location'}</span></span></button><button className="button primary" type="submit">Find support<ArrowRight size={18}/></button></div>
@@ -75,6 +77,7 @@ export default function LocationSearch({staff=false}:{staff?:boolean}) {
         <div className="location-results-heading"><div><h2 ref={heading} tabIndex={-1}>Support in {bounds ? 'this map area' : place.label}</h2>{searchText && <p className="field-hint">Results for “{searchText}”</p>}</div><div className="directory-view-toggle" role="group" aria-label="Results view"><button type="button" aria-pressed={view==='list'} onClick={() => setView('list')}><List size={17}/>List</button><button type="button" aria-pressed={view==='map'} onClick={() => setView('map')}><MapIcon size={17}/>Map</button></div></div>
         {(place.lat!==undefined || bounds) && <div className="nearby-options"><p className="field-hint">{bounds ? 'Services inside the visible map area.' : 'Recorded sites within 10 miles. Distances are straight line.'}</p><label className="checkbox-label"><input type="checkbox" checked={includeUnknown} onChange={e => {setIncludeUnknown(e.target.checked);setPage(1);}}/><span>{bounds ? 'Include services without map locations' : 'Also show services with unknown distance'}</span></label></div>}
         {bounds && <button type="button" className="text-button" onClick={() => {setBounds(place.bounds ?? null);setPage(1);setIncludeUnknown(!place.bounds);}}>Reset to selected location</button>}{loading && <p role="status">Finding services…</p>}{error ? <p role="alert" className="form-error">{error}</p> : <>
+          {data && <PublicAssistant autoRequestKey={assistantSearch>assistantStarted.current?assistantSearch:0} onAutoStart={key=>{assistantStarted.current=key;}} task="search" question={searchText} search={{q:searchText,area:place.area,lat:place.lat,lng:place.lng,bounds:bounds ? [bounds.west,bounds.south,bounds.east,bounds.north].join(',') : undefined,unknown:includeUnknown ? '1' : '0'}} onSelect={select}/>}
           <div className="directory-results-count"><p role="status">{data?.total ?? 0} services</p>{data?.searchMode==='keyword' && searchText && <span className="field-hint">Keyword results · meaning-based search is unavailable</span>}</div>
           {!data?.total ? !loading && <div className="empty-state"><h3>No matching services</h3><p>Try different words or another area.</p></div> : <div className={`directory-results-layout view-${view}`}>
             <div className="directory-results-list"><div className="result-list">{data.records.map(record => <article className="service-card" key={record.id}><div className="service-card-body"><div className="card-title-row"><h3><button className="import-service-link" onClick={() => select(record.id)}>{record.name}<ArrowRight size={16}/></button></h3><button className="bookmark" type="button" aria-pressed={saved.some(item => item.id===record.id)} aria-label={`${saved.some(item => item.id===record.id) ? "Unsave" : "Save"} ${record.name}`} onClick={() => toggleDirectorySaved(record)}><Bookmark size={19} fill={saved.some(item => item.id===record.id) ? "currentColor" : "none"}/></button></div><p className="directory-provider">{record.provider}</p>{!!record.tags?.length && <ul className="directory-result-tags" aria-label="Service tags">{record.tags.map(tag => <li key={tag}>{tag}</li>)}</ul>}{searchText && <p className="directory-snippet">{record.snippet}{record.snippet.length>=220 ? '…' : ''}</p>}<p className="field-hint">{record.distanceMiles!==null ? `${record.distanceMiles.toFixed(1)} miles · ` : place.lat!==undefined ? 'Distance unknown · ' : ''}{record.postcode ?? 'Postcode not supplied'}</p></div></article>)}</div>{data.total>20 && <div className="pagination"><button className="button secondary" disabled={page===1} onClick={() => setPage(page-1)}>Previous</button><span>Page {page} of {Math.ceil(data.total/20)}</span><button className="button secondary" disabled={page*20>=data.total} onClick={() => setPage(page+1)}>Next</button></div>}</div>

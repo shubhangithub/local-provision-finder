@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 test('general information updates can be opened and dismissed', async ({ page }) => {
   await page.goto('/');

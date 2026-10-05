@@ -51,9 +51,10 @@ export function normaliseArea(area: string): string { return area.trim().toLower
 export function matchesArea(record: DirectoryRecord, sites: DirectorySite[], area: string): boolean {
   const normal = normaliseArea(area);
   if (!normal) return true;
-  if (normal === 'buckinghamshire' || normal === 'bucks') return record.source.includes('Buckinghamshire');
-  if (normal === 'bristol') return record.source.includes('Bristol');
-  if (normal === 'kingston' || normal === 'kingstonuponthames') return record.source.includes('Kingston');
+  const community=record.source==='Community suggestion';const postcodes=[record.postcode,...sites.map(site=>site.postcode)].filter((value):value is string=>!!value).map(normaliseArea);
+  if (normal === 'buckinghamshire' || normal === 'bucks') return record.source.includes('Buckinghamshire') || community && postcodes.some(value=>/^(hp|mk)/.test(value));
+  if (normal === 'bristol') return record.source.includes('Bristol') || community && postcodes.some(value=>/^bs/.test(value));
+  if (normal === 'kingston' || normal === 'kingstonuponthames') return record.source.includes('Kingston') || community && postcodes.some(value=>/^kt/.test(value));
   return [record.postcode,...sites.map(site => site.postcode)].some(postcode => postcode && normaliseArea(postcode).startsWith(normal));
 }
 export interface MapBounds {west:number;south:number;east:number;north:number}

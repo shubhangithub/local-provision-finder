@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
 test('staff tags rank first in both search modes and display safely on public cards', async ({ page, request }, testInfo) => {
   const catalogue = await (await request.get('/api/imports?area=Bristol&mode=keyword')).json();

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 test('search, radius boundary, shortlist and persisted detail', async ({ page }) => {
   await page.goto('/#/demo');

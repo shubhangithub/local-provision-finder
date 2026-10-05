@@ -1,4 +1,4 @@
-import { test,expect } from '@playwright/test';
+import { test,expect } from './fixtures';
 import AxeBuilder from '@axe-core/playwright';
 import { DatabaseSync } from 'node:sqlite';
 test('user report is reviewed and a checked field correction reaches service details',async ({page,request},testInfo)=>{

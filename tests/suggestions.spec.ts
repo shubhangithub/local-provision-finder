@@ -1,4 +1,4 @@
-import {expect,test} from '@playwright/test';
+import {expect,test} from './fixtures';
 import {DatabaseSync} from 'node:sqlite';
 import {resolve} from 'node:path';
 

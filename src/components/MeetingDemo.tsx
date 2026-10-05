@@ -1,16 +1,24 @@
 import { useEffect, useRef, useState } from 'react';
 import '../styles/meeting.css';
+import { askAssistant, type AssistantResult } from '../lib/assistant';
+import { directoryAreas } from '../lib/directory';
 
 const SCRIPT = 'Adviser: Thanks for coming in today. What would help you most over the next few weeks? Participant: I want to get back into work, but I feel anxious about interviews. I also need childcare after school and help with the bus fare. Adviser: We can look for a local confidence group, interview support and childcare options together. Would you prefer something nearby or online? Participant: Nearby would be good, especially somewhere quiet. Tuesday mornings are easiest for me. Adviser: Let us check the opening times, costs and how to contact each service before we choose the next step.';
 const WORDS = SCRIPT.split(' ');
 const DURATION = 600;
 
-export default function MeetingDemo({ enabled, onEnd }: { enabled: boolean; onEnd?: () => void }) {
+
+export default function MeetingDemo({ enabled, onEnd, area }: { enabled: boolean; onEnd?: () => void; area?: string }) {
   const [phase, setPhase] = useState<'idle' | 'requesting' | 'recording' | 'finished'>('idle');
   const [error, setError] = useState('');
   const [remaining, setRemaining] = useState(DURATION);
   const [wordCount, setWordCount] = useState(0);
   const [download, setDownload] = useState('');
+  const [meetingArea, setMeetingArea] = useState('Bristol');
+  const [summary, setSummary] = useState<AssistantResult | null>(null);
+  const [summarising, setSummarising] = useState(false);
+  const [summaryError, setSummaryError] = useState('');
+  const summaryRequest = useRef<AbortController | null>(null);
   const stream = useRef<MediaStream | null>(null);
   const recorder = useRef<MediaRecorder | null>(null);
   const generation = useRef(0);
@@ -42,6 +50,10 @@ export default function MeetingDemo({ enabled, onEnd }: { enabled: boolean; onEn
   useEffect(() => {
     if (!enabled) {
       release(false);
+      summaryRequest.current?.abort();
+      setSummary(null);
+      setSummaryError('');
+      setSummarising(false);
       setPhase('idle');
       setWordCount(0);
       if (downloadRef.current) URL.revokeObjectURL(downloadRef.current);
@@ -51,6 +63,7 @@ export default function MeetingDemo({ enabled, onEnd }: { enabled: boolean; onEn
   }, [enabled]);
   useEffect(() => () => {
     release(false);
+    summaryRequest.current?.abort();
     if (downloadRef.current) URL.revokeObjectURL(downloadRef.current);
   }, []);
   useEffect(() => {
@@ -66,6 +79,10 @@ export default function MeetingDemo({ enabled, onEnd }: { enabled: boolean; onEn
   }, [phase]);
 
   async function start() {
+    summaryRequest.current?.abort();
+    setSummary(null);
+    setSummaryError('');
+    setSummarising(false);
     setError('');
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
       setError('Recording is unavailable in this browser. Try a current browser on localhost or HTTPS.');
@@ -117,6 +134,23 @@ export default function MeetingDemo({ enabled, onEnd }: { enabled: boolean; onEn
     }
   }
 
+  async function summarise() {
+    summaryRequest.current?.abort();
+    const controller = new AbortController();
+    summaryRequest.current = controller;
+    setSummarising(true);
+    setSummaryError('');
+    try {
+      const result = await askAssistant({ task: 'meeting', transcript: WORDS.slice(0, wordCount).join(' '), search: { area: area || meetingArea } }, controller.signal);
+      if (typeof result.summary !== 'string' || !Array.isArray(result.nextSteps) || !Array.isArray(result.services)) throw new Error('The meeting summary could not be read. Please try again.');
+      if (!controller.signal.aborted) setSummary(result);
+    } catch (cause) {
+      if (!controller.signal.aborted) setSummaryError(cause instanceof Error ? cause.message : 'Could not summarise this meeting. Please try again.');
+    } finally {
+      if (!controller.signal.aborted) setSummarising(false);
+    }
+  }
+
   if (!enabled) return null;
   return <section className="meeting-demo" aria-label="Staff meeting">
     {phase === 'idle' || phase === 'finished' ? <button className="button primary meeting-start" onClick={start}>Start meeting</button> : null}
@@ -127,6 +161,16 @@ export default function MeetingDemo({ enabled, onEnd }: { enabled: boolean; onEn
       {phase === 'recording' && <div className="meeting-controls"><p>Time remaining <strong aria-label="Time remaining">{Math.floor(remaining / 60)}:{String(remaining % 60).padStart(2, '0')}</strong></p><button className="button meeting-stop" onClick={finish}>Stop meeting</button></div>}
       <p className="meeting-note">Audio stays in this browser. The transcript below is simulated and does not transcribe your microphone.</p>
       <h3>Simulated transcript</h3><div className="meeting-transcript" role="region" aria-label="Simulated transcript" tabIndex={0}>{wordCount ? WORDS.slice(0, wordCount).join(' ') : 'The simulated conversation will appear here.'}</div>
+      {phase === 'finished' && wordCount > 0 && <div className="meeting-summary-controls">{!area && <div className="meeting-location"><label htmlFor="meeting-area">Find support in</label><select id="meeting-area" value={meetingArea} disabled={summarising} onChange={event => {setMeetingArea(event.target.value);setSummary(null);}}>{directoryAreas.map(location => <option key={location.id} value={location.id}>{location.label}</option>)}</select></div>}<button className="button secondary" disabled={summarising} onClick={summarise}>{summarising ? 'Summarising meeting…' : 'Summarise meeting'}</button><p className="meeting-note">Create a draft from the simulated transcript and relevant directory entries. Review it before using it.</p></div>}
+      {summarising && <p role="status">Preparing a meeting summary and possible next steps.</p>}
+      {summaryError && <p className="meeting-error" role="alert">{summaryError}</p>}
+      {summary && <section className="meeting-summary" aria-label="Meeting summary"><h3>Draft meeting summary</h3><p className="meeting-summary-mode">{summary.mode === 'openai' ? 'AI-assisted draft' : 'Local directory draft'}</p><p>{summary.summary}</p>
+        {!!summary.needs?.length && <><h4>Support discussed</h4><ul className="meeting-needs">{summary.needs.map((need, index) => <li key={`${need}-${index}`}>{need.replace(/-/g, ' ')}</li>)}</ul></>}
+        {!!summary.nextSteps.length && <><h4>Possible next steps</h4><ol>{summary.nextSteps.map((step, index) => <li key={index}>{step}</li>)}</ol></>}
+        {!!summary.services.length && <><h4>Services to explore</h4><ul>{summary.services.map(service => <li key={service.id}><a href={`/#/directory/${encodeURIComponent(service.id)}`}>{service.name}</a>{service.provider ? ` · ${service.provider}` : ''}</li>)}</ul></>}
+        {!!summary.citations?.length && <details><summary>Directory evidence</summary>{summary.citations.map((citation, index) => <blockquote key={`${citation.id}-${index}`}><a href={`/#/directory/${encodeURIComponent(citation.id)}`}>{citation.name}</a><p>{citation.excerpt}</p></blockquote>)}</details>}
+        {!!summary.warnings?.length && <div className="meeting-summary-warnings">{summary.warnings.map((warning, index) => <p key={index}>{warning}</p>)}</div>}
+      </section>}
       {download && <a className="meeting-download" href={download} download="jobcentre-meeting.webm">Download meeting audio</a>}
     </div>}
   </section>;

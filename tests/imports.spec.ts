@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 test('staff can search full source text and inspect preserved contacts', async ({ page, request }) => {
   const response = await request.get('/api/imports?q=anxiety');

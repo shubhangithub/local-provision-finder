@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 async function mockMicrophone(page: import('@playwright/test').Page, denied = false) {
   await page.addInitScript(({ denied }) => {
