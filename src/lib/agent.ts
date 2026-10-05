@@ -1,4 +1,4 @@
-export interface AgentContext { title: string; facts: string[]; searchText?: string; prompts?: string[]; serviceId?: string; area?: string }
+export interface AgentContext { title: string; facts: string[]; searchText?: string; prompts?: string[]; serviceId?: string }
 export interface AgentRequest { context?: AgentContext; question?: string }
 export const agentEvent = 'directory-agent-request';
 export function askAgent(request: AgentRequest = {}) { window.dispatchEvent(new CustomEvent<AgentRequest>(agentEvent, { detail: request })); }

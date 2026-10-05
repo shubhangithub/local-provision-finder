@@ -1,12 +1,13 @@
 import { expect, test } from './fixtures';
+import { chooseRegion, showView } from './region-helpers';
 const catalogue={total:1,page:1,pageSize:20,ready:true,searchMode:'semantic',mapRecords:[],mappedCount:0,unmappedCount:1,records:[{id:'test',name:'Community support',provider:'Charity',postcode:null,distanceMiles:null,sites:[],snippet:'Support',tags:[]}]};
 const answer=(summary:string)=>({mode:'openai',summary,answer:summary,needs:[],nextSteps:[],citations:[{id:'test',name:'Community support',excerpt:'Recorded support.'}],services:[],warnings:[]});
 async function search(page:import('@playwright/test').Page){
- await page.route('**/api/imports?**',route=>route.fulfill({json:catalogue}));await page.goto('/');await page.getByLabel('What do you need help with?',{exact:true}).fill('help finding work');await page.getByRole('button',{name:'Location Choose an area or use your location'}).click();await page.getByLabel('Town or service postcode').fill('Bristol');await page.getByRole('button',{name:'Search this area',exact:true}).click();
+ await page.route('**/api/imports?**',route=>route.fulfill({json:catalogue}));await page.goto('/');await page.getByLabel('What do you need help with?',{exact:true}).fill('help finding work');await chooseRegion(page,'Bristol');
 }
 test('a slow first overview survives catalogue refreshes and view rerenders with one request',async({page})=>{
  let calls=0;await page.route('**/api/assistant',async route=>{calls++;await new Promise(resolve=>setTimeout(resolve,900));await route.fulfill({json:answer('First overview completed.')});});
- await search(page);await expect(page.locator('.assistant-spinner')).toBeVisible();await page.evaluate(()=>window.dispatchEvent(new Event('directory-updated')));await page.getByRole('button',{name:'Map',exact:true}).click();await expect(page.getByText('First overview completed.',{exact:true})).toBeVisible();expect(calls).toBe(1);
+ await search(page);await expect(page.locator('.assistant-spinner')).toBeVisible();await page.evaluate(()=>window.dispatchEvent(new Event('directory-updated')));await showView(page, 'Map');await showView(page, 'List');await expect(page.getByText('First overview completed.',{exact:true})).toBeVisible();expect(calls).toBe(1);
  await page.getByLabel('What do you need help with?',{exact:true}).fill('childcare');await page.getByRole('button',{name:'Find support',exact:true}).click();await expect.poll(()=>calls).toBe(2);await expect(page.getByText('First overview completed.',{exact:true})).toBeVisible();
 });
 test('a temporary first request failure recovers automatically without a retry click',async({page})=>{

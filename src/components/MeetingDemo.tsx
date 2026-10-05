@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import '../styles/meeting.css';
 import { askAssistant, type AssistantResult } from '../lib/assistant';
 import { directoryAreas } from '../lib/directory';
+import { meetingArea as areaForMeeting, openRegionMenu, useRegion } from '../lib/region';
 import { startPcmCapture, type PcmCapture } from '../lib/mic';
 import { transcriptText, useLiveMeeting } from '../lib/live-meeting';
 import Waveform from './Waveform';
@@ -13,7 +14,7 @@ import MeetingResults from './MeetingResults';
 const DURATION = 600;
 
 
-export default function MeetingDemo({ enabled, onEnd, area }: { enabled: boolean; onEnd?: () => void; area?: string }) {
+export default function MeetingDemo({ enabled, onEnd }: { enabled: boolean; onEnd?: () => void }) {
   const [phase, setPhase] = useState<'idle' | 'requesting' | 'recording' | 'finishing' | 'finished'>('idle');
   const [error, setError] = useState('');
   const [urgency, setUrgency] = useState<UrgencyMode>('auto');
@@ -25,7 +26,8 @@ export default function MeetingDemo({ enabled, onEnd, area }: { enabled: boolean
   const shortlist = useMeetingShortlist();
   const capture = useRef<PcmCapture | null>(null);
   const [download, setDownload] = useState('');
-  const [meetingArea, setMeetingArea] = useState('Bristol');
+  const [region] = useRegion();
+  const meetingArea = areaForMeeting(region);
   const [summary, setSummary] = useState<AssistantResult | null>(null);
   const [summarising, setSummarising] = useState(false);
   const [summaryError, setSummaryError] = useState('');
@@ -128,7 +130,7 @@ export default function MeetingDemo({ enabled, onEnd, area }: { enabled: boolean
       ]);
       if (request !== generation.current) return;
       stream.current = audio;
-      await live.open(area || meetingArea).catch(error => { throw Object.assign(error instanceof Error ? error : new Error('Live transcription could not start.'), { live: true }); }); // must be ready before audio is sent
+      await live.open(meetingArea).catch(error => { throw Object.assign(error instanceof Error ? error : new Error('Live transcription could not start.'), { live: true }); }); // must be ready before audio is sent
       if (request !== generation.current) { live.close(); return; }
       const pcm = await startPcmCapture(audio, live.sendAudio);
       if (request !== generation.current) { pcm.stop(); live.close(); return; }
@@ -177,7 +179,7 @@ export default function MeetingDemo({ enabled, onEnd, area }: { enabled: boolean
     setSummarising(true);
     setSummaryError('');
     try {
-      const result = await askAssistant({ task: 'meeting', transcript: transcriptText(live.lines), search: { area: area || meetingArea, urgency: needsHelpToday(transcriptText(live.lines), urgency)?'today':'normal' } }, controller.signal);
+      const result = await askAssistant({ task: 'meeting', transcript: transcriptText(live.lines), search: { area: meetingArea, urgency: needsHelpToday(transcriptText(live.lines), urgency)?'today':'normal' } }, controller.signal);
       if (typeof result.summary !== 'string' || !Array.isArray(result.nextSteps) || !Array.isArray(result.services)) throw new Error('The meeting summary could not be read. Please try again.');
       if (!controller.signal.aborted) setSummary(result);
     } catch (cause) {
@@ -196,7 +198,7 @@ export default function MeetingDemo({ enabled, onEnd, area }: { enabled: boolean
   return <section className="meeting-demo" aria-label="Staff meeting">
     {live.lines.length > 0 && <UrgencyNotice staff text={transcriptText(live.lines)} mode={urgency} onChange={setUrgency} />}
     {phase === 'idle' && <div className="meeting-setup">
-      {phase === 'idle' && !area && <div className="meeting-location"><label htmlFor="meeting-area">Find support in</label><select id="meeting-area" value={meetingArea} onChange={event => setMeetingArea(event.target.value)}>{directoryAreas.map(location => <option key={location.id} value={location.id}>{location.label}</option>)}</select></div>}
+      {phase === 'idle' && <div className="meeting-location"><span>Finding support in <strong>{directoryAreas.find(item => item.id === meetingArea)?.label ?? meetingArea}</strong></span> <button type="button" className="text-button" onClick={openRegionMenu}>Change<span className="visually-hidden"> region</span></button></div>}
       {phase === 'idle' && <p className="meeting-consent">Starting a meeting streams the microphone audio to Azure OpenAI to write live notes and find matching services. This app does not store the audio. The audio download stays in this browser. Tell everyone in the room before you start.</p>}
       <button className="button primary meeting-start" onClick={start}>Start meeting</button>
     </div>}

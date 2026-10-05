@@ -2,6 +2,7 @@ import {completeStaffSignIn} from './helpers/staff-sign-in';
 import { test,expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { DatabaseSync } from 'node:sqlite';
+import { chooseRegion } from './region-helpers';
 test('user report is reviewed and a checked field correction reaches service details',async ({page,request},testInfo)=>{
   const listing=await (await request.get('/api/imports?area=Kingston')).json();
   const summary=listing.records[testInfo.project.name==='desktop' ? 5 : 6];
@@ -38,7 +39,7 @@ test('user report is reviewed and a checked field correction reaches service det
   }
 });
 test('feedback notification opens the prompt and real services can be saved',async ({page,request})=>{
-  await page.goto('/');await page.getByRole('button',{name:/^Location /}).click();await page.getByLabel('Town or service postcode').fill('Bristol');await page.getByRole('button',{name:'Search this area',exact:true}).click();
+  await page.goto('/');await chooseRegion(page,'Bristol');
   const first=page.locator('.directory-results-list .service-card').first();await expect(first).toBeVisible();
   const name=await first.locator('.import-service-link').innerText();
   await first.getByRole('button',{name:/^Save /}).click();

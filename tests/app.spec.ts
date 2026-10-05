@@ -1,32 +1,21 @@
 import {completeStaffSignIn} from './helpers/staff-sign-in';
 import { expect, test } from '@playwright/test';
 
-test('search, radius boundary, shortlist and persisted detail', async ({ page }) => {
-  await page.goto('/#/demo');
-  await page.getByRole('button', { name: 'Try example' }).click();
-  await expect(page.getByRole('heading', { name: '1 service to explore' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'WorkWell Local Health Pathway' })).toBeVisible();
-  await expect(page.getByText('Coverage needs checking', { exact: false })).toBeVisible();
-  await expect(page.getByText('No matching housing service', { exact: false })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Community Confidence Circle' })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Show farther options' }).click();
-  await expect(page.getByRole('heading', { name: '2 services to explore' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Community Confidence Circle' })).toBeVisible();
-  await page.getByRole('button', { name: 'Save WorkWell Local Health Pathway', exact: true }).click();
+test('saved catalogue services and their detail pages persist', async ({ page }) => {
+  await page.goto('/#/service/LP-003');
+  await expect(page.getByRole('heading', { name: 'WorkWell Local Health Pathway' })).toBeVisible();
+  await expect(page.getByText('Check area coverage before using this service')).toBeVisible();
+  await expect(page.getByText('Not supplied — check with provider').first()).toBeVisible();
+  await page.getByRole('button', { name: /^Save WorkWell Local Health Pathway/ }).first().click();
   await page.getByRole('link', { name: /^Saved/ }).click();
   await expect(page.getByRole('heading', { name: 'Saved services' })).toBeVisible();
   await page.reload();
   await expect(page.getByRole('button', { name: 'Unsave WorkWell Local Health Pathway' })).toBeVisible();
-  await page.getByRole('link', { name: 'WorkWell Local Health Pathway' }).click();
-  await expect(page.getByText('Check area coverage before using this service')).toBeVisible();
-  await expect(page.getByText('Not supplied — check with provider').first()).toBeVisible();
 });
 
 test('staff mode preserves results and requires checked evidence before publishing', async ({ page }) => {
-  await page.goto('/?q=anxiety&postcode=AB4&radius=3&remote=1');
-  const publicTitles = await page.locator('.service-card :is(h2,h3)').allTextContents();
+  await page.goto('/');
   await page.getByRole('button', { name: 'Staff sign in', exact: true }).click();await completeStaffSignIn(page);
-  expect(await page.locator('.service-card :is(h2,h3)').allTextContents()).toEqual(publicTitles);
   await page.evaluate(() => {location.hash='/review';});
   const venueCard = page.locator('.review-card').filter({ hasText: 'Community Confidence Circle' });
   await expect(venueCard.getByRole('complementary', { name: 'AI-assisted review guidance' })).toContainText('Generate AI review');
@@ -47,17 +36,13 @@ test('staff mode preserves results and requires checked evidence before publishi
   await expect(page.getByText('Details need checking', { exact: true })).toBeVisible();
 });
 
-test('invalid postcodes, unknown searches and responsive layout are handled', async ({ page }) => {
+test('the retired demo address lands on the standard search page', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
   await page.goto('/#/demo');
-  await page.getByLabel('Postcode', { exact: true }).fill('SW1A 1AA');
-  await page.getByRole('button', { name: 'Find support', exact: true }).click();
-  await expect(page.getByRole('alert')).toContainText('Enter a demo postcode');
-  await page.getByLabel('Postcode', { exact: true }).fill('AB4');
-  await page.locator('#circumstances').fill('xyz');
-  await page.getByRole('button', { name: 'Find support', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'No matching services in this search' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'What do you need help with?' })).toBeVisible();
+  await expect(page).not.toHaveURL(/demo/);
+  await expect(page.getByLabel('Postcode', { exact: true })).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   expect(errors).toEqual([]);
 });

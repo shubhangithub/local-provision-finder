@@ -6,6 +6,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Plugin } from 'vite';
 import { searchDirectory, SearchInputError } from './directory-search.ts';
 import { readServiceTags } from './tags-api.ts';
+import { buildVocabulary, suggestTerms, type Vocabulary } from './suggest-terms.ts';
 import { FeedbackStore, type FeedbackService } from './feedback-store.ts';
 import type { DirectoryRecord } from '../src/lib/directory.ts';
 
@@ -14,9 +15,11 @@ import type { DirectoryRecord } from '../src/lib/directory.ts';
 export function importsApi(): Plugin {
   const directory = resolve(process.cwd(), 'data');
   const require = createRequire(import.meta.url);
+  // Term suggestions come from a vocabulary built once and refreshed shortly after catalogue or tag changes.
+  let vocabulary: { built: number; value: Vocabulary } | null = null;
   const handler = async (request: IncomingMessage, response: ServerResponse, next: () => void) => {
     const url = new URL(request.url ?? '/', 'http://localhost');
-    if (!url.pathname.startsWith('/api/imports')) return next();
+    if (!url.pathname.startsWith('/api/imports') && url.pathname !== '/api/suggest') return next();
     response.setHeader('Content-Type', 'application/json; charset=utf-8');
     response.setHeader('Cache-Control', 'no-store');
     response.setHeader('X-Content-Type-Options', 'nosniff');
@@ -36,6 +39,14 @@ export function importsApi(): Plugin {
         return serviceTags.length ? {...updated,tags:serviceTags,searchText:`Tags: ${serviceTags.join(', ')}\n${updated.searchText ?? ''}`} : {...updated,tags:[]};
       };
       try {
+        if (url.pathname === '/api/suggest') {
+          if (!vocabulary || Date.now() - vocabulary.built > 30_000) {
+            const rows = db.prepare("SELECT record_json FROM catalogue_services WHERE availability != 'Removed at source'").all().map(row => corrected(JSON.parse(String(row.record_json))) as DirectoryRecord);
+            const curated = (require('../src/data/workbook.json')['Search Terms'] as { Search_Term?: string }[]).map(row => row.Search_Term ?? '');
+            vocabulary = { built: Date.now(), value: buildVocabulary(rows, curated) };
+          }
+          return send(200, { terms: suggestTerms(vocabulary.value, (url.searchParams.get('q') ?? '').slice(0, 100), (url.searchParams.get('area') ?? '').slice(0, 80)) });
+        }
         if (url.pathname === '/api/imports/service') {
           const id = url.searchParams.get('id');
           const row = db.prepare('SELECT record_json FROM catalogue_services WHERE id=?').get(id ?? '');
