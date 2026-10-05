@@ -1,3 +1,4 @@
+import '../styles/customer-summary.css';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, FileText, Download, Image, FileDown, Pencil } from 'lucide-react';
 import { documentSections, exportDocument } from '../lib/document-export';

@@ -1,4 +1,3 @@
-import type { CustomerDocument } from '../lib/meeting';
 import { useEffect, useRef, useState } from 'react';
 import '../styles/meeting.css';
 import { askAssistant, type AssistantResult } from '../lib/assistant';
@@ -12,7 +11,7 @@ import NextStepsReport from './NextStepsReport';
 const DURATION = 600;
 
 
-export default function MeetingDemo({ enabled, onEnd, area, onProduce }: { enabled: boolean; onEnd?: () => void; area?: string; onProduce?: (document: CustomerDocument) => void }) {
+export default function MeetingDemo({ enabled, onEnd, area }: { enabled: boolean; onEnd?: () => void; area?: string }) {
   const [phase, setPhase] = useState<'idle' | 'requesting' | 'recording' | 'finishing' | 'finished'>('idle');
   const [error, setError] = useState('');
   const [remaining, setRemaining] = useState(DURATION);
@@ -212,7 +211,6 @@ export default function MeetingDemo({ enabled, onEnd, area, onProduce }: { enabl
         {!!summary.nextSteps.length && <><h4>Possible next steps</h4><ol>{summary.nextSteps.map((step, index) => <li key={index}>{step}</li>)}</ol></>}
         {!!summary.services.length && <><h4>Services to explore</h4><ul>{summary.services.map(service => <li key={service.id}><a href={`/#/directory/${encodeURIComponent(service.id)}`}>{service.name}</a>{service.provider ? ` · ${service.provider}` : ''}</li>)}</ul></>}
         {!!summary.citations?.length && <details><summary>Directory evidence</summary>{summary.citations.map((citation, index) => <blockquote key={`${citation.id}-${index}`}><a href={`/#/directory/${encodeURIComponent(citation.id)}`}>{citation.name}</a><p>{citation.excerpt}</p></blockquote>)}</details>}
-        {onProduce && <button className="button primary" onClick={() => onProduce({title: 'Your meeting summary', customer: '', date: new Date(endedAt || Date.now()).toLocaleDateString('en-GB'), summary: summary.summary, provisions: summary.services.map(service => `${service.name}${service.provider ? ` · ${service.provider}` : ''}`).join('\n\n'), nextSteps: summary.nextSteps.map((step, index) => `${index + 1}. ${step}`).join('\n')})}>Edit and export customer summary</button>}
         {!!summary.warnings?.length && <div className="meeting-summary-warnings">{summary.warnings.map((warning, index) => <p key={index}>{warning}</p>)}</div>}
       </section>}
       {!!live.debug.length && <details className="meeting-dev"><summary>Developer view: API traffic ({live.debug.length})</summary><div className="meeting-dev-log">{live.debug.filter(entry => !entry.eventType.endsWith('.delta')).slice(-120).reverse().map(entry => <div key={entry.key}>{new Date(entry.ts).toLocaleTimeString('en-GB')} {entry.dir === 'out' ? 'sent' : 'received'} {entry.source} {entry.eventType}</div>)}</div></details>}

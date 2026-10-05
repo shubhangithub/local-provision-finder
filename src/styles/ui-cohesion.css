@@ -131,10 +131,10 @@ button:disabled {opacity:.55;}
 .meeting-page-heading {margin-bottom:24px;}
 .meeting-eyebrow {font-size:19px;}
 .meeting-actionbar {background:var(--blue-pale);border-left:4px solid var(--brand);padding:20px 24px;}
-.meeting-status {background:#f3f3f3;color:var(--muted);padding:6px 10px;}
-.meeting-status.is-recording {background:#f4d7d7;color:#651b1b;}
-.meeting-status.is-recording .meeting-record-dot {display:inline-block;background:#ca3535;width:8px;height:8px;}
-.meeting-stop {border:1px solid #ca3535!important;color:#982828!important;background:#fcf5f5!important;box-shadow:0 2px 0 #982828!important;}
+.meeting-page-heading .meeting-status {background:#f3f3f3;color:var(--muted);padding:6px 10px;}
+.meeting-page-heading .meeting-status.is-recording {background:#f4d7d7;color:#651b1b;}
+.meeting-page-heading .meeting-status.is-recording .meeting-record-dot {display:inline-block;background:#ca3535;width:8px;height:8px;}
+.meeting-actionbar .meeting-stop {border:1px solid #ca3535!important;color:#982828!important;background:#fcf5f5!important;box-shadow:0 2px 0 #982828!important;}
 .meeting-assist {border-top-color:var(--purple);padding:20px; background:var(--purple-pale);}
 .assist-icon {color:var(--purple);}
 .assist-question {background:white;border-left-color:var(--purple);}
