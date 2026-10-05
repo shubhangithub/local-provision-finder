@@ -38,6 +38,10 @@ export async function assist(input:AssistantRequest,options:{directory?:string;c
   const terms=question.toLowerCase();
   const checks:[RegExp,string][]=[[/referr|self.?refer/,'referralRoute'],[/cost|free|pay|price/,'cost'],[/open|evening|weekend|hours|when/,'openingTimes'],[/eligib|who|child|age/,'eligibilitySummary'],[/phone|call/,'publicPhone'],[/email/,'publicEmail'],[/where|address/,'address'],[/access|wheelchair/,'accessibility']];
   const matched=checks.filter(([pattern])=>pattern.test(terms));result.answer=matched.length?matched.map(([,field])=>`${feedbackFields[field as keyof typeof feedbackFields]??field}: ${record[field]&&(!Array.isArray(record[field])||(record[field] as unknown[]).length)?Array.isArray(record[field])?(record[field] as unknown[]).join(', '):record[field]:'Not recorded'}`).join('\n'):'An answer to this specific question is not recorded in structured fields. The retained source excerpt is shown below.';
+ if(input.task==='service'&&/explain|tell me|about|details|more information|what (is|does|can)/i.test(question)){
+  const details=['eligibilitySummary','referralRoute','cost','openingTimes','address','publicPhone','publicEmail'].map(field=>`${feedbackFields[field as keyof typeof feedbackFields]??'How to access'}: ${record[field]||'Not recorded'}`);
+  result.answer=[`${record.name} · ${record.provider}`,record.description||'Description: Not recorded',...details].join('\n\n');
+ }
  if(input.task==='tags')result.answer='Suggested tags come from the recorded service categories and needs. Review them before adding.';
  }else if(input.task==='search'){
   await query(input.search?.q||question);result.summary='Support matching your request';result.answer=services.length?`Found ${services.length} relevant services to explore. Source details are listed below.`:'No matching services were found in this search area.';
