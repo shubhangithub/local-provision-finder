@@ -5,7 +5,7 @@ const now=new Date();
 const flags:{source:string;id:string;name:string;issue:string;action:string}[]=[];
 const add=(r:ServiceRecord,issue:string,action:string)=>flags.push({source:r.id.split(':')[0],id:r.id,name:r.name,issue,action});
 const normalize=(v:string)=>v.toLowerCase().replace(/[^a-z0-9]/g,'');
-const summaries=Object.fromEntries(['bristol-oruk','kingston-ck'].map(source=>{
+const summaries=Object.fromEntries([...new Set(records.map(r=>r.id.split(':')[0]))].map(source=>{
  const rows=records.filter(r=>r.id.startsWith(source+':'));
  const coverage=Object.fromEntries(['description','postcode','lat','lastVerified','sourceUpdatedAt','publicPhone','publicEmail','cost','openingTimes','categories','needs'].map(key=>[key,rows.filter(r=>{const v=r[key as keyof ServiceRecord];return Array.isArray(v)?v.length>0:v!==null&&v!=='';}).length]));
 

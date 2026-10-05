@@ -17,9 +17,9 @@ test('staff can search full source text and inspect preserved contacts', async (
   await expect(page.getByText(`${data.total} source records matching “anxiety”`)).toBeVisible();
   await page.locator('.import-service-link').first().click();
   await expect(page.getByRole('heading', { name: 'Published contacts' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'All retained service text' })).toBeVisible();
-  await page.getByText('Read full service text', { exact: true }).click();
-  await expect(page.locator('.source-text pre')).not.toBeEmpty();
+  await expect(page.getByRole('heading', { name: 'All retained service text' })).toHaveCount(0);
+  const detail = await (await request.get(`/api/imports/service?id=${data.records[0].id}`)).json();
+  expect(detail.record.searchText.length).toBeGreaterThan(0);
   const accessibility = await new AxeBuilder({ page }).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();
   expect(accessibility.violations).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);

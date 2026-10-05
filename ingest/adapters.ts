@@ -4,6 +4,7 @@ import { sanitise, normalise } from './normalise.ts';
 export const sources = [
  {sourceId:'bristol-oruk',name:'Bristol City Council / Well Aware',baseUrl:'https://bristol.openplace.directory/o/OpenReferralService/v3',kind:'oruk',licensed:true,licence:'Open Government Licence (OGL), version not stated',terms:'https://www.wellaware.org.uk/terms-and-conditions-open-place-directory-account/'},
  {sourceId:'kingston-ck',name:'Connected Kingston',baseUrl:'https://api.connectedkingston.uk/core/v1',kind:'kingston',licensed:true,licence:'Data reuse approved by the user on 5 October 2026 for this project; no general open-data licence asserted',terms:'https://connectedkingston.uk/terms-and-conditions'},
+ {sourceId:'buckinghamshire-oruk',name:'Buckinghamshire Family Information Service',baseUrl:'https://api.familyinfo.buckinghamshire.gov.uk/api/v1',kind:'bucks',licensed:true,licence:'Open Government Licence v3.0, except where otherwise stated',terms:'https://directory.familyinfo.buckinghamshire.gov.uk/'},
 ];
 export class CachedClient {
  lastRequest=0; refresh:boolean; directory:string;
@@ -11,7 +12,7 @@ export class CachedClient {
  async get(url:string):Promise<any> {
   await mkdir(this.directory,{recursive:true});const file=`${this.directory}/${createHash('sha256').update(url).digest('hex')}.json`;
   if(!this.refresh){try{return JSON.parse(await readFile(file,'utf8'));}catch(e:any){if(e.code!=='ENOENT')throw e;}}
-  await new Promise(r=>setTimeout(r,Math.max(0,510-(Date.now()-this.lastRequest))));this.lastRequest=Date.now();
+  await new Promise(r=>setTimeout(r,Math.max(0,650-(Date.now()-this.lastRequest))));this.lastRequest=Date.now();
   const response=await fetch(url,{headers:{'User-Agent':'LocalProvisionFinderHackathon/1.0 (internal service directory research)','Accept':'application/json'},signal:AbortSignal.timeout(30000)});
   if(!response.ok)throw new Error(`HTTP ${response.status} fetching ${url}`);
   if(!response.headers.get('content-type')?.includes('json'))throw new Error(`Expected JSON at ${url}`);
@@ -36,8 +37,25 @@ export class SourceAdapter {
   if(records.size!==expected)throw new Error(`Incomplete ${endpoint}: ${records.size}/${expected}`);
   return records;
  }
+ async *fetchBuckinghamshire():AsyncGenerator<any> {
+  const seen=new Set<string>();let expected:number|undefined;let pages:number|undefined;
+  // This source supplies its complete detail schema, including contacts, sites,
+  // SEND survey answers and schedules, directly in each paginated list record.
+  for(let page=1;;page++){
+   const url=`${this.source.baseUrl}/services?page=${page}&per_page=50`;
+   const envelope=await this.client.get(url);const data=envelope.data;
+   if(!Array.isArray(data.content)||!Number.isInteger(data.totalElements)||!Number.isInteger(data.totalPages)||data.number!==page)throw new Error('Invalid Buckinghamshire pagination');
+   if(expected!==undefined&&(expected!==data.totalElements||pages!==data.totalPages))throw new Error('Buckinghamshire totals changed during fetch');
+   expected=data.totalElements;pages=data.totalPages;this.expectedCount=expected!;
+   if(page===1)console.log(`${this.sourceId}: source reports ${expected} records across ${pages} pages`);
+   for(const row of data.content){const id=String(row.id);if(!row.id||seen.has(id))throw new Error('Missing/duplicate Buckinghamshire identity');seen.add(id);this.fetchedCount++;yield {raw:{...row,_sourceListUrl:url,_sourceListFetchedAt:envelope.fetchedAt},fetchedAt:envelope.fetchedAt};}
+   if(page===pages)break;if(!data.content.length)throw new Error('Empty intermediate Buckinghamshire page');
+  }
+  if(seen.size!==expected)throw new Error(`Incomplete Buckinghamshire source: ${seen.size}/${expected}`);
+ }
  async *fetchAll():AsyncGenerator<any> {
   if(!this.source.licensed)throw new Error(`${this.sourceId}: ${this.source.licence}`);
+  if(this.source.kind==='bucks'){yield* this.fetchBuckinghamshire();return;}
   const ckSource=this.source.kind==='kingston';
   const organisations=ckSource?await this.fetchRelated('organisations'):new Map<string,any>();
   const seen=new Set<string>();let total:number|undefined;let pages:number|undefined;

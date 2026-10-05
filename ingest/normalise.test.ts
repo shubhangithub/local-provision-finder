@@ -78,3 +78,13 @@ test('Kingston source eligibility notes are retained without deciding eligibilit
  const row=normalise({id:'eligibility',name:'Support',eligibility_types:{custom:{age_group:'Adults 18+',housing:'Kingston residents',gender:null},taxonomies:[{name:'People with caring responsibilities'}]}},sources[1],at);
  assert.ok(row.eligibilitySummary?.includes('Adults 18+'));assert.ok(row.eligibilitySummary?.includes('Kingston residents'));assert.ok(row.eligibilitySummary?.includes('People with caring responsibilities'));
 });
+test('Buckinghamshire keeps professional contacts, GeoJSON location, cost and SEND answers without invented assurance',()=>{
+ const source=sources.find(s=>s.sourceId==='buckinghamshire-oruk')!;
+ const record=normalise({id:9,name:'Family support',description:'Family counselling and support',updated_at:at,free:false,needs_referral:true,organisation:{name:'Bucks Charity'},taxonomies:[{name:'Mental health'}],contacts:[{name:'Pat Smith',phone:'07700123456',email:'pat@charity.org'}],service_at_locations:[{location:{address_1:'10 High Street',city:'Aylesbury',postal_code:'HP20 1UZ',geometry:{type:'Point',coordinates:[-0.814,51.8167]},accessibilities:[{name:'Wheelchair accessible entrance'}]}}],regular_schedules:[{description:'Monday from 09:00 to 17:00'}],cost_options:[{option:'Session',amount:'5.50',cost_type:'per session'}],local_offer:{survey_answers:[{question:'How do I join?',answer:'Call our SEND coordinator.'}]}},source,at);
+ assert.equal(record.lat,51.8167);assert.equal(record.lng,-0.814);assert.equal(record.postcode,'HP20 1UZ');assert.equal(record.lastVerified,null);assert.equal(record.sourceUpdatedAt,at);assert.equal(record.publicPhone,'07700123456');assert.equal(record.publicEmail,'pat@charity.org');assert.ok(record.cost?.includes('£5.50 per session'));assert.equal(record.openingTimes,'Monday from 09:00 to 17:00');assert.equal(record.referralRoute,'Referral required');assert.ok(record.searchText.includes('Call our SEND coordinator.'));assert.ok(record.categories.includes('Mental health'));assert.ok(record.accessibility.includes('Wheelchair accessible entrance'));
+});
+test('Buckinghamshire full-record pagination rejects missing records',async()=>{
+ const source=sources.find(s=>s.sourceId==='buckinghamshire-oruk')!;
+ const adapter=new SourceAdapter(source,{get:async()=>({fetchedAt:at,data:{number:1,totalElements:2,totalPages:1,content:[{id:1,name:'One',contacts:[{phone:'01296123456'}]}]}})});
+ await assert.rejects(async()=>{for await(const _ of adapter.fetchAll()){}},/Incomplete Buckinghamshire/);
+});

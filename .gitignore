@@ -14,3 +14,7 @@ data/ingest-cache/
 data/*.sqlite-wal
 data/*.sqlite-shm
 .tools/
+
+# Databases, snapshots, recordings and exports remain local.
+data/*
+!data/.gitkeep

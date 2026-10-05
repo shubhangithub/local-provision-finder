@@ -1,55 +1,86 @@
+import '../styles/location-tags.css';
 import { useEffect, useRef, useState } from 'react';
-import { MapPin, Navigation, X, ArrowLeft, ArrowRight } from 'lucide-react';
+import { MapPin, Navigation, X, ArrowLeft, ArrowRight, Search, Map as MapIcon, List, Bookmark } from 'lucide-react';
 import ImportedServices from './ImportedServices';
-interface Place { label: string; area?: string; lat?: number; lng?: number }
-interface RecordSummary { id: string; name: string; provider: string; postcode: string | null; distanceMiles: number | null }
-export default function LocationSearch({ text }: { text: string }) {
-  const dialog = useRef<HTMLDialogElement>(null);
-  const trigger = useRef<HTMLButtonElement>(null);
-  const [place, setPlace] = useState<Place | null>(null);
-  const [draft, setDraft] = useState('');
-  const [error, setError] = useState('');
-  const [locationError, setLocationError] = useState('');
-  const [locating, setLocating] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1);
-  const [data, setData] = useState<{total: number; records: RecordSummary[]} | null>(null);
-  const [selected, setSelected] = useState<string | null>(null);
-  const [searchText, setSearchText] = useState('');
-  const geoRequest = useRef(0);
-  function close() { geoRequest.current++; setLocating(false); dialog.current?.close(); trigger.current?.focus(); }
-  function choose(next: Place) { setPlace(next); setPage(1); setSelected(null); setSearchText(text); setError(''); close(); }
+import ServicesMap from './ServicesMap';
+import { readDirectorySaved, toggleDirectorySaved } from '../lib/directory-saved';
+import { rememberService } from '../lib/notifications';
+import { directoryAreas, type DirectoryResponse, type MapBounds, type MapService } from '../lib/directory';
+interface Place { label: string; area?: string; lat?: number; lng?: number; bounds?: MapBounds }
+export default function LocationSearch({staff=false}:{staff?:boolean}) {
+  const [saved,setSaved]=useState(readDirectorySaved);
+  useEffect(() => {const update=()=>setSaved(readDirectorySaved());window.addEventListener("directory-saved-changed",update);return () => window.removeEventListener("directory-saved-changed",update);},[]);
+  const dialog=useRef<HTMLDialogElement>(null);
+  const trigger=useRef<HTMLButtonElement>(null);
+  const heading=useRef<HTMLHeadingElement>(null);
+  const [place,setPlace]=useState<Place | null>(null);
+  const [bounds,setBounds]=useState<MapBounds | null>(null);
+  const [pickerOpen,setPickerOpen]=useState(false);
+  const [pickerArea,setPickerArea]=useState('Bristol');
+  const [pickerBounds,setPickerBounds]=useState<MapBounds | null>(null);
+  const [pickerServices,setPickerServices]=useState<MapService[]>([]);
+  const [draft,setDraft]=useState('');
+  const [words,setWords]=useState('');
+  const [searchText,setSearchText]=useState('');
+  const [error,setError]=useState('');
+  const [locationError,setLocationError]=useState('');
+  const [locating,setLocating]=useState(false);
+  const [loading,setLoading]=useState(false);
+  const [reload,setReload]=useState(0);
+  useEffect(() => {const update=()=>setReload(value=>value+1);window.addEventListener("directory-updated",update);return () => window.removeEventListener("directory-updated",update);},[]);
+  const [page,setPage]=useState(1);
+  const [data,setData]=useState<DirectoryResponse | null>(null);
+  const [selected,setSelected]=useState<string | null>(null);
+  const [view,setView]=useState<'list' | 'map'>('list');
+  const [includeUnknown,setIncludeUnknown]=useState(true);
+  const geoRequest=useRef(0);
+  function close() {geoRequest.current++;setLocating(false);setPickerOpen(false);dialog.current?.close();trigger.current?.focus();}
+  function choose(next:Place) {setBounds(next.bounds ?? null);setIncludeUnknown(!next.bounds);setPlace(next);setPage(1);setSelected(null);setSearchText(words.trim());setError('');close();}
   function currentLocation() {
-    if (!navigator.geolocation) { setLocationError('Your browser does not support location. Choose an area or enter a postcode.'); return; }
-    setLocating(true); setLocationError(''); const request = ++geoRequest.current;
-    navigator.geolocation.getCurrentPosition(position => {
-      if (request !== geoRequest.current) return;
-      choose({label:'Your current location',lat:position.coords.latitude,lng:position.coords.longitude});
-    }, failure => { if (request !== geoRequest.current) return; setLocating(false); setLocationError(failure.code === 1 ? 'Location access was declined. Choose an area or enter a postcode instead.' : 'We could not find your location. Choose an area or enter a postcode instead.'); }, {timeout:10000,maximumAge:60000,enableHighAccuracy:false});
+    if (!navigator.geolocation) {setLocationError('Your browser does not support location. Choose an area or enter a postcode.');return;}
+    setLocating(true);setLocationError('');const request=++geoRequest.current;
+    navigator.geolocation.getCurrentPosition(position => {if (request!==geoRequest.current) return;choose({label:'Your current location',lat:position.coords.latitude,lng:position.coords.longitude});},failure => {if (request!==geoRequest.current) return;setLocating(false);setLocationError(failure.code===1 ? 'Location access was declined. Choose an area or enter a postcode instead.' : 'We could not find your location. Choose an area or enter a postcode instead.');},{timeout:10000,maximumAge:60000,enableHighAccuracy:false});
   }
   useEffect(() => {
     if (!place) return;
-    const controller = new AbortController(); setLoading(true); setError('');
-    const params = new URLSearchParams({q:searchText,page:String(page)});
+    const controller=new AbortController();setLoading(true);setError('');
+    const params=new URLSearchParams({q:searchText,page:String(page),mode:'semantic',unknown:includeUnknown ? '1' : '0'});
+    if (bounds) params.set('bounds',[bounds.west,bounds.south,bounds.east,bounds.north].join(','));
     if (place.area) params.set('area',place.area);
-    else { params.set('lat',String(place.lat)); params.set('lng',String(place.lng)); }
-    fetch(`/api/imports?${params}`,{signal:controller.signal}).then(async response => {if (!response.ok) throw new Error(); setData(await response.json()); setLoading(false);}).catch(e => {if (e.name !== 'AbortError') {setError('Could not load the local directory. Please try again.');setLoading(false);}});
+    else if (place.lat!==undefined && place.lng!==undefined) {params.set('lat',String(place.lat));params.set('lng',String(place.lng));}
+    fetch(`/api/imports?${params}`,{signal:controller.signal}).then(async response => {const result=await response.json();if (!response.ok) throw new Error(result.error ?? 'Search unavailable');setData(result);setLoading(false);}).catch(e => {if (e.name!=='AbortError') {setError('Could not load the local directory. Please try again.');setLoading(false);}});
     return () => controller.abort();
-  },[place,page,searchText]);
-  useEffect(() => () => { geoRequest.current++; },[]);
+  },[place,page,searchText,includeUnknown,bounds,reload]);
+  useEffect(() => {if (!pickerOpen) return;const controller=new AbortController();fetch('/api/imports?area=&mode=semantic',{signal:controller.signal}).then(response => response.json()).then(result => setPickerServices(result.mapRecords ?? [])).catch(() => {});return () => controller.abort();},[pickerOpen]);
+  useEffect(() => {if (!selected && data) heading.current?.focus();},[selected]);
+  useEffect(() => () => {geoRequest.current++;},[]);
+  useEffect(() => {if (!bounds && searchText && data?.searchMode==='semantic') data.records.slice(0,1).forEach(record => rememberService(record.id,record.name,'recommended'));},[data,searchText]);
+  function select(id:string) {setSelected(id);window.scrollTo({top:0});}
   return <div className="location-search">
-    <button ref={trigger} type="button" className="location-trigger" onClick={() => {setLocationError('');dialog.current?.showModal();}}><MapPin size={20} aria-hidden="true"/><span><strong>Where?</strong><span>{place?.label ?? 'Choose an area or use your location'}</span></span></button>
+    {!selected && <form className="directory-search-form" onSubmit={e => {e.preventDefault();if (!place) {setLocationError('Choose an area to search.');setPickerOpen(true);dialog.current?.showModal();return;}setSearchText(words.trim());setPage(1);}}>
+      <label htmlFor="support-query" className="visually-hidden">What do you need help with?</label>
+      <div className="input-wrap directory-query"><Search size={20} aria-hidden="true"/><input id="support-query" value={words} onChange={e => setWords(e.target.value)} placeholder="For example, I’m feeling anxious or need help finding work" maxLength={250} autoComplete="off"/></div>
+      <div className="directory-search-controls"><button ref={trigger} type="button" className="location-trigger" aria-haspopup="dialog" onClick={() => {setLocationError('');setPickerOpen(true);dialog.current?.showModal();}}><MapPin size={20} aria-hidden="true"/><span><strong>Location</strong><span>{place?.label ?? 'Choose an area or use your location'}</span></span></button><button className="button primary" type="submit">Find support<ArrowRight size={18}/></button></div>
+    </form>}
     <dialog ref={dialog} className="location-dialog" aria-labelledby="location-title" onCancel={e => {e.preventDefault();close();}}>
       <div className="location-dialog-heading"><h2 id="location-title">Where do you need support?</h2><button type="button" className="icon-button" aria-label="Close location picker" onClick={close}><X size={20}/></button></div>
-      <form onSubmit={e => {e.preventDefault();if (draft.trim()) choose({label:draft.trim().toUpperCase(),area:/^bristol$/i.test(draft.trim()) ? 'Bristol' : /^kingston(?: upon thames)?$/i.test(draft.trim()) ? 'Kingston' : draft.trim()});}}><label htmlFor="location-query">Town or service postcode</label><input autoFocus id="location-query" value={draft} onChange={e => setDraft(e.target.value)} placeholder="Bristol, Kingston or BS4" maxLength={80}/><button className="button primary" type="submit" disabled={!draft.trim()}>Search this area<ArrowRight size={16}/></button></form>
-      <button type="button" className="location-current" disabled={locating} onClick={currentLocation}><Navigation size={19}/>{locating ? 'Finding your location…' : 'Use current location'}</button>
-      <p className="field-hint">Your browser will ask permission. Your precise location is used for this search and is not saved.</p>
+      <form onSubmit={e => {e.preventDefault();if (draft.trim()) choose({label:draft.trim().toUpperCase(),area:/^bristol$/i.test(draft.trim()) ? 'Bristol' : /^kingston(?: upon thames)?$/i.test(draft.trim()) ? 'Kingston' : /^bucks|buckinghamshire$/i.test(draft.trim()) ? 'Buckinghamshire' : draft.trim()});}}><label htmlFor="location-query">Town or service postcode</label><input autoFocus id="location-query" value={draft} onChange={e => setDraft(e.target.value)} placeholder="Bristol, Kingston or BS4" maxLength={80}/><button className="button primary" type="submit" disabled={!draft.trim()}>Search this area<ArrowRight size={16}/></button></form>
+      <button type="button" className="location-current" disabled={locating} onClick={currentLocation}><Navigation size={19}/>{locating ? 'Finding your location…' : 'Use current location'}</button><p className="field-hint">Your browser will ask permission. Your precise location is used for this search and is not saved.</p>
       {locationError && <p role="alert" className="form-error">{locationError}</p>}
-      <h3>Explore the directories</h3><div className="location-destinations">{['Bristol','Kingston'].map(area => <button type="button" key={area} onClick={() => choose({label:area === 'Kingston' ? 'Kingston upon Thames' : area,area})}><MapPin size={24}/><strong>{area === 'Kingston' ? 'Kingston upon Thames' : area}</strong><span>{area === 'Bristol' ? 'Well Aware directory' : 'Connected Kingston directory'}</span></button>)}</div>
+      <div className="picker-map-section"><div className="field"><label htmlFor="picker-map-centre">Choose an area on the map</label><select id="picker-map-centre" value={pickerArea} onChange={e => setPickerArea(e.target.value)}>{directoryAreas.map(area => <option key={area.id} value={area.id}>{area.label}</option>)}</select></div>{pickerOpen && <ServicesMap picker services={pickerServices} area={pickerArea} bounds={place?.bounds} onSelect={() => {}} onBoundsChange={setPickerBounds}/>}<button type="button" className="button primary" disabled={!pickerBounds} onClick={() => {if (pickerBounds) choose({label:'Selected map area',bounds:pickerBounds});}}>Use this map area<ArrowRight size={16}/></button></div>
+      <h3>Explore the directories</h3><div className="location-destinations">{directoryAreas.map(area => <button type="button" key={area.id} onClick={() => choose({label:area.label,area:area.id})}><MapPin size={24}/><strong>{area.label}</strong><span>{area.directory}</span></button>)}</div>
     </dialog>
-    {place && <section className="location-results" aria-label="Real directory results">
-      {selected ? <><button className="back-link" type="button" onClick={() => setSelected(null)}><ArrowLeft size={16}/>Back to area results</button><ImportedServices key={selected} initialId={selected} staff enableStaff={() => {}} onNavigate={() => setSelected(null)}/></> : <><div className="location-results-heading"><h2>Support in {place.label}</h2><button type="button" className="text-button" onClick={() => {setSearchText(text);setPage(1);}}>Apply your search words</button></div><p className="field-hint">Real directory preview · check details with the provider.{place.lat !== undefined ? ' Closest recorded sites within 10 miles. Services without coordinates are excluded; browse a directory above to see them.' : 'Directory coverage may extend beyond the selected town.'}{searchText ? ` Searching for “${searchText}”.` : ''}</p>
-      {loading ? <p role="status">Finding services…</p> : <><p role="status">{data?.total ?? 0} services</p>{error && <p role="alert" className="form-error">{error}</p>}<div className="result-list">{data?.records.map(record => <article className="service-card" key={record.id}><div className="service-card-body"><h3><button className="import-service-link" onClick={() => setSelected(record.id)}>{record.name}<ArrowRight size={16}/></button></h3><p>{record.provider}</p><p className="field-hint">{record.distanceMiles !== null ? `${record.distanceMiles.toFixed(1)} miles · ` : ''}{record.postcode ?? 'Postcode not supplied'}</p></div></article>)}</div>{data?.total === 0 && <p>Try another area or clear your search words. Location information is incomplete.</p>}{!!data && data.total>20 && <div className="pagination"><button className="button secondary" disabled={page === 1} onClick={() => setPage(page-1)}>Previous</button><span>Page {page} of {Math.ceil(data.total/20)}</span><button className="button secondary" disabled={page*20>=data.total} onClick={() => setPage(page+1)}>Next</button></div>}</>}
+    {place && <section className={`location-results ${selected ? "directory-service-detail" : ""}`} aria-label="Real directory results">
+      {selected ? <><button className="back-link" type="button" onClick={() => setSelected(null)}><ArrowLeft size={16}/>Back to results</button><ImportedServices key={selected} initialId={selected} directoryView staff={staff} enableStaff={() => {}} onNavigate={() => setSelected(null)}/></> : <>
+        <div className="location-results-heading"><div><h2 ref={heading} tabIndex={-1}>Support in {bounds ? 'this map area' : place.label}</h2>{searchText && <p className="field-hint">Results for “{searchText}”</p>}</div><div className="directory-view-toggle" role="group" aria-label="Results view"><button type="button" aria-pressed={view==='list'} onClick={() => setView('list')}><List size={17}/>List</button><button type="button" aria-pressed={view==='map'} onClick={() => setView('map')}><MapIcon size={17}/>Map</button></div></div>
+        {(place.lat!==undefined || bounds) && <div className="nearby-options"><p className="field-hint">{bounds ? 'Services inside the visible map area.' : 'Recorded sites within 10 miles. Distances are straight line.'}</p><label className="checkbox-label"><input type="checkbox" checked={includeUnknown} onChange={e => {setIncludeUnknown(e.target.checked);setPage(1);}}/><span>{bounds ? 'Include services without map locations' : 'Also show services with unknown distance'}</span></label></div>}
+        {bounds && <button type="button" className="text-button" onClick={() => {setBounds(place.bounds ?? null);setPage(1);setIncludeUnknown(!place.bounds);}}>Reset to selected location</button>}{loading && <p role="status">Finding services…</p>}{error ? <p role="alert" className="form-error">{error}</p> : <>
+          <div className="directory-results-count"><p role="status">{data?.total ?? 0} services</p>{data?.searchMode==='keyword' && searchText && <span className="field-hint">Keyword results · meaning-based search is unavailable</span>}</div>
+          {!data?.total ? !loading && <div className="empty-state"><h3>No matching services</h3><p>Try different words or another area.</p></div> : <div className={`directory-results-layout view-${view}`}>
+            <div className="directory-results-list"><div className="result-list">{data.records.map(record => <article className="service-card" key={record.id}><div className="service-card-body"><div className="card-title-row"><h3><button className="import-service-link" onClick={() => select(record.id)}>{record.name}<ArrowRight size={16}/></button></h3><button className="bookmark" type="button" aria-pressed={saved.some(item => item.id===record.id)} aria-label={`${saved.some(item => item.id===record.id) ? "Unsave" : "Save"} ${record.name}`} onClick={() => toggleDirectorySaved(record)}><Bookmark size={19} fill={saved.some(item => item.id===record.id) ? "currentColor" : "none"}/></button></div><p className="directory-provider">{record.provider}</p>{!!record.tags?.length && <ul className="directory-result-tags" aria-label="Service tags">{record.tags.map(tag => <li key={tag}>{tag}</li>)}</ul>}{searchText && <p className="directory-snippet">{record.snippet}{record.snippet.length>=220 ? '…' : ''}</p>}<p className="field-hint">{record.distanceMiles!==null ? `${record.distanceMiles.toFixed(1)} miles · ` : place.lat!==undefined ? 'Distance unknown · ' : ''}{record.postcode ?? 'Postcode not supplied'}</p></div></article>)}</div>{data.total>20 && <div className="pagination"><button className="button secondary" disabled={page===1} onClick={() => setPage(page-1)}>Previous</button><span>Page {page} of {Math.ceil(data.total/20)}</span><button className="button secondary" disabled={page*20>=data.total} onClick={() => setPage(page+1)}>Next</button></div>}</div>
+            <aside className="directory-results-map" aria-label="Service map"><ServicesMap services={data.mapRecords} area={place.area} origin={place.lat!==undefined ? {lat:place.lat,lng:place.lng!} : undefined} onSelect={select} bounds={bounds} onBoundsChange={next => {setBounds(previous => previous && Math.abs(previous.west-next.west)<0.000001 && Math.abs(previous.north-next.north)<0.000001 && Math.abs(previous.east-next.east)<0.000001 && Math.abs(previous.south-next.south)<0.000001 ? previous : next);setIncludeUnknown(false);setPage(1);}}/>{!!data.unmappedCount && <p className="map-caption">{data.unmappedCount} services have no recorded coordinates and appear in the list.</p>}</aside>
+          </div>}
+        </>}
       </>}
     </section>}
   </div>;

@@ -1,11 +1,11 @@
-import { mkdir,writeFile } from 'node:fs/promises';
+import { mkdir,writeFile,readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { sources,CachedClient,SourceAdapter } from './adapters.ts';
 import { Store } from './store.ts';
 import { isJobListing } from './normalise.ts';
 export async function run(args=process.argv.slice(2)){
  const refresh=args.includes('--refresh');const sourceArg=args.find(a=>a.startsWith('--source='))?.split('=')[1];
- if(args.some(a=>a!=='--refresh'&&!a.startsWith('--source=')))throw new Error('Usage: npm run ingest -- [--refresh] [--source=bristol-oruk|kingston-ck]');
+ if(args.some(a=>a!=='--refresh'&&!a.startsWith('--source=')))throw new Error('Usage: npm run ingest -- [--refresh] [--source=bristol-oruk|kingston-ck|buckinghamshire-oruk]');
  if(sourceArg&&!sources.some(s=>s.sourceId===sourceArg))throw new Error('Unknown source');
  await mkdir('data',{recursive:true});const store=new Store('data/services.sqlite');const reports:any[]=[];let failed=false;
  try {
@@ -18,7 +18,9 @@ export async function run(args=process.argv.slice(2)){
    }catch(e:any){failed=true;const report={source:source.sourceId,status:'failed',expected:adapter.expectedCount,fetched:adapter.fetchedCount,error:e.message};store.finish(id,report);reports.push(report);console.error(e.message);}
   }
   const records=store.records();const count=(key:string)=>records.filter(r=>r[key]!==null).length;
-  const report={generatedAt:new Date().toISOString(),sources:reports,total:records.length,postcodes:{count:count('postcode'),share:records.length?count('postcode')/records.length:0},assuredDates:{count:count('lastVerified'),share:records.length?count('lastVerified')/records.length:0},updatedDates:{count:count('sourceUpdatedAt')},needs:Object.fromEntries([...new Set<string>(records.flatMap(r=>r.needs))].sort().map(need=>[need,records.filter(r=>r.needs.includes(need)).length]))};
+  let previousSources:any[]=[];try{previousSources=JSON.parse(await readFile('data/ingest-report.json','utf8')).sources??[];}catch{}
+  const combinedReports=[...previousSources.filter((s:any)=>!reports.some(r=>r.source===s.source)),...reports];
+  const report={generatedAt:new Date().toISOString(),sources:combinedReports,total:records.length,postcodes:{count:count('postcode'),share:records.length?count('postcode')/records.length:0},assuredDates:{count:count('lastVerified'),share:records.length?count('lastVerified')/records.length:0},updatedDates:{count:count('sourceUpdatedAt')},needs:Object.fromEntries([...new Set<string>(records.flatMap(r=>r.needs))].sort().map(need=>[need,records.filter(r=>r.needs.includes(need)).length]))};
   await writeFile('data/services.internal.json',JSON.stringify(records,null,2)+'\n');await writeFile('data/ingest-report.json',JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report,null,2));
  }finally{store.close();}
  if(failed)process.exitCode=1;

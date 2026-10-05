@@ -1,7 +1,11 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { DatabaseSync } from 'node:sqlite';
 import type { ServiceRecord } from '../ingest/normalise.ts';
-const input:ServiceRecord[]=JSON.parse(await readFile('data/services.internal.json','utf8'));
+const sourceDb=new DatabaseSync('data/services.sqlite',{readOnly:true});
+sourceDb.exec('PRAGMA busy_timeout=5000');
+const input:ServiceRecord[]=sourceDb.prepare('SELECT record_json FROM services').all().map(row=>JSON.parse(String(row.record_json)));
+sourceDb.close();
+await writeFile('data/services.internal.json',JSON.stringify(input,null,2)+'\n');
 const key=(r:ServiceRecord)=>r.id.split(':')[0]+'|'+r.name.toLowerCase().replace(/[^a-z0-9]/g,'')+'|'+r.provider.toLowerCase().replace(/[^a-z0-9]/g,'');
 const groups=new Map<string,ServiceRecord[]>();
 for(const record of input)groups.set(key(record),[...(groups.get(key(record))??[]),record]);
@@ -11,7 +15,7 @@ const cleaned=Array.from(groups.values()).map(group=>{
  const {raw:_raw,confidence:_confidence,verificationStatus:_status,...record}=group[0];
  const locations=unique(group.flatMap(r=>{
   const raw=r.raw as Record<string,any>;
-  return (raw.service_at_locations??[]).map((item:any)=>({location:item.location,regular_schedule:item.regular_schedule??item.regular_opening_hours??[],holiday_schedule:item.holiday_opening_hours??[]}));
+  return (raw.service_at_locations??[]).map((item:any)=>({location:r.id.startsWith('buckinghamshire-oruk:')?{...item.location,latitude:item.location?.geometry?.coordinates?.[1]??null,longitude:item.location?.geometry?.coordinates?.[0]??null,postcode:item.location?.postal_code??null}:item.location,regular_schedule:item.regular_schedule??item.regular_opening_hours??[],holiday_schedule:item.holiday_opening_hours??[]}));
  }));
  const searchText=unique(group.map(r=>r.searchText.split('\n').filter(line=>!/^\s*(minimum_age|maximum_age|min_age|max_age)\s*:/i.test(line)).join('\n'))).join('\n\n');
  return {...record,description:unique(group.map(r=>r.description).filter(Boolean)).join('\n\n'),categories:unique(group.flatMap(r=>r.categories)),needs:unique(group.flatMap(r=>r.needs)),contacts:unique(group.flatMap(r=>[...r.contacts,...(r.publicPhone||r.publicEmail?[{name:r.provider,phone:r.publicPhone,email:r.publicEmail,sourceUrl:r.sourceUrl,fetchedAt:r.fetchedAt}]:[])])),accessibility:unique(group.flatMap(r=>r.accessibility)),lastVerified:newest(group.map(r=>r.lastVerified)),sourceUpdatedAt:newest(group.map(r=>r.sourceUpdatedAt)),searchText,locations,sourceRecordIds:group.map(r=>r.id),sourceRecordUrls:group.map(r=>r.sourceUrl)};

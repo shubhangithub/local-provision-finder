@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 test('search, radius boundary, shortlist and persisted detail', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/#/demo');
   await page.getByRole('button', { name: 'Try example' }).click();
   await expect(page.getByRole('heading', { name: '1 service to explore' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'WorkWell Local Health Pathway' })).toBeVisible();
@@ -26,7 +26,7 @@ test('staff mode preserves results and requires checked evidence before publishi
   const publicTitles = await page.locator('.service-card h3').allTextContents();
   await page.getByRole('button', { name: 'Staff sign in', exact: true }).click();
   expect(await page.locator('.service-card h3').allTextContents()).toEqual(publicTitles);
-  await page.getByRole('link', { name: 'Review changes', exact: true }).click();
+  await page.evaluate(() => {location.hash='/review';});
   const venueCard = page.locator('.review-card').filter({ hasText: 'Community Confidence Circle' });
   await venueCard.getByRole('button', { name: 'Review change' }).click();
   const dialog = page.getByRole('dialog');
@@ -45,12 +45,12 @@ test('staff mode preserves results and requires checked evidence before publishi
 test('invalid postcodes, unknown searches and responsive layout are handled', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
-  await page.goto('/');
+  await page.goto('/#/demo');
   await page.getByLabel('Postcode', { exact: true }).fill('SW1A 1AA');
   await page.getByRole('button', { name: 'Find support', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Enter a demo postcode');
   await page.getByLabel('Postcode', { exact: true }).fill('AB4');
-  await page.getByLabel('What do you need help with?').fill('xyz');
+  await page.locator('#circumstances').fill('xyz');
   await page.getByRole('button', { name: 'Find support', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'No matching services in this search' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);

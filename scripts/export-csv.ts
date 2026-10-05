@@ -4,4 +4,4 @@ const quote=(value:unknown)=>'"'+(value===null||value===undefined?'':typeof valu
 const fields=[...new Set(records.flatMap(record=>Object.keys(record)))];
 const csv='\uFEFF'+[fields.map(quote).join(','),...records.map(row=>fields.map(field=>quote(row[field])).join(','))].join('\r\n')+'\r\n';
 await writeFile('data/local-provision-services.csv',csv);
-console.log(`local-provision-services.csv: ${records.length} listings, ${fields.length} columns. Bristol and Kingston combined; source references retained.`);
+console.log(`local-provision-services.csv: ${records.length} listings, ${fields.length} columns. All imported sources combined; source references retained.`);

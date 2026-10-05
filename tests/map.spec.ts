@@ -1,0 +1,106 @@
+import { expect, test, type Page } from '@playwright/test';
+
+async function openPicker(page: Page) {
+  await page.getByRole('button', { name: /^Location / }).click();
+  await expect(page.getByRole('region', { name: 'Choose a search area on the map' }).locator('.leaflet-control-zoom-in')).toBeVisible();
+}
+function mapResponse(page: Page) {
+  return page.waitForResponse(response => {
+    const url = new URL(response.url());
+    return url.pathname === '/api/imports' && url.searchParams.has('bounds');
+  });
+}
+
+test('location map selection works for all three directories and keeps unlocated services separate', async ({ page }) => {
+  await page.goto('/');
+  for (const area of ['Bristol', 'Kingston', 'Buckinghamshire']) {
+    await openPicker(page);
+    await page.getByLabel('Choose an area on the map').selectOption(area);
+    const pending = mapResponse(page);
+    await page.getByRole('button', { name: 'Use this map area' }).click();
+    const response = await pending;
+    expect(response.ok()).toBe(true);
+    const url = new URL(response.url());
+    expect(url.searchParams.has('lat')).toBe(false);
+    expect(url.searchParams.get('unknown')).toBe('0');
+    const data = await response.json();
+    expect(data.total).toBeGreaterThan(0);
+    expect(data.records.length).toBeLessThanOrEqual(20);
+    expect(data.mapRecords.length).toBe(data.total);
+    const [west, south, east, north] = url.searchParams.get('bounds')!.split(',').map(Number);
+    for (const record of data.mapRecords) {
+      expect(record.sites.length).toBeGreaterThan(0);
+      for (const site of record.sites) {
+        expect(site.lat).toBeGreaterThanOrEqual(south); expect(site.lat).toBeLessThanOrEqual(north);
+        expect(site.lng).toBeGreaterThanOrEqual(west); expect(site.lng).toBeLessThanOrEqual(east);
+      }
+    }
+    await expect(page.locator('.directory-results-count [role=status]')).toHaveText(`${data.total} services`);
+    await expect(page.getByText('Could not load the local directory. Please try again.')).toHaveCount(0);
+    const withUnknown = mapResponse(page);
+    await page.getByLabel('Include services without map locations').check();
+    const expanded = await (await withUnknown).json();
+    expect(expanded.total).toBeGreaterThanOrEqual(data.total);
+    expect(expanded.unmappedCount).toBe(expanded.total - expanded.mappedCount);
+  }
+});
+
+test('map navigation automatically searches or waits for explicit search and survives detail back', async ({ page }) => {
+  await page.goto('/');
+  await openPicker(page);
+  const selected = mapResponse(page);
+  await page.getByRole('button', { name: 'Use this map area' }).click();
+  await selected;
+  await page.getByRole('button', { name: 'Map', exact: true }).click();
+  const map = page.getByRole('region', { name: 'Map of service locations' });
+  const zoom = map.locator('.leaflet-control-zoom-in');
+  await expect(zoom).toBeVisible();
+  const automatic = mapResponse(page);
+  await zoom.click();
+  const automaticResponse = await automatic;
+  const initialBounds = new URL(automaticResponse.url()).searchParams.get('bounds');
+  const initialData = await automaticResponse.json();
+  await expect(page.locator('.directory-results-count [role=status]')).toHaveText(`${initialData.total} services`);
+  await page.getByLabel('Search as I move the map').uncheck();
+  let requests = 0;
+  const listener = (request: {url(): string}) => {const url = new URL(request.url()); if (url.pathname === '/api/imports' && url.searchParams.has('bounds')) requests++;};
+  page.on('request', listener);
+  await zoom.click();
+  const search = page.getByRole('button', { name: 'Search this map area', exact: true });
+  await expect(search).toBeEnabled();
+  await page.waitForTimeout(550);
+  expect(requests).toBe(0);
+  const manual = mapResponse(page);
+  await search.click();
+  const manualResponse = await manual;
+  const finalBounds = new URL(manualResponse.url()).searchParams.get('bounds');
+  expect(finalBounds).not.toBe(initialBounds);
+  page.off('request', listener);
+  await page.getByRole('button', { name: 'List', exact: true }).click();
+  await page.locator('.directory-results-list .import-service-link').first().click();
+  const back = page.getByRole('button', { name: 'Back to results', exact: true });
+  await expect(back).toHaveCount(1);
+  await expect(back).toBeVisible();
+  const backBox = await back.boundingBox();
+  const sectionBox = await page.locator('.directory-service-detail').boundingBox();
+  expect(Math.abs(backBox!.x - sectionBox!.x)).toBeLessThan(20);
+  await back.click();
+  await page.getByRole('button', { name: 'Map', exact: true }).click();
+  await expect(map.locator('.leaflet-control-zoom-in')).toBeVisible();
+  const restored = mapResponse(page);
+  await map.locator('.leaflet-control-zoom-out').click();
+  const restoredResponse = await restored;
+  expect(restoredResponse.ok()).toBe(true);
+  const restoredBounds = new URL(restoredResponse.url()).searchParams.get('bounds')!.split(',').map(Number);
+  const previousBounds = finalBounds!.split(',').map(Number);
+  expect(Math.abs((restoredBounds[0]+restoredBounds[2])/2-(previousBounds[0]+previousBounds[2])/2)).toBeLessThan(0.002);
+  expect(Math.abs((restoredBounds[1]+restoredBounds[3])/2-(previousBounds[1]+previousBounds[3])/2)).toBeLessThan(0.002);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('map API rejects malformed or reversed bounding boxes', async ({ request }) => {
+  for (const bounds of ['undefined,1,2,3', '1,2,0,3', '-181,1,2,3', '1,2,3,91', '1,,3,4']) {
+    const response = await request.get('/api/imports', { params: { bounds, mode: 'semantic' } });
+    expect(response.status()).toBe(400);
+  }
+});
