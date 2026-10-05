@@ -72,7 +72,11 @@ export async function assist(input:AssistantRequest,options:{directory?:string;c
    for(const proposal of answer.proposedFields){if(!proposal||typeof proposal.value!=='string'||proposal.value.length>2000||!['description','cost','openingTimes','eligibilitySummary','referralRoute','publicPhone','publicEmail','address','postcode','url'].includes(proposal.field))continue;const source=evidence.get(proposal.evidenceId);if(source&&typeof proposal.quote==='string'&&proposal.quote.length>=8&&source.excerpt.includes(proposal.quote)&&proposal.quote.includes(proposal.value))result.proposedFields![proposal.field]=proposal.value;}
    }
   if(input.task==='suggestion'||input.task==='tags')result.suggestedTags=list(answer.suggestedTags,10).map(tag=>tag.slice(0,40));
-  if(input.task==='search'&&claims.length)result.summary=claims.slice(0,2).map(claim=>claim.text).join(' ').slice(0,450);
+  if(input.task==='search'&&claims.length){
+   const included=new Set<string>();
+   const overview=claims.filter(claim=>{if(included.has(claim.evidenceId))return false;included.add(claim.evidenceId);return true;}).slice(0,3);
+   result.summary=overview.map(claim=>{const name=evidence.get(claim.evidenceId)!.name;return claim.text.toLowerCase().includes(name.toLowerCase())?claim.text:`${name}: ${claim.text}`;}).join(' ');
+  }
   if(claims.length!==answer.claims.length)result.warnings.push('Some generated claims were omitted because their source quotes could not be matched.');
  }catch(error){if(options.signal?.aborted)throw error;if(error instanceof AgentUnavailable)result.warnings.push(error.message);result.warnings.push(input.task==='guidance'?'AI assistance is temporarily unavailable. Please try again.':'OpenAI assistance is temporarily unavailable; showing local directory checks instead.');}
  if(input.task==='search'&&!result.services.length&&config.apiKey&&!options.signal?.aborted){
