@@ -27,18 +27,18 @@ export function useMeetingShortlist() {
   return { savedIds, toggle, picked, clear: () => setChoices(new Map()) };
 }
 
-export function visibleServices(concept: LiveConcept, dismissed: Set<string>) {
+export function visibleServices(concept: LiveConcept, dismissed: Set<string>, urgent=false) {
   const { filtered, results } = concept;
   const list = filtered.status === 'done' ? filtered.ids.map(id => results.find(r => r.id === id)).filter((r): r is MeetingService => !!r)
-    : filtered.status === 'error' ? results : results.slice(0, VISIBLE + 1);
-  return list.filter(service => !dismissed.has(service.id)).slice(0, VISIBLE);
+    : filtered.status === 'error' ? results : results;
+  return list.filter(service => !dismissed.has(service.id)).sort((a,b)=>urgent?Number(!!b.urgentSupportEvidence)-Number(!!a.urgentSupportEvidence):0).slice(0, VISIBLE);
 }
 
-export default function LiveServices({ concepts, dismissed, onDismiss, shortlist, newestFirst }: { concepts: LiveConcept[]; dismissed: Set<string>; onDismiss: (id: string) => void; shortlist: ReturnType<typeof useMeetingShortlist>; newestFirst?: boolean }) {
+export default function LiveServices({ concepts, dismissed, onDismiss, shortlist, newestFirst, urgent=false }: { urgent?: boolean; concepts: LiveConcept[]; dismissed: Set<string>; onDismiss: (id: string) => void; shortlist: ReturnType<typeof useMeetingShortlist>; newestFirst?: boolean }) {
   if (!concepts.length) return <div className="live-empty" role="status"><p><strong>Listening for what support is needed.</strong></p><p>Matching services appear here as the conversation moves to a topic, such as work, housing or childcare.</p></div>;
   return <div className="live-services">{(newestFirst ? [...concepts].reverse() : concepts).map(concept => {
     const pending = concept.filtered.status === 'pending';
-    const shown = visibleServices(concept, dismissed);
+    const shown = visibleServices(concept, dismissed, urgent);
     return <section key={concept.label} className="live-concept" aria-label={concept.label}>
       <h4>{concept.label}</h4>
       <p className="live-query" key={concept.query}><span className="live-flash">Searching for “{concept.query}”</span></p>
@@ -50,6 +50,7 @@ export default function LiveServices({ concepts, dismissed, onDismiss, shortlist
           <div className="live-service-body">
             <h5><a href={`/#/directory/${encodeURIComponent(service.id)}`} target="_blank" rel="noreferrer">{service.name}<span className="visually-hidden"> (opens in a new tab)</span></a></h5>
             {service.provider && service.provider !== service.name && <p className="directory-provider">{service.provider}</p>}
+            {urgent&&service.urgentSupportEvidence&&<span className="urgent-service-label" title={service.urgentSupportEvidence}>Urgent support listed</span>}
             <p className="live-snippet">{service.snippet}</p>
             {service.postcode && <p className="field-hint">{service.postcode}</p>}
           </div>

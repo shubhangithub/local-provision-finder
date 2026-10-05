@@ -30,7 +30,7 @@ test('summary starts automatically from only the displayed transcript and links 
   await finishMeeting(page);
   const transcript='I want to get back into work. I also need childcare after school.';
   await expect(page.getByRole('heading',{name:'Draft meeting summary'})).toBeVisible();
-  expect(sent).toEqual({task:'meeting',transcript,search:{area:'Bristol'}});
+  expect(sent).toEqual({task:'meeting',transcript,search:{area:'Bristol',urgency:'normal'}});
   await expect(page.getByText('Local directory draft',{exact:true})).toBeVisible();
   await expect(page.getByRole('region',{name:'Meeting summary'})).toContainText('Check group opening times');
   await page.getByText('Directory evidence',{exact:true}).click();

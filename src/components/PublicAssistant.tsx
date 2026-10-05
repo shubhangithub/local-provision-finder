@@ -5,12 +5,12 @@ interface Citation {id:string;name:string;url?:string;excerpt?:string}
 function sourceUrl(value?:string){try{const url=new URL(value ?? '');return ['http:','https:'].includes(url.protocol)?url.href:null;}catch{return null;}}
 interface Discovery {suggestionId:number|string;name:string;provider:string;description:string;url:string;postcode?:string;reviewStatus:'pending'}
 interface Answer {mode:'openai'|'local';summary:string;answer:string;needs:string[];nextSteps:string[];citations:Citation[];warnings:string[];discoveries?:Discovery[]}
-interface Props {task:'search'|'service';question?:string;search?:{q:string;area?:string;lat?:number;lng?:number;bounds?:string;unknown?:'0'|'1'};serviceId?:string;onSelect?:(id:string)=>void;autoRequestKey?:number;onAutoStart?:(key:number)=>void}
+interface Props {task:'search'|'service';question?:string;search?:{q:string;area?:string;lat?:number;lng?:number;bounds?:string;unknown?:'0'|'1';urgency?:'today'|'normal'};serviceId?:string;onSelect?:(id:string)=>void;autoRequestKey?:number;onAutoStart?:(key:number)=>void}
 export default function PublicAssistant({task,question='',search,serviceId,onSelect,autoRequestKey=0,onAutoStart}:Props) {
  const [draft,setDraft]=useState('');const [answer,setAnswer]=useState<Answer|null>(null);const [loading,setLoading]=useState(false);const [error,setError]=useState('');const controller=useRef<AbortController|null>(null);
  // Preserve the last submitted overview while list/map display filters change.
  const hasRequested=useRef(false);
- const filterContext=JSON.stringify({bounds:search?.bounds,unknown:search?.unknown});
+ const filterContext=JSON.stringify({bounds:search?.bounds,unknown:search?.unknown,urgency:search?.urgency});
  const previousFilters=useRef(filterContext);
  useEffect(()=>{if(previousFilters.current===filterContext)return;previousFilters.current=filterContext;if(task!=='search'||!hasRequested.current)return;const timer=window.setTimeout(()=>void ask(),700);return()=>window.clearTimeout(timer);},[filterContext]);
  const context=JSON.stringify({task,question,serviceId,area:search?.area,lat:search?.lat,lng:search?.lng});

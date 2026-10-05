@@ -7,7 +7,7 @@ import ResultsTabs from './ResultsTabs';
 
 interface Props {
   lines: TranscriptLine[]; concepts: LiveConcept[]; dismissed: Set<string>; onDismiss: (id: string) => void;
-  shortlist: ReturnType<typeof useMeetingShortlist>; endedAt: number; seconds: number; download: string; onRestart: () => void;
+  shortlist: ReturnType<typeof useMeetingShortlist>; endedAt: number; seconds: number; urgent: boolean; download: string; onRestart: () => void;
   summary: AssistantResult | null; summarising: boolean; summaryError: string; onSummarise: () => void;
 }
 
@@ -30,12 +30,12 @@ function Summary({ summary, summarising, summaryError, onSummarise, hasTranscrip
 
 /** What staff see once the meeting is over: the next steps first, everything else a tab away. */
 export default function MeetingResults(props: Props) {
-  const { lines, concepts, dismissed, onDismiss, shortlist, endedAt, seconds, download, onRestart } = props;
+  const { lines, concepts, dismissed, onDismiss, shortlist, endedAt, seconds, download, onRestart, urgent } = props;
   const transcript = transcriptText(lines, true);
   const choices: MeetingChoice[] = shortlist.picked;
-  const fallback: MeetingChoice[] = concepts.flatMap(concept => visibleServices(concept, dismissed).slice(0, 2).map(service => ({ service, concept: concept.label })));
+  const fallback: MeetingChoice[] = concepts.flatMap(concept => visibleServices(concept, dismissed, urgent).slice(0, 2).map(service => ({ service, concept: concept.label })));
   const topics = concepts.map(concept => concept.label);
-  const unsaved = concepts.reduce((total, concept) => total + visibleServices(concept, dismissed).filter(service => !shortlist.savedIds.has(service.id)).length, 0);
+  const unsaved = concepts.reduce((total, concept) => total + visibleServices(concept, dismissed, urgent).filter(service => !shortlist.savedIds.has(service.id)).length, 0);
   const top = useRef<HTMLDivElement>(null);
   useEffect(() => { top.current?.scrollIntoView?.({ block: 'start' }); }, []);
   return <div className="meeting-results" ref={top}>
@@ -47,7 +47,7 @@ export default function MeetingResults(props: Props) {
     <ResultsTabs label="Meeting details" tabs={[
       { id: 'summary', label: 'Summary', panel: <Summary summary={props.summary} summarising={props.summarising} summaryError={props.summaryError} onSummarise={props.onSummarise} hasTranscript={!!transcript} /> },
       { id: 'transcript', label: 'Transcript', panel: <><div className="meeting-transcript" role="region" aria-label="Transcript" tabIndex={0}>{transcript || 'Nothing was transcribed.'}</div><p className="meeting-note">Machine-generated from the audio and may contain mistakes. Check it before relying on it.</p></> },
-      { id: 'suggestions', label: `More suggestions${unsaved ? ` (${unsaved})` : ''}`, panel: <><p className="meeting-note">Tick a service to add it to the next steps above.</p><LiveServices concepts={concepts} dismissed={dismissed} onDismiss={onDismiss} shortlist={shortlist} /></> },
+      { id: 'suggestions', label: `More suggestions${unsaved ? ` (${unsaved})` : ''}`, panel: <><p className="meeting-note">Tick a service to add it to the next steps above.</p><LiveServices concepts={concepts} dismissed={dismissed} onDismiss={onDismiss} shortlist={shortlist} urgent={urgent} /></> },
     ].filter(tab => tab.id !== 'suggestions' || concepts.length > 0)} />
     {download && <p className="meeting-footer"><a className="meeting-download" href={download} download="jobcentre-meeting.webm">Download meeting audio</a></p>}
   </div>;

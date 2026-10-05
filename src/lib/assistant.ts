@@ -1,6 +1,6 @@
 import type { DirectorySummary } from './directory';
 export type AssistantTask='search'|'service'|'suggestion'|'feedback'|'meeting'|'tags'|'guidance';
-export interface AssistantSearch {q?:string;area?:string;lat?:number;lng?:number;bounds?:string;unknown?:'0'|'1'}
+export interface AssistantSearch {q?:string;area?:string;lat?:number;lng?:number;bounds?:string;unknown?:'0'|'1';urgency?:'today'|'normal'}
 export interface AssistantRequest {task:AssistantTask;question?:string;search?:AssistantSearch;serviceId?:string;suggestionId?:string;feedbackId?:string;transcript?:string;pageContext?:string}
 export interface AssistantCitation {id:string;name:string;url:string;excerpt:string}
 export interface AssistantDiscovery {suggestionId:string;name:string;provider:string;description:string;url:string;postcode?:string|null;reviewStatus:'pending'}

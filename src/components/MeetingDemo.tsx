@@ -1,3 +1,5 @@
+import UrgencyNotice from './UrgencyNotice';
+import { type UrgencyMode, needsHelpToday } from '../lib/urgency';
 import { useEffect, useRef, useState } from 'react';
 import '../styles/meeting.css';
 import { askAssistant, type AssistantResult } from '../lib/assistant';
@@ -14,6 +16,7 @@ const DURATION = 600;
 export default function MeetingDemo({ enabled, onEnd, area }: { enabled: boolean; onEnd?: () => void; area?: string }) {
   const [phase, setPhase] = useState<'idle' | 'requesting' | 'recording' | 'finishing' | 'finished'>('idle');
   const [error, setError] = useState('');
+  const [urgency, setUrgency] = useState<UrgencyMode>('auto');
   const [remaining, setRemaining] = useState(DURATION);
   const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
@@ -150,6 +153,7 @@ export default function MeetingDemo({ enabled, onEnd, area }: { enabled: boolean
       recording.start(1000);
       setRemaining(DURATION);
       setPhase('recording');
+      setUrgency('auto');
     } catch (cause) {
       if (request !== generation.current) return;
       release(false);
@@ -173,7 +177,7 @@ export default function MeetingDemo({ enabled, onEnd, area }: { enabled: boolean
     setSummarising(true);
     setSummaryError('');
     try {
-      const result = await askAssistant({ task: 'meeting', transcript: transcriptText(live.lines), search: { area: area || meetingArea } }, controller.signal);
+      const result = await askAssistant({ task: 'meeting', transcript: transcriptText(live.lines), search: { area: area || meetingArea, urgency: needsHelpToday(transcriptText(live.lines), urgency)?'today':'normal' } }, controller.signal);
       if (typeof result.summary !== 'string' || !Array.isArray(result.nextSteps) || !Array.isArray(result.services)) throw new Error('The meeting summary could not be read. Please try again.');
       if (!controller.signal.aborted) setSummary(result);
     } catch (cause) {
@@ -184,11 +188,13 @@ export default function MeetingDemo({ enabled, onEnd, area }: { enabled: boolean
   }
 
   if (!enabled) return null;
+  const urgent = needsHelpToday(transcriptText(live.lines), urgency);
   const dismiss = (id: string) => setDismissed(previous => new Set(previous).add(id));
   const words = live.lines.reduce((total, line) => total + (line.text.trim() ? line.text.trim().split(/\s+/).length : 0), 0);
   const inCall = phase === 'recording' || phase === 'finishing';
   const active = inCall || phase === 'finished';
   return <section className="meeting-demo" aria-label="Staff meeting">
+    {live.lines.length > 0 && <UrgencyNotice staff text={transcriptText(live.lines)} mode={urgency} onChange={setUrgency} />}
     {phase === 'idle' && <div className="meeting-setup">
       {phase === 'idle' && !area && <div className="meeting-location"><label htmlFor="meeting-area">Find support in</label><select id="meeting-area" value={meetingArea} onChange={event => setMeetingArea(event.target.value)}>{directoryAreas.map(location => <option key={location.id} value={location.id}>{location.label}</option>)}</select></div>}
       {phase === 'idle' && <p className="meeting-consent">Starting a meeting streams the microphone audio to Azure OpenAI to write live notes and find matching services. This app does not store the audio. The audio download stays in this browser. Tell everyone in the room before you start.</p>}
@@ -197,7 +203,7 @@ export default function MeetingDemo({ enabled, onEnd, area }: { enabled: boolean
     {phase === 'requesting' && <div className="meeting-permission"><p role="status">Allow microphone access to start your meeting.</p><button className="button secondary" onClick={() => { release(false); live.close(); setPhase('idle'); }}>Cancel</button></div>}
     {error && <p className="meeting-error" role="alert">{error}</p>}
     {live.error && active && <p className="meeting-error" role="alert">{live.error}</p>}
-    {phase === 'finished' && <div className="meeting-session is-finished"><MeetingResults lines={live.lines} concepts={live.concepts} dismissed={dismissed} onDismiss={dismiss} shortlist={shortlist} endedAt={endedAt} seconds={DURATION - remaining} download={download} onRestart={start} summary={summary} summarising={summarising} summaryError={summaryError} onSummarise={summarise} />
+    {phase === 'finished' && <div className="meeting-session is-finished"><MeetingResults lines={live.lines} concepts={live.concepts} dismissed={dismissed} onDismiss={dismiss} shortlist={shortlist} endedAt={endedAt} seconds={DURATION - remaining} download={download} onRestart={start} urgent={urgent} summary={summary} summarising={summarising} summaryError={summaryError} onSummarise={summarise} />
       {!!live.debug.length && <details className="meeting-dev"><summary>Developer view: API traffic ({live.debug.length})</summary><div className="meeting-dev-log">{live.debug.filter(entry => !entry.eventType.endsWith('.delta')).slice(-120).reverse().map(entry => <div key={entry.key}>{new Date(entry.ts).toLocaleTimeString('en-GB')} {entry.dir === 'out' ? 'sent' : 'received'} {entry.source} {entry.eventType}</div>)}</div></details>}
     </div>}
     {inCall && <div className="meeting-session meeting-live" ref={liveRef}>
@@ -208,7 +214,7 @@ export default function MeetingDemo({ enabled, onEnd, area }: { enabled: boolean
       </div>
       <div className="live-main">
         <div className="live-main-head"><h3>Suggested support</h3><p className="live-saved" aria-live="polite">{shortlist.picked.length} saved</p></div>
-        <LiveServices concepts={live.concepts} dismissed={dismissed} onDismiss={dismiss} shortlist={shortlist} newestFirst />
+        <LiveServices concepts={live.concepts} dismissed={dismissed} onDismiss={dismiss} shortlist={shortlist} newestFirst urgent={urgent} />
       </div>
       <p className="live-footnote">Audio is sent to Azure OpenAI to write notes and is not stored by this app. The transcript is kept for after the meeting.</p>
     </div>}

@@ -15,6 +15,7 @@ export interface DirectoryRecord {
 }
 export interface DirectorySite { lat: number | null; lng: number | null; postcode: string | null; label: string }
 export interface DirectorySummary {
+  urgentSupportEvidence?:string;
   id: string; name: string; provider: string; postcode: string | null;
   availabilityConfirmation?:AvailabilityConfirmation;distanceMiles: number | null; sites: DirectorySite[]; snippet: string; tags: string[];
 }
