@@ -1,0 +1,22 @@
+.ns-report{margin-top:24px;padding:20px;background:white;border-left:5px solid #00703c}.ns-report h3{margin:0 0 8px;font-size:28px}.ns-lead{font-size:19px;margin:0 0 20px}.ns-print-head{display:none}.ns-inset{border-left:8px solid #b1b4b6;padding:10px 14px;margin:0 0 20px}
+.ns-banner{border:4px solid #003078;padding:14px 16px;margin-bottom:20px}.ns-banner p{margin:6px 0 0}
+.ns-steps{list-style:none;margin:0 0 24px;padding:0;display:flex;flex-direction:column;gap:16px}.ns-step{display:flex;gap:16px;align-items:flex-start;border:1px solid #b1b4b6;border-top:5px solid #00703c;padding:16px 18px}
+.ns-num{flex:none;width:40px;height:40px;border-radius:50%;background:#00703c;color:white;font-weight:700;font-size:22px;display:grid;place-items:center}.ns-body{flex:1;min-width:0}.ns-body h4{margin:0 0 4px;font-size:22px;line-height:1.2}
+.ns-action{margin:0 0 4px;font-size:19px;font-weight:700;color:#00703c}.ns-why{margin:0 0 10px;color:#505a5f;font-size:16px}
+.ns-facts{margin:0;font-size:16px}.ns-facts>div{display:grid;grid-template-columns:170px 1fr;gap:14px;padding:5px 0;border-top:1px solid #e8e8e8}.ns-facts dt{font-weight:700}.ns-facts dd{margin:0;overflow-wrap:anywhere}
+@media(max-width:600px){.ns-facts>div{grid-template-columns:1fr;gap:0}}
+.ns-check{display:none;flex:none;width:22px;height:22px;border:2px solid #0b0c0c;margin-top:6px}
+.ns-actions{display:flex;flex-wrap:wrap;gap:12px}.ns-actions .button{margin:0}
+.ns-share{margin-top:16px;border-left:5px solid #b1b4b6;padding:4px 0 4px 18px}.ns-share label{display:block;font-weight:700;margin-bottom:6px}.ns-share input{display:block;font:inherit;border:2px solid #0b0c0c;padding:6px;width:100%;max-width:26rem;margin-bottom:14px}.ns-error{color:#d4351c;font-weight:700;margin:0 0 8px}
+@page{margin:12mm}
+@media print{
+ body:has(.ns-report) :not(.ns-report):not(.ns-report *):not(:has(.ns-report)){display:none!important}
+ body:has(.ns-report) .meeting-session,body:has(.ns-report) .meeting-demo,body:has(.ns-report) .finder-section,body:has(.ns-report) .directory-home{border:0!important;padding:0!important;margin:0!important;background:none!important;max-width:none!important}
+ .ns-report{border:0;padding:0;margin:0;font-size:10pt;line-height:1.3}.ns-report .no-print{display:none!important}
+ .ns-print-head{display:block;border-bottom:3px solid #1d70b8;padding-bottom:4px;margin:0 0 8px;font-weight:700;font-size:9pt}
+ .ns-report h3{font-size:20pt;margin:0 0 4px}.ns-lead{font-size:11pt;margin:0 0 8px}.ns-inset{padding:6px 10px;margin:0 0 8px;font-size:9pt}
+ .ns-steps{gap:7px;margin:0}.ns-step{break-inside:avoid;gap:10px;padding:7px 10px;border-top-width:3px}.ns-num{width:24px;height:24px;font-size:11pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ .ns-body h4{font-size:11.5pt;margin:0}.ns-action{font-size:10.5pt;margin:0}.ns-why{font-size:8.5pt;margin:0 0 4px}
+ .ns-facts{display:grid;grid-template-columns:1fr 1fr;column-gap:18px;font-size:8.5pt}.ns-facts>div{grid-template-columns:84px 1fr;gap:6px;padding:1px 0;border-top:0}.ns-facts dt{color:#505a5f}
+ .ns-check{display:block;width:14px;height:14px;margin-top:2px;border-width:1.5px}
+}
