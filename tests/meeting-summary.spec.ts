@@ -14,7 +14,7 @@ async function finishMeeting(page: import('@playwright/test').Page, area?: strin
   await page.getByRole('button',{name:'Staff sign in',exact:true}).click();
   if (area) await page.getByLabel('Find support in',{exact:true}).selectOption(area);
   await page.getByRole('button',{name:'Start meeting',exact:true}).click();
-  await expect(page.getByRole('region',{name:'Transcript'})).toContainText('childcare after school');
+  await expect(page.getByText('13 words captured')).toBeVisible();
   await page.getByRole('button',{name:'Stop meeting',exact:true}).click();
 }
 

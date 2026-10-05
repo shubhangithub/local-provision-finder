@@ -16,8 +16,8 @@ test('meeting is staff-only, shows live words and stops microphone', async ({ pa
   await expect(page.getByText('streams the microphone audio to Azure OpenAI', { exact: false })).toBeVisible();
   await page.getByRole('button', { name: 'Start meeting', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Meeting in progress' })).toBeVisible();
-  await expect(page.getByRole('region', { name: 'Transcript' })).toContainText('I want to get back into work.');
-  await expect(page.getByRole('region', { name: 'Transcript' })).toContainText('childcare after school');
+  await expect(page.getByText('13 words captured')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Transcript' })).toHaveCount(0); // no running transcript while the customer is in the room
   expect(requests[0]).toContain('staff=true');
   await page.getByRole('button', { name: 'Stop meeting', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Meeting ended' })).toBeVisible();
@@ -33,7 +33,7 @@ test('leaving staff mode releases the microphone and removes transcript', async 
   await page.getByRole('button', { name: 'Start meeting', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Meeting in progress' })).toBeVisible();
   await page.getByRole('button', { name: 'Staff demo', exact: true }).click();
-  await expect(page.getByRole('region', { name: 'Transcript' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Meeting in progress' })).toHaveCount(0);
   expect(await mic(page)).toMatchObject({ stopped: 1, recording: false });
 });
 

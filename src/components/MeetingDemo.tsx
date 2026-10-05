@@ -32,6 +32,7 @@ export default function MeetingDemo({ enabled, onEnd, area }: { enabled: boolean
   const generation = useRef(0);
   const resultGeneration = useRef(0);
   const downloadRef = useRef('');
+  const liveRef = useRef<HTMLDivElement>(null);
   const finishRef = useRef<() => void>(() => {});
   const onEndRef = useRef(onEnd);
   onEndRef.current = onEnd;
@@ -84,6 +85,7 @@ export default function MeetingDemo({ enabled, onEnd, area }: { enabled: boolean
     summaryRequest.current?.abort();
     if (downloadRef.current) URL.revokeObjectURL(downloadRef.current);
   }, []);
+  useEffect(() => { if (phase === 'recording') liveRef.current?.scrollIntoView?.({ block: 'start' }); }, [phase]);
   useEffect(() => {
     if (phase !== 'recording') return;
     const started = Date.now();
@@ -183,6 +185,7 @@ export default function MeetingDemo({ enabled, onEnd, area }: { enabled: boolean
 
   if (!enabled) return null;
   const dismiss = (id: string) => setDismissed(previous => new Set(previous).add(id));
+  const words = live.lines.reduce((total, line) => total + (line.text.trim() ? line.text.trim().split(/\s+/).length : 0), 0);
   const inCall = phase === 'recording' || phase === 'finishing';
   const active = inCall || phase === 'finished';
   return <section className="meeting-demo" aria-label="Staff meeting">
@@ -197,15 +200,17 @@ export default function MeetingDemo({ enabled, onEnd, area }: { enabled: boolean
     {phase === 'finished' && <div className="meeting-session is-finished"><MeetingResults lines={live.lines} concepts={live.concepts} dismissed={dismissed} onDismiss={dismiss} shortlist={shortlist} endedAt={endedAt} seconds={DURATION - remaining} download={download} onRestart={start} summary={summary} summarising={summarising} summaryError={summaryError} onSummarise={summarise} />
       {!!live.debug.length && <details className="meeting-dev"><summary>Developer view: API traffic ({live.debug.length})</summary><div className="meeting-dev-log">{live.debug.filter(entry => !entry.eventType.endsWith('.delta')).slice(-120).reverse().map(entry => <div key={entry.key}>{new Date(entry.ts).toLocaleTimeString('en-GB')} {entry.dir === 'out' ? 'sent' : 'received'} {entry.source} {entry.eventType}</div>)}</div></details>}
     </div>}
-    {inCall && <div className="meeting-session">
-      <div className="meeting-heading"><h2>{phase === 'recording' ? 'Meeting in progress' : 'Finishing notes'}</h2><span className={`meeting-status ${phase === 'recording' ? 'is-recording' : ''}`}>{phase === 'recording' ? 'Recording' : 'Microphone off'}</span></div>
-      {phase === 'recording' && <div className="meeting-controls"><p>Time remaining <strong aria-label="Time remaining">{Math.floor(remaining / 60)}:{String(remaining % 60).padStart(2, '0')}</strong></p><Waveform analyser={analyser} /><button className="button meeting-stop" onClick={finish}>Stop meeting</button></div>}
-      {phase === 'finishing' && <p role="status">Finishing the transcript and checking the last suggestions…</p>}
-      <p className="meeting-note">Audio is sent to Azure OpenAI to create the transcript, which is machine-generated and may contain mistakes. Check it before relying on it.</p>
-      <div className="meeting-workspace">
-        <div><h3>Transcript</h3><div className="meeting-transcript" role="region" aria-label="Transcript" aria-live="polite" tabIndex={0}>{transcriptText(live.lines, true) || 'Start talking. The transcript appears here.'}</div></div>
-        <div><h3>Suggested services</h3><LiveServices concepts={live.concepts} dismissed={dismissed} onDismiss={dismiss} shortlist={shortlist} /></div>
+    {inCall && <div className="meeting-session meeting-live" ref={liveRef}>
+      <div className="live-bar">
+        <span className={`live-dot ${phase === 'recording' ? 'is-recording' : ''}`} aria-hidden="true" />
+        <div className="live-state"><h2>{phase === 'recording' ? 'Meeting in progress' : 'Finishing notes'}</h2><p role="status">{phase === 'recording' ? 'Listening' : 'Checking the last suggestions…'} · {words} {words === 1 ? 'word' : 'words'} captured</p></div>
+        {phase === 'recording' && <><Waveform analyser={analyser} /><p className="live-clock">Time remaining <strong aria-label="Time remaining">{Math.floor(remaining / 60)}:{String(remaining % 60).padStart(2, '0')}</strong></p><button className="button meeting-stop" onClick={finish}>Stop meeting</button></>}
       </div>
+      <div className="live-main">
+        <div className="live-main-head"><h3>Suggested support</h3><p className="live-saved" aria-live="polite">{shortlist.picked.length} saved</p></div>
+        <LiveServices concepts={live.concepts} dismissed={dismissed} onDismiss={dismiss} shortlist={shortlist} newestFirst />
+      </div>
+      <p className="live-footnote">Audio is sent to Azure OpenAI to write notes and is not stored by this app. The transcript is kept for after the meeting.</p>
     </div>}
   </section>;
 }
