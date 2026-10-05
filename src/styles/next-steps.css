@@ -20,3 +20,7 @@
  .ns-facts{display:grid;grid-template-columns:1fr 1fr;column-gap:18px;font-size:8.5pt}.ns-facts>div{grid-template-columns:84px 1fr;gap:6px;padding:1px 0;border-top:0}.ns-facts dt{color:#505a5f}
  .ns-check{display:block;width:14px;height:14px;margin-top:2px;border-width:1.5px}
 }
+.ns-report{margin-top:20px;padding:0;background:none;border-left:0}.ns-top{position:sticky;top:0;z-index:2;background:white;display:flex;align-items:center;justify-content:space-between;gap:12px 20px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid #e8e8e8;margin-bottom:12px}.ns-top h3{margin:0;font-size:24px}.ns-actions .button{padding:8px 14px;font-size:17px}
+.ns-lead{font-size:17px;margin:0 0 14px}.ns-steps{margin:0;gap:10px}.ns-step{padding:12px 16px;border-top-width:1px;border-left:5px solid #00703c}.ns-num{width:32px;height:32px;font-size:18px}.ns-body h4{font-size:20px}.ns-why{margin:0 0 4px;font-size:15px}
+.ns-toggle{font-size:16px;padding:0;margin:2px 0 4px}.ns-facts.is-collapsed{display:none}.ns-share{margin:0 0 14px;padding:12px 16px;background:#f3f2f1;border-left:5px solid #1d70b8}
+@media print{.ns-top{position:static;border:0;padding:0;margin:0 0 4px;display:block}.ns-top h3{font-size:20pt}.ns-facts.is-collapsed{display:grid!important}.ns-step{border-left-width:1px;border-top-width:3px}.meeting-session.is-finished{padding:0!important}.meeting-heading,.results-tabs,.meeting-dev{display:none!important}}

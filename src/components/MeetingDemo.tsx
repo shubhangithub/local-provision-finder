@@ -5,8 +5,8 @@ import { directoryAreas } from '../lib/directory';
 import { startPcmCapture, type PcmCapture } from '../lib/mic';
 import { transcriptText, useLiveMeeting } from '../lib/live-meeting';
 import Waveform from './Waveform';
-import LiveServices, { useMeetingShortlist, visibleServices, type MeetingChoice } from './LiveServices';
-import NextStepsReport from './NextStepsReport';
+import LiveServices, { useMeetingShortlist } from './LiveServices';
+import MeetingResults from './MeetingResults';
 
 const DURATION = 600;
 
@@ -160,6 +160,10 @@ export default function MeetingDemo({ enabled, onEnd, area }: { enabled: boolean
     }
   }
 
+  useEffect(() => {
+    if (phase === 'finished' && transcriptText(live.lines)) summarise();
+  }, [phase]);
+
   async function summarise() {
     summaryRequest.current?.abort();
     const controller = new AbortController();
@@ -178,23 +182,23 @@ export default function MeetingDemo({ enabled, onEnd, area }: { enabled: boolean
   }
 
   if (!enabled) return null;
-  const transcript = transcriptText(live.lines);
-  const choices: MeetingChoice[] = shortlist.picked;
-  const fallback: MeetingChoice[] = live.concepts.flatMap(concept => visibleServices(concept, dismissed).slice(0, 2).map(service => ({ service, concept: concept.label })));
-  const topics = live.concepts.map(concept => concept.label);
   const dismiss = (id: string) => setDismissed(previous => new Set(previous).add(id));
-  const active = phase === 'recording' || phase === 'finishing' || phase === 'finished';
+  const inCall = phase === 'recording' || phase === 'finishing';
+  const active = inCall || phase === 'finished';
   return <section className="meeting-demo" aria-label="Staff meeting">
-    {(phase === 'idle' || phase === 'finished') && <div className="meeting-setup">
+    {phase === 'idle' && <div className="meeting-setup">
       {phase === 'idle' && !area && <div className="meeting-location"><label htmlFor="meeting-area">Find support in</label><select id="meeting-area" value={meetingArea} onChange={event => setMeetingArea(event.target.value)}>{directoryAreas.map(location => <option key={location.id} value={location.id}>{location.label}</option>)}</select></div>}
       {phase === 'idle' && <p className="meeting-consent">Starting a meeting streams the microphone audio to Azure OpenAI to write live notes and find matching services. This app does not store the audio. The audio download stays in this browser. Tell everyone in the room before you start.</p>}
-      <button className="button primary meeting-start" onClick={start}>{phase === 'finished' ? 'Start another meeting' : 'Start meeting'}</button>
+      <button className="button primary meeting-start" onClick={start}>Start meeting</button>
     </div>}
     {phase === 'requesting' && <div className="meeting-permission"><p role="status">Allow microphone access to start your meeting.</p><button className="button secondary" onClick={() => { release(false); live.close(); setPhase('idle'); }}>Cancel</button></div>}
     {error && <p className="meeting-error" role="alert">{error}</p>}
     {live.error && active && <p className="meeting-error" role="alert">{live.error}</p>}
-    {active && <div className="meeting-session">
-      <div className="meeting-heading"><h2>{phase === 'recording' ? 'Meeting in progress' : phase === 'finishing' ? 'Finishing notes' : 'Meeting ended'}</h2><span className={`meeting-status ${phase === 'recording' ? 'is-recording' : ''}`}>{phase === 'recording' ? 'Recording' : 'Microphone off'}</span></div>
+    {phase === 'finished' && <div className="meeting-session is-finished"><MeetingResults lines={live.lines} concepts={live.concepts} dismissed={dismissed} onDismiss={dismiss} shortlist={shortlist} endedAt={endedAt} seconds={DURATION - remaining} download={download} onRestart={start} summary={summary} summarising={summarising} summaryError={summaryError} onSummarise={summarise} />
+      {!!live.debug.length && <details className="meeting-dev"><summary>Developer view: API traffic ({live.debug.length})</summary><div className="meeting-dev-log">{live.debug.filter(entry => !entry.eventType.endsWith('.delta')).slice(-120).reverse().map(entry => <div key={entry.key}>{new Date(entry.ts).toLocaleTimeString('en-GB')} {entry.dir === 'out' ? 'sent' : 'received'} {entry.source} {entry.eventType}</div>)}</div></details>}
+    </div>}
+    {inCall && <div className="meeting-session">
+      <div className="meeting-heading"><h2>{phase === 'recording' ? 'Meeting in progress' : 'Finishing notes'}</h2><span className={`meeting-status ${phase === 'recording' ? 'is-recording' : ''}`}>{phase === 'recording' ? 'Recording' : 'Microphone off'}</span></div>
       {phase === 'recording' && <div className="meeting-controls"><p>Time remaining <strong aria-label="Time remaining">{Math.floor(remaining / 60)}:{String(remaining % 60).padStart(2, '0')}</strong></p><Waveform analyser={analyser} /><button className="button meeting-stop" onClick={finish}>Stop meeting</button></div>}
       {phase === 'finishing' && <p role="status">Finishing the transcript and checking the last suggestions…</p>}
       <p className="meeting-note">Audio is sent to Azure OpenAI to create the transcript, which is machine-generated and may contain mistakes. Check it before relying on it.</p>
@@ -202,19 +206,6 @@ export default function MeetingDemo({ enabled, onEnd, area }: { enabled: boolean
         <div><h3>Transcript</h3><div className="meeting-transcript" role="region" aria-label="Transcript" aria-live="polite" tabIndex={0}>{transcriptText(live.lines, true) || 'Start talking. The transcript appears here.'}</div></div>
         <div><h3>Suggested services</h3><LiveServices concepts={live.concepts} dismissed={dismissed} onDismiss={dismiss} shortlist={shortlist} /></div>
       </div>
-      {phase === 'finished' && <NextStepsReport choices={choices} fallback={fallback} topics={topics} endedAt={endedAt} />}
-      {phase === 'finished' && transcript && <div className="meeting-summary-controls"><button className="button secondary" disabled={summarising} onClick={summarise}>{summarising ? 'Summarising meeting…' : 'Summarise meeting'}</button><p className="meeting-note">Create a draft from the transcript and relevant directory entries. Review it before using it.</p></div>}
-      {summarising && <p role="status">Preparing a meeting summary and possible next steps.</p>}
-      {summaryError && <p className="meeting-error" role="alert">{summaryError}</p>}
-      {summary && <section className="meeting-summary" aria-label="Meeting summary"><h3>Draft meeting summary</h3><p className="meeting-summary-mode">{summary.mode === 'openai' ? 'AI-assisted draft' : 'Local directory draft'}</p><p>{summary.summary}</p>
-        {!!summary.needs?.length && <><h4>Support discussed</h4><ul className="meeting-needs">{summary.needs.map((need, index) => <li key={`${need}-${index}`}>{need.replace(/-/g, ' ')}</li>)}</ul></>}
-        {!!summary.nextSteps.length && <><h4>Possible next steps</h4><ol>{summary.nextSteps.map((step, index) => <li key={index}>{step}</li>)}</ol></>}
-        {!!summary.services.length && <><h4>Services to explore</h4><ul>{summary.services.map(service => <li key={service.id}><a href={`/#/directory/${encodeURIComponent(service.id)}`}>{service.name}</a>{service.provider ? ` · ${service.provider}` : ''}</li>)}</ul></>}
-        {!!summary.citations?.length && <details><summary>Directory evidence</summary>{summary.citations.map((citation, index) => <blockquote key={`${citation.id}-${index}`}><a href={`/#/directory/${encodeURIComponent(citation.id)}`}>{citation.name}</a><p>{citation.excerpt}</p></blockquote>)}</details>}
-        {!!summary.warnings?.length && <div className="meeting-summary-warnings">{summary.warnings.map((warning, index) => <p key={index}>{warning}</p>)}</div>}
-      </section>}
-      {!!live.debug.length && <details className="meeting-dev"><summary>Developer view: API traffic ({live.debug.length})</summary><div className="meeting-dev-log">{live.debug.filter(entry => !entry.eventType.endsWith('.delta')).slice(-120).reverse().map(entry => <div key={entry.key}>{new Date(entry.ts).toLocaleTimeString('en-GB')} {entry.dir === 'out' ? 'sent' : 'received'} {entry.source} {entry.eventType}</div>)}</div></details>}
-      {download && <a className="meeting-download" href={download} download="jobcentre-meeting.webm">Download meeting audio</a>}
     </div>}
   </section>;
 }

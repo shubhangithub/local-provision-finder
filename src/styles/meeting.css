@@ -10,3 +10,6 @@
 .meeting-dev{margin-top:24px;font-size:14px}.meeting-dev summary{cursor:pointer;color:#1d70b8}.meeting-dev-log{max-height:220px;overflow:auto;font-family:ui-monospace,Menlo,monospace;font-size:12px;border-left:4px solid #b1b4b6;padding-left:10px;margin-top:8px}
 .meeting-consent{border-left:8px solid #b1b4b6;padding:12px 16px;margin:16px 0;max-width:46rem}
 .meeting-waveform-wrap{flex:1;min-width:0;display:flex}
+.meeting-session.is-finished{background:white;border-top-color:#00703c;padding:20px 24px}.meeting-heading-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap}.meeting-meta{margin:4px 0 0;color:#505a5f}.meeting-heading-actions .button{margin:0}.meeting-heading-actions .meeting-download{margin:0}
+.results-tabs{margin-top:24px}.results-tablist{display:flex;gap:4px;border-bottom:3px solid #b1b4b6;flex-wrap:wrap}.results-tablist [role=tab]{font:inherit;font-weight:700;padding:10px 18px;background:#f3f2f1;border:0;border-bottom:5px solid transparent;margin-bottom:-3px;cursor:pointer;color:#0b0c0c}.results-tablist [role=tab][aria-selected=true]{background:white;border-bottom-color:#4c2c92}.results-tablist [role=tab]:focus-visible{outline:3px solid #ffdd00;background:#ffdd00}
+.results-panel{padding:16px 0 4px}.results-panel .meeting-summary{margin-top:0;padding:0;border-left:0}.results-panel .meeting-note{margin:12px 0}
