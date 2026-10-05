@@ -31,28 +31,12 @@ export interface Service {
   venueCheckedOn?: string;
   endDate?: string;
 }
-export interface SearchQuery {
-  text: string;
-  postcode: string;
-  radius: number;
-  includeRemote: boolean;
-  needs: Need[];
-  practical: PracticalNeed[];
-  providerType: string;
-}
 export interface ServiceMatch {
   service: Service;
   score: number;
   matchedNeeds: Need[];
   reasons: string[];
   missingPractical: PracticalNeed[];
-}
-export interface SearchResult {
-  matches: ServiceMatch[];
-  farther: ServiceMatch[];
-  needs: Need[];
-  unmetNeeds: Need[];
-  urgent: boolean;
 }
 export interface ProposedChange {
   id: string;

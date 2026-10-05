@@ -1,4 +1,5 @@
 import { test, expect } from './fixtures';
+import { chooseRegion } from './region-helpers';
 
 test('staff tags rank first in both search modes and display safely on public cards', async ({ page, request }, testInfo) => {
   const catalogue = await (await request.get('/api/imports?area=Bristol&mode=keyword')).json();
@@ -17,8 +18,7 @@ test('staff tags rank first in both search modes and display safely on public ca
     }
     await page.goto('/');
     await page.getByLabel('What do you need help with?', {exact:true}).fill(tag);
-    await page.getByRole('button', {name:/^Location /}).click();
-    await page.locator('#location-query').fill('Bristol');await page.getByRole('button',{name:'Search this area',exact:true}).click();
+    await chooseRegion(page,'Bristol');
     const first = page.locator('.directory-results-list .service-card').first();
     await expect(first.locator('.import-service-link')).toHaveText(service.name);
     await expect(first.locator('.directory-result-tags li').filter({hasText:tag})).toHaveText(tag);

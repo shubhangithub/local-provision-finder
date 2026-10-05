@@ -9,10 +9,7 @@ test('main pages have no automated WCAG A/AA violations', async ({ page }) => {
     expect(result.violations).toEqual([]);
   };
   await scan();
-  await page.goto('/#/demo');
-  await page.getByRole('button', { name: 'Try example' }).click();
-  await scan();
-  await page.getByRole('link', { name: 'WorkWell Local Health Pathway' }).click();
+  await page.goto('/#/service/LP-003');
   await scan();
   await page.getByRole('button', { name: 'Staff sign in', exact: true }).click();await completeStaffSignIn(page);
   await page.evaluate(() => {location.hash='/review';});

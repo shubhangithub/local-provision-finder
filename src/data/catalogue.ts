@@ -37,7 +37,6 @@ export const catalogue: Service[] = workbook['Provision Catalogue'].map(row => {
   };
 });
 
-export const postcodeLookup = workbook['Postcode Lookup'];
 export const searchTerms = workbook['Search Terms'];
 export const qualityCases = workbook['Data Quality Cases'];
 export const pathways = workbook['Referral Pathways'];

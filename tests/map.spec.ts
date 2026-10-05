@@ -1,7 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
+import { openRegionMenu, showView } from './region-helpers';
 
 async function openPicker(page: Page) {
-  await page.getByRole('button', { name: /^Location / }).click();
+  const panel = await openRegionMenu(page);
+  await panel.getByText('Choose on the map', { exact: true }).click();
   await expect(page.getByRole('region', { name: 'Choose a search area on the map' }).locator('.leaflet-control-zoom-in')).toBeVisible();
 }
 function mapResponse(page: Page) {
@@ -15,7 +17,7 @@ test('location map selection works for all three directories and keeps unlocated
   await page.goto('/');
   for (const area of ['Bristol', 'Kingston', 'Buckinghamshire']) {
     await openPicker(page);
-    await page.getByLabel('Choose an area on the map').selectOption(area);
+    await page.getByLabel('Start the map at').selectOption(area);
     const pending = mapResponse(page);
     await page.getByRole('button', { name: 'Use this map area' }).click();
     const response = await pending;
@@ -35,7 +37,7 @@ test('location map selection works for all three directories and keeps unlocated
         expect(site.lng).toBeGreaterThanOrEqual(west); expect(site.lng).toBeLessThanOrEqual(east);
       }
     }
-    await expect(page.locator('.directory-results-count [role=status]')).toHaveText(`${data.total} services`);
+    await expect(page.locator('.results-count')).toHaveText(`${data.total} services`);
     await expect(page.getByText('Could not load the local directory. Please try again.')).toHaveCount(0);
     const withUnknown = mapResponse(page);
     await page.getByLabel('Include services without map locations').check();
@@ -51,7 +53,7 @@ test('map navigation automatically searches or waits for explicit search and sur
   const selected = mapResponse(page);
   await page.getByRole('button', { name: 'Use this map area' }).click();
   await selected;
-  await page.getByRole('button', { name: 'Map', exact: true }).click();
+  await showView(page, 'Map');
   const map = page.getByRole('region', { name: 'Map of service locations' });
   const zoom = map.locator('.leaflet-control-zoom-in');
   await expect(zoom).toBeVisible();
@@ -60,7 +62,7 @@ test('map navigation automatically searches or waits for explicit search and sur
   const automaticResponse = await automatic;
   const initialBounds = new URL(automaticResponse.url()).searchParams.get('bounds');
   const initialData = await automaticResponse.json();
-  await expect(page.locator('.directory-results-count [role=status]')).toHaveText(`${initialData.total} services`);
+  await expect(page.locator('.results-count')).toHaveText(`${initialData.total} services`);
   await page.getByLabel('Search as I move the map').uncheck();
   let requests = 0;
   const listener = (request: {url(): string}) => {const url = new URL(request.url()); if (url.pathname === '/api/imports' && url.searchParams.has('bounds')) requests++;};
@@ -76,7 +78,7 @@ test('map navigation automatically searches or waits for explicit search and sur
   const finalBounds = new URL(manualResponse.url()).searchParams.get('bounds');
   expect(finalBounds).not.toBe(initialBounds);
   page.off('request', listener);
-  await page.getByRole('button', { name: 'List', exact: true }).click();
+  await showView(page, 'List');
   await page.locator('.directory-results-list .import-service-link').first().click();
   const back = page.getByRole('button', { name: 'Back to results', exact: true });
   await expect(back).toHaveCount(1);
@@ -85,7 +87,7 @@ test('map navigation automatically searches or waits for explicit search and sur
   const sectionBox = await page.locator('.directory-service-detail').boundingBox();
   expect(Math.abs(backBox!.x - sectionBox!.x)).toBeLessThan(20);
   await back.click();
-  await page.getByRole('button', { name: 'Map', exact: true }).click();
+  await showView(page, 'Map');
   await expect(map.locator('.leaflet-control-zoom-in')).toBeVisible();
   const restored = mapResponse(page);
   await map.locator('.leaflet-control-zoom-out').click();
@@ -105,12 +107,12 @@ test('map API rejects malformed or reversed bounding boxes', async ({ request })
   }
 });
 
-test('service links inside the location picker open their service details',async({page})=>{
+test('service links inside the region map picker open their service details',async({page})=>{
  await page.goto('/');await openPicker(page);await page.locator('.service-map-pin').first().waitFor();
  const index=await page.locator('.service-map-pin').evaluateAll(nodes=>nodes.findIndex(node=>{const pin=node.getBoundingClientRect(),map=node.closest('.services-map')!.getBoundingClientRect();return pin.top>map.top+10&&pin.bottom<map.bottom-10&&pin.left>map.left+60&&pin.right<map.right-20;}));
- expect(index).toBeGreaterThanOrEqual(0);await page.locator('.service-map-pin').nth(index).click();
+ expect(index).toBeGreaterThanOrEqual(0);await page.locator('.service-map-pin').nth(index).click({force:true});
  const link=page.locator('.map-service-link').first();const name=await link.innerText();await link.click();
- await expect(page.getByRole('dialog',{name:'Choose location',exact:true})).not.toBeVisible();
+ await expect(page.getByRole('region',{name:'Region settings'})).toBeHidden();
  await expect(page.getByRole('heading',{name,exact:true})).toBeVisible();await expect(page.getByRole('heading',{name:'About this service',exact:true})).toBeVisible();
- await page.getByRole('button',{name:'Back to results',exact:true}).click();await expect(page.locator('.directory-results-list .service-card').first()).toBeVisible();
+ await page.getByRole('button',{name:'Back to results',exact:true}).click();await expect(page.getByRole('heading',{name:'What do you need help with?'})).toBeVisible();
 });

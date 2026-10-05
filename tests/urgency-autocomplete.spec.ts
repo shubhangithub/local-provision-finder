@@ -1,6 +1,7 @@
 import { expect, test } from './fixtures';
 import { mockMicrophone, mockRealtime, service } from './meeting-helpers';
 import { completeStaffSignIn } from './helpers/staff-sign-in';
+import { chooseRegion } from './region-helpers';
 const result={ready:true,total:2,page:1,pageSize:20,searchMode:'semantic',mappedCount:0,unmappedCount:2,mapRecords:[],records:[{...service('food-a','Food support'),urgentSupportEvidence:'Emergency food support.'},service('food-b','Community food parcels')]};
 test('urgent wording activates help today; opt-out refreshes results and overview',async({page})=>{
  const requests:string[]=[];const assistant:Record<string,unknown>[]=[];
@@ -8,7 +9,7 @@ test('urgent wording activates help today; opt-out refreshes results and overvie
  await page.route('**/api/assistant',route=>{assistant.push(route.request().postDataJSON());return route.fulfill({json:{mode:'openai',summary:'Food options',answer:'Food options',nextSteps:[],citations:[],services:[],warnings:[]}});});
  await page.goto('/');await page.getByRole('combobox',{name:'What do you need help with?'}).fill('I have no food today');
  await expect(page.getByLabel('I need help today',{exact:true})).toBeChecked();
- await page.getByRole('button',{name:'Find support',exact:true}).click();await page.getByLabel('Town or service postcode').fill('Bristol');await page.getByRole('button',{name:'Search this area',exact:true}).click();
+ await page.getByRole('button',{name:'Find support',exact:true}).click();await chooseRegion(page,'Bristol');
  await expect(page.getByText('Urgent support listed',{exact:true})).toBeVisible();
  await expect.poll(()=>assistant.length).toBeGreaterThan(0);
  await page.getByLabel('I need help today',{exact:true}).uncheck();
@@ -24,7 +25,7 @@ test('danger guidance appears without waiting for location or AI; negation does 
 test('autocomplete is debounced, area-scoped and keyboard selectable',async({page})=>{
  const requests:string[]=[];
  await page.route('**/api/imports?**',route=>{requests.push(route.request().url());return route.fulfill({json:result});});
- await page.goto('/');await page.getByRole('button',{name:/Location Choose an area/}).click();await page.getByLabel('Town or service postcode').fill('Kingston');await page.getByRole('button',{name:'Search this area',exact:true}).click();
+ await page.goto('/');await chooseRegion(page,'Kingston');
  const input=page.getByRole('combobox',{name:'What do you need help with?'});await input.fill('fo');await page.waitForTimeout(400);await expect(page.getByRole('listbox')).toHaveCount(0);
  await input.fill('food');await expect(page.getByRole('option',{name:'Food support',exact:true})).toBeVisible();expect(requests.some(url=>url.includes('q=food')&&url.includes('area=Kingston')&&url.includes('mode=semantic'))).toBe(true);
  await input.press('ArrowDown');await expect(input).toHaveAttribute('aria-activedescendant','support-option-0');await input.press('Enter');await expect(input).toHaveValue('Food support');await expect(page.getByRole('listbox')).toHaveCount(0);
