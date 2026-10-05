@@ -1,3 +1,4 @@
+import { completeStaffSignIn } from './helpers/staff-sign-in';
 import { expect, test } from './fixtures';
 
 import { mockMicrophone, mockRealtime } from './meeting-helpers';
@@ -12,6 +13,8 @@ async function finishMeeting(page: import('@playwright/test').Page, area?: strin
   await mockRealtime(page, { messages: words });
   await page.goto('/');
   await page.getByRole('button',{name:'Staff sign in',exact:true}).click();
+  await completeStaffSignIn(page);
+  await page.getByRole('button', { name: 'Start meeting', exact: true }).click();
   if (area) await page.getByLabel('Find support in',{exact:true}).selectOption(area);
   await page.getByRole('button',{name:'Start meeting',exact:true}).click();
   await expect(page.getByRole('region',{name:'Transcript'})).toContainText('childcare after school');
