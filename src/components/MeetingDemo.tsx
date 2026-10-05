@@ -1,3 +1,5 @@
+import UrgencyNotice from './UrgencyNotice';
+import { type UrgencyMode, needsHelpToday } from '../lib/urgency';
 import { useEffect, useRef, useState } from 'react';
 import '../styles/meeting.css';
 import { askAssistant, type AssistantResult } from '../lib/assistant';
@@ -14,6 +16,7 @@ const DURATION = 600;
 export default function MeetingDemo({ enabled, onEnd, area }: { enabled: boolean; onEnd?: () => void; area?: string }) {
   const [phase, setPhase] = useState<'idle' | 'requesting' | 'recording' | 'finishing' | 'finished'>('idle');
   const [error, setError] = useState('');
+  const [urgency, setUrgency] = useState<UrgencyMode>('auto');
   const [remaining, setRemaining] = useState(DURATION);
   const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
@@ -148,6 +151,7 @@ export default function MeetingDemo({ enabled, onEnd, area }: { enabled: boolean
       recording.start(1000);
       setRemaining(DURATION);
       setPhase('recording');
+      setUrgency('auto');
     } catch (cause) {
       if (request !== generation.current) return;
       release(false);
@@ -167,7 +171,7 @@ export default function MeetingDemo({ enabled, onEnd, area }: { enabled: boolean
     setSummarising(true);
     setSummaryError('');
     try {
-      const result = await askAssistant({ task: 'meeting', transcript: transcriptText(live.lines), search: { area: area || meetingArea } }, controller.signal);
+      const result = await askAssistant({ task: 'meeting', transcript: transcriptText(live.lines), search: { area: area || meetingArea, urgency: needsHelpToday(transcriptText(live.lines), urgency)?'today':'normal' } }, controller.signal);
       if (typeof result.summary !== 'string' || !Array.isArray(result.nextSteps) || !Array.isArray(result.services)) throw new Error('The meeting summary could not be read. Please try again.');
       if (!controller.signal.aborted) setSummary(result);
     } catch (cause) {
@@ -180,11 +184,12 @@ export default function MeetingDemo({ enabled, onEnd, area }: { enabled: boolean
   if (!enabled) return null;
   const transcript = transcriptText(live.lines);
   const choices: MeetingChoice[] = shortlist.picked;
-  const fallback: MeetingChoice[] = live.concepts.flatMap(concept => visibleServices(concept, dismissed).slice(0, 2).map(service => ({ service, concept: concept.label })));
+  const fallback: MeetingChoice[] = live.concepts.flatMap(concept => visibleServices(concept, dismissed, needsHelpToday(transcript,urgency)).slice(0, 2).map(service => ({ service, concept: concept.label })));
   const topics = live.concepts.map(concept => concept.label);
   const dismiss = (id: string) => setDismissed(previous => new Set(previous).add(id));
   const active = phase === 'recording' || phase === 'finishing' || phase === 'finished';
   return <section className="meeting-demo" aria-label="Staff meeting">
+    {live.lines.length>0 && <UrgencyNotice staff text={transcriptText(live.lines)} mode={urgency} onChange={setUrgency}/>}
     {(phase === 'idle' || phase === 'finished') && <div className="meeting-setup">
       {phase === 'idle' && !area && <div className="meeting-location"><label htmlFor="meeting-area">Find support in</label><select id="meeting-area" value={meetingArea} onChange={event => setMeetingArea(event.target.value)}>{directoryAreas.map(location => <option key={location.id} value={location.id}>{location.label}</option>)}</select></div>}
       {phase === 'idle' && <p className="meeting-consent">Starting a meeting streams the microphone audio to Azure OpenAI to write live notes and find matching services. This app does not store the audio. The audio download stays in this browser. Tell everyone in the room before you start.</p>}
@@ -200,7 +205,7 @@ export default function MeetingDemo({ enabled, onEnd, area }: { enabled: boolean
       <p className="meeting-note">Audio is sent to Azure OpenAI to create the transcript, which is machine-generated and may contain mistakes. Check it before relying on it.</p>
       <div className="meeting-workspace">
         <div><h3>Transcript</h3><div className="meeting-transcript" role="region" aria-label="Transcript" aria-live="polite" tabIndex={0}>{transcriptText(live.lines, true) || 'Start talking. The transcript appears here.'}</div></div>
-        <div><h3>Suggested services</h3><LiveServices concepts={live.concepts} dismissed={dismissed} onDismiss={dismiss} shortlist={shortlist} /></div>
+        <div><h3>Suggested services</h3><LiveServices concepts={live.concepts} dismissed={dismissed} onDismiss={dismiss} shortlist={shortlist} urgent={needsHelpToday(transcript,urgency)} /></div>
       </div>
       {phase === 'finished' && <NextStepsReport choices={choices} fallback={fallback} topics={topics} endedAt={endedAt} />}
       {phase === 'finished' && transcript && <div className="meeting-summary-controls"><button className="button secondary" disabled={summarising} onClick={summarise}>{summarising ? 'Summarising meeting…' : 'Summarise meeting'}</button><p className="meeting-note">Create a draft from the transcript and relevant directory entries. Review it before using it.</p></div>}

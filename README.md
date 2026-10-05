@@ -65,3 +65,11 @@ npm run test:e2e
 ```
 
 Browser tests cover desktop/mobile searches, maps, feedback, suggestions, tags, notifications and meeting controls, alongside automated accessibility checks. These checks do not replace a manual accessibility audit.
+
+## Urgency and search suggestions
+
+The search box offers real directory service names after three characters, using the existing semantic index with a 350 ms debounce. Suggestions respect selected location/map bounds and never require a paid model call. If semantic search is unavailable, directory keyword matches are used. Arrow keys select an option; Enter searches it; Escape dismisses suggestions.
+
+Clear current urgency phrases activate the optional Help today preference. Users can turn it off or enable it themselves. Matching urgent services move higher in results; closed services and location boundaries are still respected. A badge requires explicit affirmative urgency wording in a service name, description, category or tag. It does not claim current opening or availability. Live meetings show the same urgency prompt and prioritise recorded urgent services within each relevance-filtered topic; the meeting AI summary receives the staff preference.
+
+Detection uses transparent phrase rules, with common negation and historical clauses suppressed. It is not a comprehensive safety assessment. Clear danger signals show NHS emergency guidance immediately, independently of AI availability or location selection. Guidance sources: https://www.nhs.uk/nhs-services/mental-health-services/where-to-get-urgent-help-for-mental-health/ and https://www.gov.uk/homelessness-help-from-council .

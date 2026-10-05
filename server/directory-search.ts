@@ -1,3 +1,4 @@
+import { needsHelpToday, urgencySearchText, urgentServiceEvidence, matchesUrgentTopic } from '../src/lib/urgency.ts';
 import { directoryAreas, directorySites, matchesArea, siteInBounds, nearestDistance, distanceMiles, type DirectoryRecord, type DirectoryResponse, type DirectorySite, type MapBounds } from '../src/lib/directory.ts';
 import { semanticMatches } from './semantic.ts';
 const subjectPatterns=[[/\b(job|jobs|employment|unemployed|cv|career)\b|(?:back|return|finding|find).{0,20}\bwork\b/i,/employment|job|career|employability|cv writing/i],[/\b(bills?|money|debts?|financial|benefits?|budget)\b/i,/money|debt|financial|benefit|budget/i],[/anxi|anxious|panic|depress|mental|someone to talk|counsell/i,/mental|counsell|anxiety|talking therap|mindline/i]];
@@ -25,7 +26,9 @@ function nearbyDirectory(record: DirectoryRecord, origin:{lat:number;lng:number}
 }
 export class SearchInputError extends Error {}
 export async function searchDirectory(records: DirectoryRecord[], params: URLSearchParams): Promise<DirectoryResponse> {
-  const query=(params.get('q') ?? '').trim().slice(0,250);
+  const originalQuery=(params.get('q') ?? '').trim().slice(0,250);
+  const urgent=needsHelpToday(originalQuery,params.get('urgency')==='normal'?'normal':params.get('urgency')==='today'?'today':'auto');
+  const query=urgent?urgencySearchText(originalQuery):originalQuery;
   const area=(params.get('area') ?? '').trim().slice(0,80);
   const nearby=params.has('lat');
   const lat=Number(params.get('lat')), lng=Number(params.get('lng'));
@@ -43,7 +46,7 @@ export async function searchDirectory(records: DirectoryRecord[], params: URLSea
   const candidates=records.filter(record => record.availability!=='Removed at source' && record.availability!=='Closed').map(record => {
     const sites=directorySites(record);
     const distance=nearby ? nearestDistance(origin,sites) : null;
-    return {record,sites,distance,score:0,tagMatch:false,snippet:record.description};
+    return {record,sites,distance,score:0,tagMatch:false,snippet:record.description,urgentEvidence:urgentServiceEvidence(record)};
   }).filter(item => bounds ? item.sites.some(site => siteInBounds(site,bounds!)) || includeUnknown && item.sites.every(site => site.lat===null) && nearbyDirectory(item.record,{lat:(bounds.north+bounds.south)/2,lng:(bounds.east+bounds.west)/2}) : nearby ? item.distance === null ? includeUnknown && nearbyDirectory(item.record,origin) : item.distance<=radius : matchesArea(item.record,item.sites,area));
   let semantic=null;
   if (query && params.get('mode')!=='keyword') {
@@ -59,10 +62,10 @@ export async function searchDirectory(records: DirectoryRecord[], params: URLSea
       return {...item,tagMatch,score:(match?.score ?? 0)+lexical.score,snippet:match?.snippet || lexical.snippet,semanticScore:match?.score ?? 0,exact:lexical.exact};
     });
     const best=Math.max(0,...scored.map(item => item.semanticScore));
-    ranked=scored.filter(item => item.tagMatch || (semantic ? item.exact || (item.semanticScore>=0.32 && item.semanticScore>=best-0.16) : item.exact || queryTerms(query).length>0 && queryTerms(query).every(term => item.record.searchText.toLowerCase().includes(term))));
+    ranked=scored.filter(item => item.tagMatch || urgent && matchesUrgentTopic(item.record,originalQuery) || (semantic ? item.exact || (item.semanticScore>=0.32 && item.semanticScore>=best-0.16) : item.exact || queryTerms(query).length>0 && queryTerms(query).every(term => item.record.searchText.toLowerCase().includes(term))));
   }
-  ranked.sort((a,b) => query ? Number(b.tagMatch)-Number(a.tagMatch) || b.score-a.score || (a.distance ?? Infinity)-(b.distance ?? Infinity) || a.record.name.localeCompare(b.record.name) : nearby ? (a.distance ?? Infinity)-(b.distance ?? Infinity) || a.record.name.localeCompare(b.record.name) : a.record.name.localeCompare(b.record.name));
+  ranked.sort((a,b) => (urgent?Number(!!b.urgentEvidence)-Number(!!a.urgentEvidence):0) || (query ? Number(b.tagMatch)-Number(a.tagMatch) || b.score-a.score || (a.distance ?? Infinity)-(b.distance ?? Infinity) || a.record.name.localeCompare(b.record.name) : nearby ? (a.distance ?? Infinity)-(b.distance ?? Infinity) || a.record.name.localeCompare(b.record.name) : a.record.name.localeCompare(b.record.name)));
   const mappedSites = (sites: DirectorySite[]) => sites.filter(site => site.lat!==null && site.lng!==null && (bounds ? siteInBounds(site,bounds) : !nearby || distanceMiles(origin,{lat:site.lat!,lng:site.lng!})<=radius));
   const mapRecords=ranked.flatMap(item => {const sites=mappedSites(item.sites);return sites.length ? [{id:item.record.id,name:item.record.name,provider:item.record.provider,sites}] : [];});
-  return {total:ranked.length,page,pageSize,ready:true,searchMode:query ? semantic ? 'semantic' : 'keyword' : 'browse',mappedCount:mapRecords.length,unmappedCount:ranked.length-mapRecords.length,mapRecords,records:ranked.slice((page-1)*pageSize,page*pageSize).map(item => ({id:item.record.id,name:item.record.name,provider:item.record.provider,availabilityConfirmation:item.record.availabilityConfirmation,tags:item.record.tags ?? [],postcode:item.record.postcode,distanceMiles:item.distance,sites:mappedSites(item.sites),snippet:item.snippet.replace(/^name:\s*/i,'').slice(0,220)}))};
+  return {total:ranked.length,page,pageSize,ready:true,searchMode:query ? semantic ? 'semantic' : 'keyword' : 'browse',mappedCount:mapRecords.length,unmappedCount:ranked.length-mapRecords.length,mapRecords,records:ranked.slice((page-1)*pageSize,page*pageSize).map(item => ({id:item.record.id,name:item.record.name,provider:item.record.provider,urgentSupportEvidence:item.urgentEvidence??undefined,availabilityConfirmation:item.record.availabilityConfirmation,tags:item.record.tags ?? [],postcode:item.record.postcode,distanceMiles:item.distance,sites:mappedSites(item.sites),snippet:item.snippet.replace(/^name:\s*/i,'').slice(0,220)}))};
 }

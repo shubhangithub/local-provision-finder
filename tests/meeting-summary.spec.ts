@@ -31,7 +31,7 @@ test('staff summarises only the displayed transcript and gets grounded service l
   const transcript='I want to get back into work. I also need childcare after school.';
   await page.getByRole('button',{name:'Summarise meeting',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Draft meeting summary'})).toBeVisible();
-  expect(sent).toEqual({task:'meeting',transcript,search:{area:'Bristol'}});
+  expect(sent).toEqual({task:'meeting',transcript,search:{area:'Bristol',urgency:'normal'}});
   await expect(page.getByText('Local directory draft',{exact:true})).toBeVisible();
   await expect(page.getByRole('region',{name:'Meeting summary'})).toContainText('Check group opening times');
   await expect(page.getByRole('region',{name:'Meeting summary'}).getByRole('link',{name:'Confidence support'}).first()).toHaveAttribute('href','/#/directory/grounded-service');
