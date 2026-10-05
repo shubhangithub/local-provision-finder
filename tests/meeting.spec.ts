@@ -200,3 +200,20 @@ test('opening the summary page does not start a hidden recording',async({page})=
  await expect(page.getByRole('heading',{name:'No meeting summary yet',exact:true})).toBeVisible();
  expect(await page.evaluate(()=>(window as unknown as {meetingMic:{requested:number}}).meetingMic.requested)).toBe(0);
 });
+
+test('recording hides the transcript until asked, and the transcript returns after the meeting', async ({ page }) => {
+  await mockMicrophone(page);
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Staff sign in', exact: true }).click();await completeStaffSignIn(page);
+  await page.getByRole('button', { name: 'Start meeting', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Customer meeting' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Transcript' })).toHaveCount(0);
+  await expect(page.getByText('words captured')).toBeVisible();
+  await expect(page.getByLabel('Add conversation note')).toBeVisible();
+  await page.getByRole('button', { name: 'Show transcript', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Transcript' })).toBeVisible();
+  await page.getByRole('button', { name: 'Hide transcript', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Transcript' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Stop meeting', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Transcript' })).toBeVisible();
+});

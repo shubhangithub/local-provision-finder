@@ -37,6 +37,7 @@ export default function MeetingDemo({ enabled, autoStart=true, onNotify, onBack,
   const [sample, setSample] = useState(false);
   const [turns, setTurns] = useState<MeetingTurn[]>([]);
   const [interim, setInterim] = useState('');
+  const [showTranscript, setShowTranscript] = useState(false);
   const [speaker, setSpeaker] = useState<MeetingTurn['speaker']>('Customer');
   const speakerRef = useRef(speaker); speakerRef.current = speaker;
   const [note, setNote] = useState('');
@@ -187,6 +188,7 @@ export default function MeetingDemo({ enabled, autoStart=true, onNotify, onBack,
       deadline.current = Date.now() + DURATION * 1000;
       setRemaining(DURATION);
       setWordCount(0);
+      setShowTranscript(false);
       setPhase('recording');
       cue('Start recording');
       notifyRef.current?.('Recording started.');
@@ -238,7 +240,7 @@ export default function MeetingDemo({ enabled, autoStart=true, onNotify, onBack,
   }
   function trySample() {
     liveCapture.current?.stop();liveCapture.current=null;live.close();live.reset();
-    const engine=recognition.current;recognition.current=null;engine?.abort();setInterim('');setWordCount(0);setSample(true);sampleRef.current=true;setTranscriptionError('');
+    const engine=recognition.current;recognition.current=null;engine?.abort();setInterim('');setWordCount(0);setSample(true);setShowTranscript(true);sampleRef.current=true;setTranscriptionError('');
   }
   function addNote() {
     if (!note.trim()) return;
@@ -254,6 +256,8 @@ export default function MeetingDemo({ enabled, autoStart=true, onNotify, onBack,
   }
 
   if (!enabled) return null;
+  const words = displayTurns.reduce((total, turn) => total + (turn.text.trim() ? turn.text.trim().split(/\s+/).length : 0), 0);
+  const focused = phase === 'recording' && !showTranscript;
   return <section className="meeting-workspace" aria-label="Staff meeting">
     <div className="meeting-page-top"><button className="text-button" onClick={onBack}><ArrowLeft size={16}/>Back to workspace</button><span className="meeting-workspace-tag">CASEWORKER WORKSPACE</span></div>
     <div className="meeting-page-heading"><div><p className="meeting-eyebrow">Customer conversation</p><h1>{phase==='finished' ? 'Meeting complete' : 'Customer meeting'}</h1><p>{phase==='finished' ? 'Review the conversation and prepare the customer’s next steps.' : 'Listen, explore support and build a plan together.'}</p></div><span className={`meeting-status ${phase === 'recording' ? 'is-recording' : ''}`}><span className="meeting-record-dot"/>{phase === 'recording' ? 'Recording' : phase==='requesting' ? 'Connecting microphone' : 'Microphone off'}</span></div>
@@ -261,11 +265,11 @@ export default function MeetingDemo({ enabled, autoStart=true, onNotify, onBack,
     {phase==='requesting' && <div className="meeting-permission"><p role="status">Allow microphone access to start your meeting.</p><button className="button secondary" onClick={()=>{release(false);setPhase('idle');}}>Cancel</button></div>}
     <div className="meeting-actionbar"><div className="meeting-clock"><Clock3 size={19}/><span>Time remaining</span><strong aria-label="Time remaining">{Math.floor(remaining/60)}:{String(remaining%60).padStart(2,'0')}</strong></div><div className="meeting-actions">{phase==='recording' ? <><button className="text-button" onClick={extend}>Add 5 minutes</button><button className="button meeting-stop" onClick={()=>finish()}><Square size={15}/>Stop meeting</button></> : phase==='finished' ? <button className="button primary" onClick={()=>onProduce(createCustomerDocument(displayTurns,[...selectedProvisions,...shortlist.picked.filter(choice=>!selectedProvisions.some(item=>item.id===choice.service.id)).map(choice=>({...choice.service,reason:choice.concept}))]))}><FileText size={18}/>Produce customer summary</button> : phase==='finishing' ? <span role="status">Finishing the transcript…</span> : phase==='idle' ? <button className="button primary" onClick={start}><Mic size={17}/>Start recording</button> : null}</div></div>
     {phase==='recording' && remaining<=WARNING && remaining>0 && <div className="meeting-time-alert"><p role="alert"><strong>Meeting time is nearly up.</strong> Recording stops when the timer reaches zero.</p><button className="button secondary" onClick={extend}>Extend by 5 minutes</button></div>}
-    <div className="meeting-grid"><div className="meeting-conversation"><div className="conversation-heading"><div><MessageSquare size={19}/><h2>Conversation</h2></div>{phase==='recording' && <button className="text-button" disabled={sample} onClick={trySample}>{sample ? 'Sample conversation' : 'Try sample conversation'}</button>}</div>
-      <div ref={transcriptRef} className="meeting-transcript" role="region" aria-label="Transcript" tabIndex={0}>{displayTurns.length ? displayTurns.map((turn,index)=><div className={`meeting-turn ${turn.speaker.toLowerCase()}`} key={index}><span className="meeting-speaker-avatar">{turn.speaker==='Advisor' ? 'A' : 'C'}</span><div><strong>{turn.speaker}</strong><p>{turn.text}</p></div></div>) : <div className="conversation-empty"><Mic size={30}/><h3>{phase==='recording' ? 'Listening to the conversation' : 'Your conversation appears here'}</h3><p>Customer needs and useful provision will appear alongside your notes.</p></div>}{interim && <div className={`meeting-turn ${speaker.toLowerCase()} interim`}><span className="meeting-speaker-avatar">{speaker[0]}</span><div><strong>{speaker}</strong><p>{interim}</p></div></div>}</div>
+    <div className={`meeting-grid ${phase === 'recording' ? 'is-focused' : ''}`}><div className="meeting-conversation"><div className="conversation-heading"><div><MessageSquare size={19}/><h2>Conversation</h2></div>{phase==='recording' && <div className="conversation-tools"><button className="text-button" aria-expanded={showTranscript} onClick={()=>setShowTranscript(value=>!value)}>{showTranscript ? 'Hide transcript' : 'Show transcript'}</button><button className="text-button" disabled={sample} onClick={trySample}>{sample ? 'Sample conversation' : 'Try sample conversation'}</button></div>}</div>
+      {focused ? <div className="conversation-quiet"><Mic size={22}/><p><strong>Listening</strong> · {words} {words === 1 ? 'word' : 'words'} captured</p></div> : <div ref={transcriptRef} className="meeting-transcript" role="region" aria-label="Transcript" tabIndex={0}>{displayTurns.length ? displayTurns.map((turn,index)=><div className={`meeting-turn ${turn.speaker.toLowerCase()}`} key={index}><span className="meeting-speaker-avatar">{turn.speaker==='Advisor' ? 'A' : 'C'}</span><div><strong>{turn.speaker}</strong><p>{turn.text}</p></div></div>) : <div className="conversation-empty"><Mic size={30}/><h3>{phase==='recording' ? 'Listening to the conversation' : 'Your conversation appears here'}</h3><p>Customer needs and useful provision will appear alongside your notes.</p></div>}{interim && <div className={`meeting-turn ${speaker.toLowerCase()} interim`}><span className="meeting-speaker-avatar">{speaker[0]}</span><div><strong>{speaker}</strong><p>{interim}</p></div></div>}</div>}
       {phase==='recording' && <form className="meeting-note-form" onSubmit={event=>{event.preventDefault();addNote();}}><div className="meeting-note-top"><label htmlFor="meeting-note">Add conversation note</label><div className="speaker-picker" role="group" aria-label="Current speaker">{(['Customer','Advisor'] as const).map(value=><button key={value} type="button" aria-pressed={speaker===value} onClick={()=>setSpeaker(value)}>{value}</button>)}</div></div>{transcriptionError && <p className="transcription-status" role="status">{transcriptionError}</p>}<div className="meeting-note-input"><textarea id="meeting-note" rows={2} value={note} onChange={event=>setNote(event.target.value)} placeholder="Capture a need, preference or agreed action…" maxLength={4000}/><button className="button secondary" disabled={!note.trim()} type="submit">Add note</button></div></form>}
       {phase==='finished' && <div className="meeting-finished"><div><CheckMark/><strong>Recording stopped</strong></div>{download && <a className="meeting-download" href={download} download="customer-meeting.webm">Download meeting audio</a>}<button className="text-button" onClick={start}>Start another meeting</button></div>}
-    </div>{!sample&&live.concepts.length>0 ? <aside className="meeting-assist"><h2>Suggested support</h2><LiveServices concepts={live.concepts} dismissed={dismissed} onDismiss={id=>setDismissed(previous=>new Set([...previous,id]))} shortlist={shortlist}/></aside> : <MeetingAssist customerText={customerText} selected={selectedProvisions} onToggle={provision=>setSelectedProvisions(previous=>previous.some(item=>item.id===provision.id) ? previous.filter(item=>item.id!==provision.id) : [...previous,provision])}/>}</div>
+    </div>{!sample&&live.concepts.length>0 ? <aside className="meeting-assist"><div className="live-main-head"><h2>Suggested support</h2><p className="live-saved" aria-live="polite">{shortlist.picked.length} saved</p></div><LiveServices concepts={live.concepts} dismissed={dismissed} onDismiss={id=>setDismissed(previous=>new Set([...previous,id]))} shortlist={shortlist} newestFirst/></aside> : <MeetingAssist customerText={customerText} selected={selectedProvisions} onToggle={provision=>setSelectedProvisions(previous=>previous.some(item=>item.id===provision.id) ? previous.filter(item=>item.id!==provision.id) : [...previous,provision])}/>}</div>
   </section>;
 }
 function CheckMark(){return <span aria-hidden="true" className="meeting-checkmark">✓</span>;}
