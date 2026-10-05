@@ -32,6 +32,27 @@ export function importsApi(): Plugin {
           return send(200, { record: readable });
         }
         if (url.pathname !== '/api/imports') return send(404, { error: 'Endpoint not found.' });
+        if (url.searchParams.has('area') || url.searchParams.has('lat')) {
+          const area = (url.searchParams.get('area') ?? '').trim();
+          const q = (url.searchParams.get('q') ?? '').slice(0, 200).trim().toLowerCase();
+          const latitude = Number(url.searchParams.get('lat'));
+          const longitude = Number(url.searchParams.get('lng'));
+          const nearby = url.searchParams.has('lat');
+          if (nearby && (!url.searchParams.has('lng') || !Number.isFinite(latitude) || !Number.isFinite(longitude) || Math.abs(latitude)>90 || Math.abs(longitude)>180)) return send(400, {error:'Invalid coordinates.'});
+          const miles = (lat: number, lng: number) => {
+            const rad = Math.PI/180;
+            const a = Math.sin((lat-latitude)*rad/2)**2 + Math.cos(latitude*rad)*Math.cos(lat*rad)*Math.sin((lng-longitude)*rad/2)**2;
+            return 3958.8*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+          };
+          const records = db.prepare("SELECT record_json FROM catalogue_services WHERE availability != 'Removed at source'").all().map(row => JSON.parse(String(row.record_json))).filter(record => !q || record.searchText.toLowerCase().includes(q)).map(record => {
+            const sites = [{lat:record.lat,lng:record.lng}, ...(record.locations ?? []).map((site: {location?: Record<string, unknown>}) => ({lat:site.location?.latitude ?? site.location?.lat,lng:site.location?.longitude ?? site.location?.lon}))];
+            const distances = sites.filter(site => typeof site.lat === 'number' && typeof site.lng === 'number').map(site => miles(site.lat,site.lng));
+            return {...record, distanceMiles: nearby && distances.length ? Math.min(...distances) : null};
+          }).filter(record => nearby ? record.distanceMiles !== null && record.distanceMiles <= 10 : area === 'Bristol' ? record.source.includes('Bristol') : area === 'Kingston' ? record.source.includes('Kingston') : JSON.stringify([record.postcode,record.locations]).toLowerCase().replace(/\s/g,'').includes(area.toLowerCase().replace(/\s/g,'')));
+          records.sort((a,b) => nearby ? a.distanceMiles-b.distanceMiles || a.name.localeCompare(b.name) : a.name.localeCompare(b.name));
+          const page = Math.max(1, Math.floor(Number(url.searchParams.get('page')) || 1));
+          return send(200,{total:records.length,records:records.slice((page-1)*20,page*20).map(record => ({id:record.id,name:record.name,provider:record.provider,postcode:record.postcode,description:record.description.slice(0,180),distanceMiles:record.distanceMiles})),page,pageSize:20,ready:true});
+        }
         const q = (url.searchParams.get('q') ?? '').slice(0, 200).trim();
         const page = Math.max(1, Math.min(10000, Number(url.searchParams.get('page')) || 1));
         const pageSize = 20;

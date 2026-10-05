@@ -26,13 +26,13 @@ function organisationContacts(value: unknown): string[] {
 function safeUrl(value: string | null | undefined): string | null {
   try { const url = new URL(value ?? ''); return ['https:', 'http:'].includes(url.protocol) ? url.href : null; } catch { return null; }
 }
-export default function ImportedServices({ staff, enableStaff, onNavigate }: { staff: boolean; enableStaff: () => void; onNavigate: (route: string) => void }) {
+export default function ImportedServices({ staff, enableStaff, onNavigate, initialId }: { initialId?: string; staff: boolean; enableStaff: () => void; onNavigate: (route: string) => void }) {
   const [draft, setDraft] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [data, setData] = useState<ImportResponse | null>(null);
   const [record, setRecord] = useState<ImportedRecord | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(initialId ?? null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const heading = useRef<HTMLHeadingElement>(null);
