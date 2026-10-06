@@ -27,3 +27,12 @@
 .meeting-live .live-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}.meeting-live .live-service{flex-direction:column;gap:10px;padding:14px 16px;border-left-width:1px;border-top:5px solid #1d70b8}.meeting-live .live-service.is-saved{border-top-color:#00703c}.meeting-live .live-service h5{font-size:20px}.meeting-live .live-snippet{font-size:16px;-webkit-line-clamp:2}
 .meeting-live .live-vote{flex-direction:row;gap:10px}.meeting-live .live-vote button{width:auto;flex:1;height:48px;display:flex;align-items:center;justify-content:center;gap:8px;padding:0 14px}.live-vote-label{font-weight:700;font-size:17px}
 @media (max-width:639px){.live-bar{padding:12px 16px}.live-main{padding:16px}}
+
+/* The area where suggested support appears keeps a minimum height, so the page does not jump as services arrive. */
+.meeting-live .live-main{min-height:420px}
+.live-placeholder{padding:8px 0}
+.live-placeholder>p{margin:0 0 16px;color:#505a5f}
+.live-skeleton{display:grid;gap:12px}
+.live-skeleton span{display:block;height:84px;background:linear-gradient(90deg,#f3f2f1,#ebeae8,#f3f2f1);border:1px solid #e5e5e5}
+@media (prefers-reduced-motion:no-preference){.live-skeleton span{background-size:200% 100%;animation:live-shimmer 1.8s ease-in-out infinite}}
+@keyframes live-shimmer{from{background-position:200% 0}to{background-position:-200% 0}}

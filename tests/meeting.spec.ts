@@ -16,7 +16,6 @@ test('meeting is staff-only, shows live words and stops microphone', async ({ pa
   await page.getByRole('button', { name: 'Staff sign in', exact: true }).click();
   await completeStaffSignIn(page);
   await page.getByRole('button', { name: 'Start meeting', exact: true }).click();
-  await expect(page.getByText('streams the microphone audio to Azure OpenAI', { exact: false })).toBeVisible();
   await page.getByRole('button', { name: 'Start meeting', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Meeting in progress' })).toBeVisible();
   await expect(page.getByText('13 words captured')).toBeVisible();

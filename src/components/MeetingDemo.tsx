@@ -194,31 +194,31 @@ export default function MeetingDemo({ enabled, onEnd }: { enabled: boolean; onEn
   const dismiss = (id: string) => setDismissed(previous => new Set(previous).add(id));
   const words = live.lines.reduce((total, line) => total + (line.text.trim() ? line.text.trim().split(/\s+/).length : 0), 0);
   const inCall = phase === 'recording' || phase === 'finishing';
+  // Before recording the same layout is shown with placeholders, so nothing jumps when the meeting starts.
+  const ready = phase === 'idle' || phase === 'requesting';
   const active = inCall || phase === 'finished';
   return <section className="meeting-demo" aria-label="Staff meeting">
-    {live.lines.length > 0 && <UrgencyNotice staff text={transcriptText(live.lines)} mode={urgency} onChange={setUrgency} />}
-    {phase === 'idle' && <div className="meeting-setup">
-      {phase === 'idle' && <div className="meeting-location"><span>Finding support in <strong>{directoryAreas.find(item => item.id === meetingArea)?.label ?? meetingArea}</strong></span> <button type="button" className="text-button" onClick={openRegionMenu}>Change<span className="visually-hidden"> region</span></button></div>}
-      {phase === 'idle' && <p className="meeting-consent">Starting a meeting streams the microphone audio to Azure OpenAI to write live notes and find matching services. This app does not store the audio. The audio download stays in this browser. Tell everyone in the room before you start.</p>}
-      <button className="button primary meeting-start" onClick={start}>Start meeting</button>
-    </div>}
-    {phase === 'requesting' && <div className="meeting-permission"><p role="status">Allow microphone access to start your meeting.</p><button className="button secondary" onClick={() => { release(false); live.close(); setPhase('idle'); }}>Cancel</button></div>}
+    {live.lines.length > 0 && <UrgencyNotice staff showToggle={false} text={transcriptText(live.lines)} mode={urgency} onChange={setUrgency} />}
     {error && <p className="meeting-error" role="alert">{error}</p>}
     {live.error && active && <p className="meeting-error" role="alert">{live.error}</p>}
     {phase === 'finished' && <div className="meeting-session is-finished"><MeetingResults lines={live.lines} concepts={live.concepts} dismissed={dismissed} onDismiss={dismiss} shortlist={shortlist} endedAt={endedAt} seconds={DURATION - remaining} download={download} onRestart={start} urgent={urgent} summary={summary} summarising={summarising} summaryError={summaryError} onSummarise={summarise} />
       {!!live.debug.length && <details className="meeting-dev"><summary>Developer view: API traffic ({live.debug.length})</summary><div className="meeting-dev-log">{live.debug.filter(entry => !entry.eventType.endsWith('.delta')).slice(-120).reverse().map(entry => <div key={entry.key}>{new Date(entry.ts).toLocaleTimeString('en-GB')} {entry.dir === 'out' ? 'sent' : 'received'} {entry.source} {entry.eventType}</div>)}</div></details>}
     </div>}
-    {inCall && <div className="meeting-session meeting-live" ref={liveRef}>
+    {(inCall || ready) && <div className="meeting-session meeting-live" ref={liveRef}>
       <div className="live-bar">
         <span className={`live-dot ${phase === 'recording' ? 'is-recording' : ''}`} aria-hidden="true" />
-        <div className="live-state"><h2>{phase === 'recording' ? 'Meeting in progress' : 'Finishing notes'}</h2><p role="status">{phase === 'recording' ? 'Listening' : 'Checking the last suggestions…'} · {words} {words === 1 ? 'word' : 'words'} captured</p></div>
+        <div className="live-state"><h2>{phase === 'recording' ? 'Meeting in progress' : phase === 'finishing' ? 'Finishing notes' : 'Ready to start'}</h2>
+          {ready ? <p role="status">{phase === 'requesting' ? 'Waiting for microphone access…' : 'Press Start meeting to begin listening'}</p>
+            : <p role="status">{phase === 'recording' ? 'Listening' : 'Checking the last suggestions…'} · {words} {words === 1 ? 'word' : 'words'} captured</p>}</div>
+        {ready && <><Waveform analyser={null} /><p className="live-clock">Time remaining <strong aria-label="Time remaining">{Math.floor(DURATION / 60)}:{String(DURATION % 60).padStart(2, '0')}</strong></p>
+          {phase === 'requesting' ? <button className="button secondary" onClick={() => { release(false); live.close(); setPhase('idle'); }}>Cancel</button> : <button className="button primary meeting-start" onClick={start}>Start meeting</button>}</>}
         {phase === 'recording' && <><Waveform analyser={analyser} /><p className="live-clock">Time remaining <strong aria-label="Time remaining">{Math.floor(remaining / 60)}:{String(remaining % 60).padStart(2, '0')}</strong></p><button className="button meeting-stop" onClick={finish}>Stop meeting</button></>}
       </div>
       <div className="live-main">
         <div className="live-main-head"><h3>Suggested support</h3><p className="live-saved" aria-live="polite">{shortlist.picked.length} saved</p></div>
-        <LiveServices concepts={live.concepts} dismissed={dismissed} onDismiss={dismiss} shortlist={shortlist} newestFirst urgent={urgent} />
+        {ready ? <div className="live-placeholder"><p>Services that match what is said will appear here as people talk.</p><div className="live-skeleton" aria-hidden="true"><span /><span /><span /></div></div>
+          : <LiveServices concepts={live.concepts} dismissed={dismissed} onDismiss={dismiss} shortlist={shortlist} newestFirst urgent={urgent} />}
       </div>
-      <p className="live-footnote">Audio is sent to Azure OpenAI to write notes and is not stored by this app. The transcript is kept for after the meeting.</p>
     </div>}
   </section>;
 }

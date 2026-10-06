@@ -62,7 +62,7 @@ test('the region indicator appears only when a region is set and opens the heade
   await expect(trigger(page)).toHaveAccessibleName('Region settings');
   await chooseArea(page, 'Bristol');
   await expect(page.getByRole('button',{name:/^Region settings/})).toContainText('Bristol');
-  await page.getByRole('button', { name: 'Change region' }).click();
+  await page.getByRole('button', { name: /^Region settings/ }).click();
   await expect(page.getByRole('region', { name: 'Region settings' })).toBeVisible();
 });
 
