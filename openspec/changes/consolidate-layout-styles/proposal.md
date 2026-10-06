@@ -6,7 +6,7 @@ Page widths and grids are inconsistent. At a 1440px viewport the brand and nav s
 
 ## What Changes
 
-- Introduce one frame: a shared container with two width variants (**reading** and **wide**) and one gutter. The header, staff bar, staff navigation, page content and footer all take the width of the page they sit on, so they line up.
+- Introduce one frame: a shared container with two width variants (**reading** and **wide**) and one gutter. The header, page content and footer all take the width of the page they sit on, so they line up.
 - Replace the separate two-column layouts (service detail, feedback review, meeting, summary) with one main-and-side grid, and the list-and-map layouts (results, meeting workspace) with one split grid that keeps the resizable divider.
 - Define spacing, widths and gutters as design tokens, and reduce breakpoints from 18 to three.
 - Consolidate `styles.css`, `ui-cohesion.css`, `ui-polish.css` and `results-layout.css` into organised cascade layers (tokens, base, layout, components, pages), delete dead and duplicate rules, and remove the `!important` and `body .x` overrides.
@@ -16,7 +16,7 @@ Page widths and grids are inconsistent. At a 1440px viewport the brand and nav s
 ## Capabilities
 
 ### New Capabilities
-- `page-layout`: how every page is framed (width variants, gutters, header, footer and staff navigation alignment), how multi-column areas behave, and how the layout responds to screen size.
+- `page-layout`: how every page is framed (width variants, gutters, header and footer alignment), how multi-column areas behave, and how the layout responds to screen size.
 
 ### Modified Capabilities
 

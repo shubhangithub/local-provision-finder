@@ -12,7 +12,7 @@
 
 ## 3. Frame
 
-- [x] 3.1 Add the shared `.container` and the width variants, set `data-width` from the route in `App.tsx`, and move the header, staff bar, staff navigation, page content and footer onto it, deleting the old width, margin and fixed-width rules. Verify at 1440 that the header, content and footer share edges on a reading page and on the search results.
+- [x] 3.1 Add the shared `.container` and the width variants, set `data-width` from the route in `App.tsx`, and move the header, page content and footer onto it, deleting the old width, margin and fixed-width rules. Verify at 1440 that the header, content and footer share edges on a reading page and on the search results.
 - [x] 3.2 Replace the per-page side margins and the results page's own 1800px and 24px rules with the shared gutter. Verify every page's content is inset by the same gutter at 390 and 1440.
 - [x] 3.3 Compare against the baseline for all pages and fix or accept each difference. Verify no page scrolls sideways at 320px.
 

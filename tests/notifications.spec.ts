@@ -11,7 +11,10 @@ test('staff sees real queue counts while public notifications hide them', async 
   await expect(panel).toContainText('You’re all caught up.');
   await page.getByRole('button', { name: 'Close notifications' }).click();
   await page.getByRole('button', { name: 'Staff sign in', exact: true }).click();await completeStaffSignIn(page);
-  const nav=page.getByRole('navigation',{name:'Staff workspace'});
+  // The Staff button totals both queues; inside the menu each queue shows its own count.
+  await expect(page.getByRole('button',{name:/^Staff/}).getByLabel('4 awaiting review')).toBeVisible();
+  await page.getByRole('button',{name:/^Staff/}).click();
+  const nav=page.getByRole('navigation',{name:'Staff menu'});
   await expect(nav.getByLabel('2 awaiting review')).toHaveCount(2);
   await expect(nav.getByRole('link',{name:/Service reports/}).getByLabel('2 awaiting review')).toBeVisible();
   await expect(nav.getByRole('link',{name:/New listings to approve/}).getByLabel('2 awaiting review')).toBeVisible();

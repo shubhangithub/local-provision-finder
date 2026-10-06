@@ -14,7 +14,7 @@ How pages are framed and laid out. The rules live in `src/styles/layout.css` and
 
 ## The frame
 
-Every page, and the header, staff bar, staff navigation and footer around it, share one width and one gutter (`.page-wrap`, `.header-inner`, `.footer-inner`, `.staff-strip > div`, `.workspace-nav` and the results containers all use the same rule in `layout.css`). A page is "reading" unless it asks for "wide". To ask, render `<PageWidthClaim width="wide"/>` while the page is on screen, or call `usePageWidth('wide')` (`src/lib/page-width.ts`). The width is a `data-width` attribute on `<html>`, so the header and footer resize with the page.
+Every page, and the header and footer around it, share one width and one gutter (`.page-wrap`, `.header-inner`, `.footer-inner` and the results containers all use the same rule in `layout.css`). A page is "reading" unless it asks for "wide". To ask, render `<PageWidthClaim width="wide"/>` while the page is on screen, or call `usePageWidth('wide')` (`src/lib/page-width.ts`). The width is a `data-width` attribute on `<html>`, so the header and footer resize with the page.
 
 Do not set `max-width`, side `margin` or side `padding` on a page wrapper. Use `.page-wrap` and let the frame decide.
 

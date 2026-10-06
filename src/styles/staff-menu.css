@@ -1,0 +1,17 @@
+.staff-menu{position:relative}
+.staff-menu-trigger{display:inline-flex;align-items:center;gap:8px}
+.staff-menu-panel{position:absolute;right:0;top:calc(100% + 6px);z-index:1000;width:min(300px,calc(100vw - 2 * var(--gutter)));background:#fff;color:#0b0c0c;border:1px solid #b1b4b6;border-top:4px solid #1d70b8;box-shadow:0 8px 24px rgb(0 0 0 / .25);padding:12px 0}
+.staff-menu-heading{margin:0;padding:4px 16px;font-size:14px;font-weight:700;color:#505a5f;text-transform:uppercase;letter-spacing:.04em}
+.staff-menu-panel ul{list-style:none;margin:0;padding:0}
+.staff-menu-more{margin-top:8px!important;padding-top:8px!important;border-top:1px solid #e5e5e5}
+.staff-menu-panel li a{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;font-size:17px;color:#0b0c0c;text-decoration:none}
+.staff-menu-panel li a:hover{background:#f3f2f1;text-decoration:underline}
+.staff-menu-panel li a[aria-current=page]{font-weight:700;box-shadow:inset 4px 0 #1d70b8;background:#f2f7fb}
+.staff-menu-panel li a:focus-visible,.staff-menu-signout:focus-visible{outline:3px solid #ffdd00;outline-offset:0;background:#ffdd00;color:#0b0c0c}
+.staff-menu-signout{display:block;width:calc(100% - 32px);margin:8px 16px 0;padding:10px 0 0;border:0;border-top:1px solid #e5e5e5;background:none;color:#1d70b8;font-size:17px;text-align:left;text-decoration:underline;cursor:pointer}
+/* On a phone the trigger sits mid-row, so the panel spans the header's width instead of hanging off the button. */
+@media (max-width:639px){
+  .header-inner{position:relative}
+  .staff-menu{position:static}
+  .staff-menu-panel{left:0;right:0;top:100%;width:auto}
+}

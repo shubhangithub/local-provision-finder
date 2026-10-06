@@ -8,6 +8,19 @@ test('hovering a listing highlights its marker and selecting a pin highlights th
  await page.goto('/');await chooseRegion(page,'Bristol');
  const first=page.locator('[data-service-id="one"]');await expect(first).toBeVisible();await page.mouse.move(5,5);await first.hover();await expect(page.locator('.service-map-pin[title="Counselling support"]')).toHaveClass(/is-highlighted/);await page.locator('.service-map-pin[title="Peer support"]').click();await expect(page.locator('[data-service-id="two"]')).toHaveClass(/is-highlighted/);
 });
-test('staff navigation displays queue counts and an active section',async({page})=>{
- await page.route('**/api/feedback',route=>route.fulfill({json:{entries:[{status:'pending'},{status:'checking'},{status:'resolved'}]}}));await page.route('**/api/suggestions',route=>route.fulfill({json:{entries:[{status:'draft'},{status:'published'}]}}));await page.goto('/');await page.getByRole('button',{name:'Staff sign in',exact:true}).click();await completeStaffSignIn(page);const nav=page.getByRole('navigation',{name:'Staff workspace'});await expect(nav.getByRole('link',{name:/Service reports/}).locator('.workspace-count')).toHaveText('2');await expect(nav.getByRole('link',{name:/New listings to approve/}).locator('.workspace-count')).toHaveText('1');await nav.getByRole('link',{name:/Add provision/}).click();await expect(nav.getByRole('link',{name:'Add provision',exact:true})).toHaveAttribute('aria-current','page');
+test('the staff menu totals the queues, shows counts only above zero, marks the current page and closes with Escape',async({page})=>{
+ await page.route('**/api/feedback',route=>route.fulfill({json:{entries:[{status:'pending'},{status:'checking'},{status:'resolved'}]}}));
+ await page.route('**/api/suggestions',route=>route.fulfill({json:{entries:[{status:'published'}]}}));
+ await page.goto('/');await page.getByRole('button',{name:'Staff sign in',exact:true}).click();await completeStaffSignIn(page);
+ const trigger=page.getByRole('button',{name:/^Staff/});
+ await expect(trigger.locator('.workspace-count')).toHaveText('2');
+ await trigger.click();await expect(trigger).toHaveAttribute('aria-expanded','true');
+ const menu=page.getByRole('navigation',{name:'Staff menu'});
+ await expect(menu.getByRole('link',{name:/Service reports/}).locator('.workspace-count')).toHaveText('2');
+ await expect(menu.getByRole('link',{name:/New listings to approve/}).locator('.workspace-count')).toHaveCount(0);
+ await page.keyboard.press('Escape');await expect(menu).toHaveCount(0);await expect(trigger).toBeFocused();
+ await trigger.click();await menu.getByRole('link',{name:'Add a service',exact:true}).click();
+ await expect(menu).toHaveCount(0);await expect(page.getByRole('heading',{name:'Add a service'}).first()).toBeVisible();
+ await trigger.click();await expect(menu.getByRole('link',{name:'Add a service',exact:true})).toHaveAttribute('aria-current','page');
 });
+

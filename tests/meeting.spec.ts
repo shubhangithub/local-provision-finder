@@ -37,7 +37,8 @@ test('leaving staff mode releases the microphone and removes transcript', async 
   await page.getByRole('button', { name: 'Start meeting', exact: true }).click();
   await page.getByRole('button', { name: 'Start meeting', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Meeting in progress' })).toBeVisible();
-  await page.getByRole('button', { name: 'Staff demo', exact: true }).click();
+  await page.getByRole('button', { name: /^Staff/ }).click();
+  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Meeting in progress' })).toHaveCount(0);
   expect(await mic(page)).toMatchObject({ stopped: 1, recording: false });
 });

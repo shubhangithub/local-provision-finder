@@ -17,8 +17,8 @@ The system SHALL lay out every page inside one frame that has a reading width an
 - **WHEN** the search results or the live meeting is shown
 - **THEN** it uses the wide width, centred, so a list and a map have room side by side
 
-### Requirement: Header, staff bar and footer follow the page
-The site header, the staff account bar, the staff workspace navigation and the footer SHALL take the same width and left edge as the page content they sit above or below.
+### Requirement: Header and footer follow the page
+The site header and the footer SHALL take the same width and left edge as the page content they sit above or below.
 
 #### Scenario: Search results
 - **WHEN** the search results are shown at a screen wider than the wide width
@@ -27,10 +27,6 @@ The site header, the staff account bar, the staff workspace navigation and the f
 #### Scenario: Moving between pages
 - **WHEN** a person moves from a reading page to the search results
 - **THEN** the header and footer resize to the new page's width, and no element is aligned to a different width from its neighbours
-
-#### Scenario: Staff navigation
-- **WHEN** a staff member is signed in on any page
-- **THEN** the staff bar and workspace navigation align with the page content without fixed widths
 
 ### Requirement: One gutter
 The system SHALL use one horizontal gutter at each screen size for the frame, and SHALL NOT let a page define its own side margins.

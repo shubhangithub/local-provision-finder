@@ -33,12 +33,6 @@ button:disabled {opacity:.55;}
 .header-inner .staff-toggle.enabled {background:#cfe4dc;color:#083d29;border-color:#87bca8;font-size:14px;}
 .header-inner .staff-toggle.enabled:hover {background:#b4d6c8;}
 .header-inner .nav-count {background:#d2e2f1;color:#0f385c;font-size:12px;min-width:24px;height:24px;}
-.staff-strip {background:var(--blue-pale);border-color:#d2e2f1;color:var(--muted);}
-.staff-strip>div {font-size:14px;gap:8px;}
-.workspace-nav {gap:8px 28px;padding-top:14px;padding-bottom:0;border-color:var(--line);}
-.workspace-nav a {padding:10px 0 14px;text-decoration:none;border-bottom:4px solid transparent;font-size:16px;}
-.workspace-nav a:hover {text-decoration:underline;}
-.workspace-nav a[aria-current=page] {border-color:var(--purple);color:#3f2577;font-weight:700;}
 .hero {padding-top:48px;padding-bottom:24px;}
 .hero h1 {font-size:48px;line-height:1.12;max-width:800px;}
 .hero-copy>p {font-size:19px;max-width:680px;line-height:1.5;color:var(--muted);margin-top:14px;}
@@ -152,8 +146,7 @@ button:disabled {opacity:.55;}
  .header-inner {display:grid;grid-template-columns:1fr;gap:12px;}
  .header-inner nav {width:auto;}
 }
-@media (max-width:1023px) {
-}
+
 @media (max-width:639px) {
  .hero h1 {font-size:36px;}
  .hero {padding-top:32px;padding-bottom:20px;}
@@ -164,10 +157,6 @@ button:disabled {opacity:.55;}
  .header-inner .brand {font-size:24px;}
  .header-inner nav {gap:8px 16px;}
  .header-inner .staff-toggle {font-size:14px;}
- .workspace-nav {gap:4px 20px;}
- .workspace-nav a {font-size:16px;}
- .staff-strip>div {flex-wrap:wrap;font-size:13px;}
- .staff-strip a {margin-left:0;}
  .directory-query {min-height:64px;}
  .directory-query input {font-size:17px;}
  .card-title-row h3,.import-service-link {font-size:21px;}
@@ -188,13 +177,13 @@ button:disabled {opacity:.55;}
 
 @media print {
  #root {display:block;min-height:0;}
- .workspace-nav,.staff-strip,.staff-sign-in-dialog,.directory-agent {display:none!important;}
+ .staff-sign-in-dialog,.directory-agent{display:none!important;}
  .summary-paper-wrap {padding:0;border:0;background:white;}
  .summary-paper {box-shadow:none;}
  .service-card {background:white!important;}
 }
 .toast>button {min-height:36px;min-width:36px;justify-content:center;}
-@media (max-width:639px) {}
+
 /* Shared transparent bookmark controls across results, details and the shortlist. */
 .save-service-button {
  display:inline-flex;align-items:center;justify-content:center;gap:7px;
