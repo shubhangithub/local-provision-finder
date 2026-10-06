@@ -28,10 +28,6 @@ export default function MeetingDemo({ enabled, onEnd }: { enabled: boolean; onEn
   const [download, setDownload] = useState('');
   const [region] = useRegion();
   const meetingArea = areaForMeeting(region);
-  const [summary, setSummary] = useState<AssistantResult | null>(null);
-  const [summarising, setSummarising] = useState(false);
-  const [summaryError, setSummaryError] = useState('');
-  const summaryRequest = useRef<AbortController | null>(null);
   const stream = useRef<MediaStream | null>(null);
   const recorder = useRef<MediaRecorder | null>(null);
   const generation = useRef(0);
@@ -70,10 +66,6 @@ export default function MeetingDemo({ enabled, onEnd }: { enabled: boolean; onEn
   useEffect(() => {
     if (!enabled) {
       release(false);
-      summaryRequest.current?.abort();
-      setSummary(null);
-      setSummaryError('');
-      setSummarising(false);
       live.close();
       live.reset();
       shortlist.clear();
@@ -87,7 +79,6 @@ export default function MeetingDemo({ enabled, onEnd }: { enabled: boolean; onEn
   useEffect(() => () => {
     release(false);
     live.close();
-    summaryRequest.current?.abort();
     if (downloadRef.current) URL.revokeObjectURL(downloadRef.current);
   }, []);
   useEffect(() => { if (phase === 'recording') liveRef.current?.scrollIntoView?.({ block: 'start' }); }, [phase]);
@@ -103,10 +94,6 @@ export default function MeetingDemo({ enabled, onEnd }: { enabled: boolean; onEn
   }, [phase]);
 
   async function start() {
-    summaryRequest.current?.abort();
-    setSummary(null);
-    setSummaryError('');
-    setSummarising(false);
     setError('');
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
       setError('Recording is unavailable in this browser. Try a current browser on localhost or HTTPS.');
@@ -168,27 +155,6 @@ export default function MeetingDemo({ enabled, onEnd }: { enabled: boolean; onEn
     }
   }
 
-  useEffect(() => {
-    if (phase === 'finished' && transcriptText(live.lines)) summarise();
-  }, [phase]);
-
-  async function summarise() {
-    summaryRequest.current?.abort();
-    const controller = new AbortController();
-    summaryRequest.current = controller;
-    setSummarising(true);
-    setSummaryError('');
-    try {
-      const result = await askAssistant({ task: 'meeting', transcript: transcriptText(live.lines), search: { area: meetingArea, urgency: needsHelpToday(transcriptText(live.lines), urgency)?'today':'normal' } }, controller.signal);
-      if (typeof result.summary !== 'string' || !Array.isArray(result.nextSteps) || !Array.isArray(result.services)) throw new Error('The meeting summary could not be read. Please try again.');
-      if (!controller.signal.aborted) setSummary(result);
-    } catch (cause) {
-      if (!controller.signal.aborted) setSummaryError(cause instanceof Error ? cause.message : 'Could not summarise this meeting. Please try again.');
-    } finally {
-      if (!controller.signal.aborted) setSummarising(false);
-    }
-  }
-
   if (!enabled) return null;
   const urgent = needsHelpToday(transcriptText(live.lines), urgency);
   const dismiss = (id: string) => setDismissed(previous => new Set(previous).add(id));
@@ -201,7 +167,7 @@ export default function MeetingDemo({ enabled, onEnd }: { enabled: boolean; onEn
     {live.lines.length > 0 && <UrgencyNotice staff showToggle={false} text={transcriptText(live.lines)} mode={urgency} onChange={setUrgency} />}
     {error && <p className="meeting-error" role="alert">{error}</p>}
     {live.error && active && <p className="meeting-error" role="alert">{live.error}</p>}
-    {phase === 'finished' && <div className="meeting-session is-finished"><MeetingResults lines={live.lines} concepts={live.concepts} dismissed={dismissed} onDismiss={dismiss} shortlist={shortlist} endedAt={endedAt} seconds={DURATION - remaining} download={download} onRestart={start} urgent={urgent} summary={summary} summarising={summarising} summaryError={summaryError} onSummarise={summarise} />
+    {phase === 'finished' && <div className="meeting-session is-finished"><MeetingResults concepts={live.concepts} dismissed={dismissed} shortlist={shortlist} endedAt={endedAt} seconds={DURATION - remaining} download={download} onRestart={start} urgent={urgent} />
       {!!live.debug.length && <details className="meeting-dev"><summary>Developer view: API traffic ({live.debug.length})</summary><div className="meeting-dev-log">{live.debug.filter(entry => !entry.eventType.endsWith('.delta')).slice(-120).reverse().map(entry => <div key={entry.key}>{new Date(entry.ts).toLocaleTimeString('en-GB')} {entry.dir === 'out' ? 'sent' : 'received'} {entry.source} {entry.eventType}</div>)}</div></details>}
     </div>}
     {(inCall || ready) && <div className="meeting-session meeting-live" ref={liveRef}>

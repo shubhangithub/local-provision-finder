@@ -23,28 +23,13 @@ async function finishMeeting(page: import('@playwright/test').Page, area?: strin
   await page.getByRole('button',{name:'Stop meeting',exact:true}).click();
 }
 
-test('summary failure allows staff to retry',async({page})=>{
-  let fail=true;
-  await page.route('**/api/assistant',route=>fail?route.fulfill({status:503,json:{error:'Unavailable'}}):route.fulfill({json:{mode:'local',summary:'Second try worked.',answer:'',needs:[],nextSteps:[],citations:[],services:[],warnings:[]}}));
+test('the ended meeting is a stack of boxes with no summary or transcript',async({page})=>{
+  await page.setViewportSize({width:1280,height:900});
   await finishMeeting(page);
-  await expect(page.getByRole('alert')).toContainText('Unavailable');
-  fail=false;
-  await page.getByRole('button',{name:'Try again',exact:true}).click();
-  await expect(page.getByRole('region',{name:'Meeting summary'})).toContainText('Second try worked.');
-});
-
-test('after the meeting the next steps and actions fit on one screen, with details in tabs',async({page})=>{
-  await page.setViewportSize({width:1280,height:720});
-  await page.route('**/api/assistant',route=>route.fulfill({json:{mode:'local',summary:'Draft',answer:'',needs:[],nextSteps:[],citations:[],services:[],warnings:[]}}));
-  await finishMeeting(page);
-  const report=page.getByRole('region',{name:'Your next steps'});
-  await expect(report.getByRole('heading',{name:'Your next steps'})).toBeInViewport();
-  await expect(report.getByRole('button',{name:'Print or save as PDF'})).toHaveCount(0);
-  await expect(page.getByRole('tab',{name:/More suggestions/})).toHaveCount(0);
-  await expect(page.getByRole('tab',{name:'Summary'})).toHaveAttribute('aria-selected','true');
-  await expect(page.getByRole('region',{name:'Transcript'})).toHaveCount(0);
-  await page.getByRole('tab',{name:'Transcript'}).click();
-  await expect(page.getByRole('region',{name:'Transcript'})).toContainText('childcare after school');
-  await page.getByRole('tab',{name:'Transcript'}).press('ArrowLeft');
-  await expect(page.getByRole('tab',{name:'Summary'})).toBeFocused();
+  await expect(page.getByRole('region',{name:'Meeting ended'})).toContainText(/Length \d+:\d\d · 0 services saved/);
+  await expect(page.getByRole('region',{name:'Meeting ended'}).getByRole('button',{name:'Start another meeting'})).toBeVisible();
+  await expect(page.getByRole('region',{name:'Your next steps'}).getByRole('heading',{name:'Your next steps'})).toBeVisible();
+  await expect(page.getByRole('region',{name:'Follow-up call'})).toContainText('Tick services during the meeting');
+  await expect(page.getByRole('tab')).toHaveCount(0);
+  await expect(page.getByText('Preparing a meeting summary')).toHaveCount(0);
 });

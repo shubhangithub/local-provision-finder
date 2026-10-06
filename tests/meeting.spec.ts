@@ -15,7 +15,8 @@ test('meeting is staff-only, shows live words and stops microphone', async ({ pa
   await expect(page.getByRole('button', { name: 'Start meeting', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Staff sign in', exact: true }).click();
   await completeStaffSignIn(page);
-  await page.getByRole('button', { name: 'Start meeting', exact: true }).click();
+  await page.getByRole('button', { name: /^Staff/ }).click();
+  await page.getByRole('link', { name: 'Start meeting', exact: true }).click();
   await page.getByRole('button', { name: 'Start meeting', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Meeting in progress' })).toBeVisible();
   await expect(page.getByText('13 words captured')).toBeVisible();
@@ -110,11 +111,16 @@ test('live services can be saved or hidden and feed the next-steps report', asyn
   await expect(report).toContainText('Call 0117 000 1111');
   await expect(report).toContainText('Refer yourself');
   await expect(report).not.toContainText('Beta Club');
-  await expect(report.getByRole('button', { name: 'Print or save as PDF' })).toBeVisible();
-  await report.getByRole('button', { name: 'Send a copy' }).click();
-  await report.getByRole('button', { name: 'Send email' }).click();
-  await expect(report.getByRole('alert')).toContainText('Enter an email address');
-  await report.getByLabel('Email address').fill('sam@example.com');
-  await report.getByRole('button', { name: 'Send email' }).click();
-  await expect(report.getByRole('status')).toContainText('Not sent (prototype)');
+  // The hand-over actions are their own box after the follow-up call.
+  const takeAway = page.getByRole('region', { name: 'Take this away' });
+  await expect(takeAway.getByRole('button', { name: 'Print or save as PDF' })).toBeVisible();
+  await expect(takeAway.getByText('Sandbox demo: nothing is sent yet')).toBeVisible();
+  await takeAway.getByRole('button', { name: 'Send a copy' }).click();
+  await takeAway.getByRole('button', { name: 'Send email' }).click();
+  await expect(takeAway.getByRole('alert')).toContainText('Enter an email address');
+  await takeAway.getByLabel('Email address').fill('sam@example.com');
+  await takeAway.getByRole('button', { name: 'Send email' }).click();
+  await expect(takeAway.getByRole('status')).toContainText('Not sent (prototype)');
+  await expect(page.getByRole('region', { name: 'Ask for a follow-up call' })).toBeVisible();
+  await expect(page.getByRole('tab')).toHaveCount(0);
 });
