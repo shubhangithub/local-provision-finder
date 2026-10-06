@@ -3,18 +3,16 @@ import { mockMicrophone, mockRealtime, service } from './meeting-helpers';
 import { completeStaffSignIn } from './helpers/staff-sign-in';
 import { chooseRegion } from './region-helpers';
 const result={ready:true,total:2,page:1,pageSize:20,searchMode:'semantic',mappedCount:0,unmappedCount:2,mapRecords:[],records:[{...service('food-a','Food support'),urgentSupportEvidence:'Emergency food support.'},service('food-b','Community food parcels')]};
-test('urgent wording activates help today; opt-out refreshes results and overview',async({page})=>{
- const requests:string[]=[];const assistant:Record<string,unknown>[]=[];
+test('urgent wording activates help today; opt-out refreshes results',async({page})=>{
+ const requests:string[]=[];
  await page.route('**/api/imports?**',route=>{requests.push(route.request().url());return route.fulfill({json:result});});
- await page.route('**/api/assistant',route=>{assistant.push(route.request().postDataJSON());return route.fulfill({json:{mode:'openai',summary:'Food options',answer:'Food options',nextSteps:[],citations:[],services:[],warnings:[]}});});
  await page.goto('/');await page.getByRole('combobox',{name:'What do you need help with?'}).fill('I have no food today');
  await expect(page.getByLabel('I need help today',{exact:true})).toBeChecked();
  await page.getByRole('button',{name:'Find support',exact:true}).click();await chooseRegion(page,'Bristol');
  await expect(page.getByText('Urgent support listed',{exact:true})).toBeVisible();
- await expect.poll(()=>assistant.length).toBeGreaterThan(0);
+ await expect(page.locator('.search-options').getByLabel('I need help today',{exact:true})).toBeVisible();
  await page.getByLabel('I need help today',{exact:true}).uncheck();
  await expect.poll(()=>requests.some(url=>url.includes('urgency=normal')&&url.includes('area=Bristol'))).toBe(true);
- await expect.poll(()=>assistant.some(body=>(body.search as {urgency:string}).urgency==='normal')).toBe(true);
  await expect(page.getByText('Urgent support listed',{exact:true})).toHaveCount(0);
 });
 test('danger guidance appears without waiting for location or AI; negation does not trigger it',async({page})=>{

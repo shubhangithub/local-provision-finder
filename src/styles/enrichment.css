@@ -1,0 +1,42 @@
+.from-web{margin:16px 0}
+.from-web-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px}
+.from-web-head h2{margin:0}
+.from-web-status{margin:8px 0;color:#505a5f}
+.from-web ul{list-style:none;padding:0;margin:12px 0;display:grid;gap:10px}
+.from-web dl{margin:12px 0 0;display:grid;gap:10px}
+.from-web dt{font-weight:700}
+.from-web dd{margin:0}
+.from-web .fact-source,.change-source{font-size:14px;color:#505a5f}
+.from-web .fact-ended{margin-left:8px;padding:1px 6px;background:#fcd6c3;color:#6e3619;font-size:14px;font-weight:700}
+.from-web details{margin-top:12px}
+.from-web details .field{margin:12px 0 0}
+.change-line del,.report-change del{color:#505a5f}
+.change-line ins,.report-change ins{text-decoration:none;font-weight:700}
+.change-line .text-button{margin-left:8px}
+.recent-enriched .change-line{padding:12px 0;border-top:1px solid #b1b4b6}
+.recent-enriched .change-line .change-service{display:block;font-weight:700}
+.recent-enriched .was-reverted{color:#505a5f}
+.followup-sandbox{padding:0 6px;background:#fff7bf;color:#594d00;font-size:13px;font-weight:700}
+.followup-line{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;margin:6px 0 0;font-size:16px;color:#505a5f}
+.followup-line .text-button{font-size:16px}
+.followup-status{font-size:14px;color:#505a5f}
+.followup-consent{margin-top:16px}
+.followup-consent .field{margin:12px 0 0}
+.report-list{list-style:none;padding:0;margin:0}
+.report-row{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px 24px;padding:20px 0;border-top:1px solid #b1b4b6}
+.report-row:last-child{border-bottom:1px solid #b1b4b6}
+.report-main{flex:1 1 320px;min-width:0}
+.report-main h2{font-size:1.25rem;margin:0 0 4px}
+.report-main p{margin:4px 0}
+.report-change q{display:block;color:#505a5f;font-size:16px;margin-top:2px}
+.report-summary{color:#505a5f}
+.report-actions{display:flex;align-items:center;gap:16px;flex:0 0 auto}
+
+.enrich-profile{margin-bottom:16px}
+.enrich-button{display:inline-flex;align-items:center;gap:10px}
+.enrich-status{margin:10px 0 0;color:#505a5f}
+.enrich-gaps{margin:6px 0 0;color:#505a5f;font-size:16px}
+.enrich-changes{list-style:none;padding:0;margin:12px 0 0;display:grid;gap:10px}
+.spinner{width:16px;height:16px;border:3px solid #b1b4b6;border-top-color:#1d70b8;border-radius:50%;animation:enrich-spin .8s linear infinite;flex:none}
+@keyframes enrich-spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spinner{animation:none;border-top-color:#b1b4b6;border-right-color:#1d70b8}}

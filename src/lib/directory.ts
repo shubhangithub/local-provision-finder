@@ -5,19 +5,20 @@ export interface DirectoryLocation {
     addresses?: { postal_code?: unknown; address_1?: unknown }[];
   };
 }
-export interface AvailabilityConfirmation {status:'Open'|'Waiting list'|'Closed';confirmedAt:string}
+export interface EnrichedFact {key:string;label:string;value:string;sourceUrl?:string;sourceType:string;validFrom?:string;validTo?:string;outdated:boolean}
+export interface DirectoryEnrichment {enrichedAt:string;facts:EnrichedFact[];overwrites:{id:string;field:string;sourceUrl:string}[]}
 export interface DirectoryRecord {
   id: string; name: string; provider: string; description: string; searchText: string;
   source: string; postcode: string | null; lat: number | null; lng: number | null;
   address?: string | null; categories?: string[]; needs?: string[];
   eligibilitySummary?: string | null; accessibility?: string[]; cost?: string | null;
-  availabilityConfirmation?:AvailabilityConfirmation;openingTimes?: string | null; tags?:string[]; availability?: string; locations?: DirectoryLocation[];
+  enrichment?:DirectoryEnrichment;openingTimes?: string | null; tags?:string[]; availability?: string; locations?: DirectoryLocation[];
 }
 export interface DirectorySite { lat: number | null; lng: number | null; postcode: string | null; label: string }
 export interface DirectorySummary {
   urgentSupportEvidence?:string;
   id: string; name: string; provider: string; postcode: string | null;
-  availabilityConfirmation?:AvailabilityConfirmation;distanceMiles: number | null; sites: DirectorySite[]; snippet: string; tags: string[];
+  distanceMiles: number | null; sites: DirectorySite[]; snippet: string; tags: string[];
 }
 export interface MapService { id: string; name: string; provider: string; sites: DirectorySite[] }
 export interface DirectoryResponse {
@@ -26,8 +27,11 @@ export interface DirectoryResponse {
   searchMode: 'browse' | 'semantic' | 'keyword'; ready: boolean;
 }
 const text = (value: unknown): string | null => typeof value === 'string' && value.trim() ? value.trim() : null;
+// The directories write 0,0 (and other points outside the UK) where a location is unknown, and a pin there is
+// thousands of miles from the service. Treat those as having no coordinates so the service is listed but not plotted.
+const inUnitedKingdom=(lat:number,lng:number)=>lat>=49 && lat<=61 && lng>=-11 && lng<=2.5;
 function coordinates(lat: unknown, lng: unknown): {lat: number | null; lng: number | null} {
-  return typeof lat === 'number' && typeof lng === 'number' && Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180 ? {lat,lng} : {lat:null,lng:null};
+  return typeof lat === 'number' && typeof lng === 'number' && Number.isFinite(lat) && Number.isFinite(lng) && inUnitedKingdom(lat,lng) ? {lat,lng} : {lat:null,lng:null};
 }
 export function directorySites(record: DirectoryRecord): DirectorySite[] {
   const sites = (record.locations ?? []).flatMap(site => {

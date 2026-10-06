@@ -1,5 +1,4 @@
 import { resolve } from 'node:path';
-import { discoverSupport } from './assistant-discovery.ts';
 import { loadEnv } from 'vite';
 import { searchDirectory } from './directory-search.ts';
 import { feedbackFields } from '../src/lib/feedback.ts';
@@ -89,8 +88,5 @@ export async function assist(input:AssistantRequest,options:{directory?:string;c
   }
   if(claims.length!==answer.claims.length)result.warnings.push('Some generated claims were omitted because their source quotes could not be matched.');
  }catch(error){if(options.signal?.aborted)throw error;if(error instanceof AgentUnavailable)result.warnings.push(error.message);result.warnings.push(input.task==='guidance'?'AI assistance is temporarily unavailable. Please try again.':'OpenAI assistance is temporarily unavailable; showing local directory checks instead.');}
- if(input.task==='search'&&!result.services.length&&config.apiKey&&!options.signal?.aborted){
-  try{result.discoveries=await discoverSupport(input.search?.q||question,input.search,{config,directory,records,signal:options.signal,fetcher:options.fetcher});if(result.discoveries.length){result.mode='openai';result.summary='No matches in the directory yet. Here are relevant services found on the web.';result.answer='These services have been sent to staff for review. Their details have not yet been checked.';}}catch{result.warnings.push('Web discovery could not complete. Try another search or suggest a service.');}
- }
  return result;
 }

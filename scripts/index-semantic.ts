@@ -3,12 +3,16 @@ import { resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { embedTexts, embeddingModel } from '../server/embeddings.ts';
 import { indexVersion, recordFingerprint, semanticChunks, serialiseChunks } from '../server/semantic.ts';
+import { enrichmentOverlay, readEnrichment } from '../server/enrichment-store.ts';
 import type { DirectoryRecord } from '../src/lib/directory.ts';
 
 mkdirSync(resolve('data'),{recursive:true});
 const source = new DatabaseSync(resolve('data/services.sqlite'),{readOnly:true});
 const records = source.prepare("SELECT record_json FROM catalogue_services WHERE availability != 'Removed at source'").all().map(row => JSON.parse(String(row.record_json)) as DirectoryRecord);
 source.close();
+// Enriched facts and passages are searched as part of each service's text.
+const enrichment = readEnrichment(resolve('data'));
+for (let i = 0; i < records.length; i++) records[i] = enrichmentOverlay(records[i], enrichment.get(records[i].id));
 const index = new DatabaseSync(resolve('data/semantic-index.sqlite'));
 index.exec('PRAGMA journal_mode=DELETE; CREATE TABLE IF NOT EXISTS metadata (key TEXT PRIMARY KEY,value TEXT NOT NULL); CREATE TABLE IF NOT EXISTS embeddings(id TEXT PRIMARY KEY,fingerprint TEXT NOT NULL,chunks_json TEXT NOT NULL)');
 const previous = index.prepare("SELECT value FROM metadata WHERE key='version'").get();

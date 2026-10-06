@@ -13,7 +13,10 @@ export interface FeedbackAnswers {
   location?: 'yes' | 'no' | 'not-tried';
   issues: FeedbackField[];
 }
+/** A change a follow-up call suggested, ready for one-click apply. Only the server creates these. */
+export interface ProposedChange {field:FeedbackField;value:string;previous:string;quote:string;source:'follow-up'}
 export interface FeedbackEntry {
+  proposed?:ProposedChange;
   id:string;serviceId:string;serviceName:string;createdAt:string;status:FeedbackStatus;
   answers:FeedbackAnswers;note:string;review?: {action:string;note:string;reviewedAt:string;field?:FeedbackField;previousValue?:string;newValue?:string};
 }

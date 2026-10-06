@@ -17,7 +17,7 @@ test('current location uses real coordinates; denial is recoverable', async ({pa
   await context.setGeolocation({latitude:51.4288,longitude:-2.59625});
   await page.goto('/');
   await useCurrentLocation(page);
-  await expect(page.getByRole('heading',{name:'Support in Your current location'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Search results'})).toBeVisible();
   await expect(page.locator('.results-main .service-card').first()).toBeVisible();
   const response = await page.request.get('/api/imports?lat=51.4288&lng=-2.59625');
   const data = await response.json(); expect(data.records[0].distanceMiles).toBe(0);

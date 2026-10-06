@@ -121,7 +121,8 @@ export class MeetingSession {
     this.send({ type: 'concepts', concepts: this.view });
     for (const concept of view) {
       if (concept.filtered.status !== 'pending') continue;
-      const candidates = concept.results.map(r => ({ id: r.id, name: r.name, needs: r.needs, snippet: r.snippet }));
+      // The filter judges on the passage that matched the query when there is one, not only the generic description.
+      const candidates = concept.results.map(r => ({ id: r.id, name: r.name, needs: r.needs, snippet: r.evidence ?? r.snippet }));
       void this.deps.filter(concept.query, this.history, candidates).then(outcome => {
         if (this.closed || !this.view.includes(concept)) return;
         concept.filtered = outcome ? { status: 'done', ids: outcome.ids, ms: outcome.ms } : { status: 'error', ids: [], ms: 0 };
