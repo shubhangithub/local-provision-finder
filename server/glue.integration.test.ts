@@ -10,7 +10,6 @@ import { enrichmentHandler } from './enrichment-api';
 import { enrichmentOverlay,readEnrichment } from './enrichment-store';
 import { FeedbackStore } from './feedback-store';
 import { followUpsHandler } from './follow-ups-api';
-import { FollowUpStore,validateFollowUp } from './follow-ups-store';
 import { GovHackClient } from './gov-hack';
 import type { DirectoryRecord } from '../src/lib/directory';
 vi.mock('./semantic.ts',async importOriginal=>({...await importOriginal<typeof import('./semantic')>(),semanticMatches:vi.fn(async()=>null)}));
@@ -55,7 +54,7 @@ describe('enrich, search, revert, follow up',()=>{
     const done=await (await call(`/api/enrichment?serviceId=${service.id}`,{headers:staff})).json();
     expect(done.run).toMatchObject({status:'completed',outcome:'found'});expect(done.gaps[0].topic).toBe('eligibility');
     expect(calls.filter(item=>item.path.startsWith('/jobs')).every(item=>item.auth===`Bearer ${token}`)).toBe(true);
-    expect(shown().cost).toBe('Free, booking required');expect(read().cost).toBeNull();expect(shown().enrichment?.facts).toHaveLength(2);
+    expect(shown().cost).toBe('Free, booking required');expect(read().cost).toBeNull();expect(shown().enrichment?.facts).toHaveLength(1);
   });
   it('finds the service by words that exist only in the enriched text',async()=>{
     const query=(q:string,record:DirectoryRecord)=>searchDirectory([record],new URLSearchParams({q,mode:'keyword'}));
@@ -67,15 +66,14 @@ describe('enrich, search, revert, follow up',()=>{
     expect((await call('/api/enrichment/revert',{method:'POST',headers:staff,body:JSON.stringify({id:overwrites[0].id,serviceId:service.id})})).status).toBe(200);
     expect(shown().cost).toBeNull();expect(shown().enrichment?.facts).toHaveLength(2);
   });
-  it('follows up a consenting report and the finding arrives as a pending report, changing no record',async()=>{
-    const feedback=new FeedbackStore(join(directory,'feedback.sqlite'));const consent=validateFollowUp({phone:'07700 900123',consent:true})!;
-    const report=feedback.submit(service,{answers:{upToDate:'yes',issues:[]},note:'Used it last week'});feedback.close();
-    const follow=new FollowUpStore(join(directory,'follow-ups.sqlite'));follow.record(report.id,service,consent.phone);follow.close();
-    const placed=await call('/api/follow-ups',{method:'POST',headers:staff,body:JSON.stringify({feedbackId:report.id})});expect(placed.status).toBe(202);expect(await placed.text()).not.toContain('07700');
-    expect(followupBody).toMatchObject({person:{phone:'07700900123'},consent:{attested:true},services:[{name:service.name,job_id:jobId}],reference:report.id});
-    const result=await (await call(`/api/follow-ups?feedbackId=${report.id}`,{headers:staff})).json();
+  it('follows up a customer from a meeting and the finding arrives as a pending report, changing no record',async()=>{
+    const created=await call('/api/follow-ups',{method:'POST',headers:staff,body:JSON.stringify({firstName:'Sam',phone:'07700 900123',agreed:true,services:[{id:service.id}]})});
+    expect(created.status).toBe(201);const {followUp}=await created.json();
+    const placed=await call('/api/follow-ups/call',{method:'POST',headers:staff,body:JSON.stringify({id:followUp.id})});expect(placed.status).toBe(202);expect(await placed.text()).not.toContain('07700');
+    expect(followupBody).toMatchObject({person:{phone:'07700900123',first_name:'Sam'},consent:{attested:true},services:[{name:service.name,job_id:jobId}],reference:followUp.id});
+    const result=await (await call(`/api/follow-ups?id=${followUp.id}`,{headers:staff})).json();
     expect(result.followUp).toMatchObject({status:'completed',outcome:'answered'});
-    const after=new FeedbackStore(join(directory,'feedback.sqlite'));const pending=after.list('pending').filter(entry=>entry.id!==report.id);after.close();
+    const after=new FeedbackStore(join(directory,'feedback.sqlite'));const pending=after.list('pending');after.close();
     expect(pending).toHaveLength(1);expect(pending[0]).toMatchObject({serviceId:service.id,answers:{availability:'closed'}});expect(pending[0].note).toContain("it's shut down");
     expect(result.followUp.reportIds).toEqual([pending[0].id]);expect(shown().availability).toBe(read().availability);
   });

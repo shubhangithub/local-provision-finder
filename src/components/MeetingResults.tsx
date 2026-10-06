@@ -3,6 +3,7 @@ import type { AssistantResult } from '../lib/assistant';
 import { transcriptText, type LiveConcept, type TranscriptLine } from '../lib/live-meeting';
 import LiveServices, { visibleServices, type MeetingChoice, type useMeetingShortlist } from './LiveServices';
 import NextStepsReport from './NextStepsReport';
+import FollowUpOffer from './FollowUpOffer';
 import ResultsTabs from './ResultsTabs';
 
 interface Props {
@@ -44,6 +45,7 @@ export default function MeetingResults(props: Props) {
       <div className="meeting-heading-actions"><button type="button" className="button secondary meeting-start" onClick={onRestart}>Start another meeting</button></div>
     </div>
     <NextStepsReport choices={choices} fallback={fallback} topics={topics} endedAt={endedAt} />
+      <FollowUpOffer services={choices.map(choice => ({ id: choice.service.id, name: choice.service.name }))} />
     <ResultsTabs label="Meeting details" tabs={[
       { id: 'summary', label: 'Summary', panel: <Summary summary={props.summary} summarising={props.summarising} summaryError={props.summaryError} onSummarise={props.onSummarise} hasTranscript={!!transcript} /> },
       { id: 'transcript', label: 'Transcript', panel: <><div className="meeting-transcript" role="region" aria-label="Transcript" tabIndex={0}>{transcript || 'Nothing was transcribed.'}</div><p className="meeting-note">Machine-generated from the audio and may contain mistakes. Check it before relying on it.</p></> },

@@ -42,7 +42,7 @@ export default function StaffMenu({ route, onNavigate, onSignOut }: { route: str
   }, [open]);
   const total = (counts.reports ?? 0) + (counts.listings ?? 0);
   const review: Item[] = [{ path: '/feedback', label: 'Service reports', count: counts.reports }, { path: '/suggestions', label: 'New listings to approve', count: counts.listings }];
-  const more: Item[] = [{ path: '/add-provision', label: 'Add a service' }, { path: '/enriched', label: 'Enrichment log' }, { path: '/meeting', label: 'Start meeting' }, { path: '/imports', label: 'Directory records' }];
+  const more: Item[] = [{ path: '/add-provision', label: 'Add a service' }, { path: '/follow-ups', label: 'Follow-ups' }, { path: '/enriched', label: 'Enrichment log' }, { path: '/meeting', label: 'Start meeting' }, { path: '/imports', label: 'Directory records' }];
   const link = (item: Item) => <li key={item.path}>
     <a href={`#${item.path}`} aria-current={route === item.path ? 'page' : undefined} onClick={event => { event.preventDefault(); setOpen(false); onNavigate(item.path); }}>
       {item.label}{!!item.count && <span className="workspace-count" aria-label={`${item.count} awaiting review`}>{item.count}</span>}

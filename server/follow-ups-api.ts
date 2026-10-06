@@ -6,7 +6,7 @@ import { openApi, readCatalogueRecord, readJson } from './api-util.ts';
 import { EnrichmentStore } from './enrichment-store.ts';
 import { FeedbackStore } from './feedback-store.ts';
 import { reportFromFinding, type CallFinding } from './follow-up-findings.ts';
-import { FollowUpError, FollowUpStore, type FollowUp } from './follow-ups-store.ts';
+import { FollowUpError, FollowUpStore, maxServices, normaliseName, normalisePhone, type FollowUp } from './follow-ups-store.ts';
 import { GovHackError, govHackClient, notConfigured, type FollowupResponse, type GovHackClient } from './gov-hack.ts';
 
 const terminal=new Set(['resolved','failed','denied','rejected']);
@@ -22,26 +22,31 @@ export function followUpsHandler({directory,client}:Options) {
   /** Ends a follow-up whose call has finished. Reports are made only by the one request that wins the status change. */
   const settle=(follow:FollowUpStore,feedback:FeedbackStore,current:FollowUp,response:FollowupResponse) => {
     if (!terminal.has(response.status)) return;
-    if (response.status!=='resolved') {follow.finish(current.feedbackId,response.status==='failed' ? 'failed' : 'denied',{reason:refusal(response)});return;}
+    if (response.status!=='resolved') {follow.finish(current.id,response.status==='failed' ? 'failed' : 'denied',{reason:refusal(response)});return;}
     const outcome=response.outcome ?? response.result?.outcome ?? '';
-    if (retryable[outcome]) {follow.finish(current.feedbackId,'failed',{outcome,reason:retryable[outcome]});return;}
-    const service=readCatalogueRecord(directory,current.serviceId) ?? {id:current.serviceId,name:current.serviceName};
-    const drafts=['answered','partly_answered'].includes(outcome) ? (response.result?.services ?? []).flatMap(finding=>{const draft=reportFromFinding(finding as CallFinding,current.serviceName);return draft ? [draft] : [];}) : [];
-    if (!follow.finish(current.feedbackId,'completed',{outcome})) return;
-    const ids=drafts.map(draft=>feedback.submit(service as {id:string;name:string},draft,draft.proposal ? {...draft.proposal,previous:String((service as Record<string,unknown>)[draft.proposal.field] ?? ''),source:'follow-up'} : undefined).id);
-    follow.setReports(current.feedbackId,ids);
+    if (retryable[outcome]) {follow.finish(current.id,'failed',{outcome,reason:retryable[outcome]});return;}
+    // One finding per service the call asked about, matched back to the stored services by name.
+    const byName=new Map(current.services.map(service => [service.name.toLowerCase(),service]));
+    const drafts=['answered','partly_answered'].includes(outcome) ? (response.result?.services ?? []).flatMap(finding => {
+      const stored=byName.get(String((finding as CallFinding).name ?? '').toLowerCase());if (!stored) return [];
+      const draft=reportFromFinding(finding as CallFinding,stored.name);const service=readCatalogueRecord(directory,stored.id);
+      return draft && service ? [{draft,service}] : [];
+    }) : [];
+    if (!follow.finish(current.id,'completed',{outcome})) return;
+    const ids=drafts.map(({draft,service}) => feedback.submit(service as {id:string;name:string},draft,draft.proposal ? {...draft.proposal,previous:String(service[draft.proposal.field] ?? ''),source:'follow-up'} : undefined).id);
+    follow.setReports(current.id,ids);
   };
   return async (request:IncomingMessage,response:ServerResponse,next:()=>void) => {
-    const path=new URL(request.url ?? '/','http://localhost').pathname;if (path!=='/api/follow-ups') return next();
+    const path=new URL(request.url ?? '/','http://localhost').pathname;if (path!=='/api/follow-ups' && path!=='/api/follow-ups/call') return next();
     const api=openApi(request,response,{staffOnly:true});if (!api) return;const {send,url}=api;
     mkdirSync(directory,{recursive:true});
     const follow=new FollowUpStore(resolve(directory,'follow-ups.sqlite'));const feedback=new FeedbackStore(resolve(directory,'feedback.sqlite'));const enrichment=new EnrichmentStore(resolve(directory,'enrichment.sqlite'));
     try {
       const gov=client();
-      if (request.method==='GET') {
-        const id=url.searchParams.get('feedbackId');
+      if (request.method==='GET' && path==='/api/follow-ups') {
+        const id=url.searchParams.get('id');
         if (!id) return send(200,{configured:!!gov,sandbox:true,followUps:follow.list()});
-        let current=follow.get(id);if (!current) return send(404,{error:'No follow-up for this report.'});
+        let current=follow.get(id);if (!current) return send(404,{error:'Follow-up not found.'});
         if (gov && current.status==='requested' && current.followupId) {
           try {settle(follow,feedback,current,await gov.getFollowup(current.followupId));current=follow.get(id)!;} catch (error) {
             if (!(error instanceof GovHackError)) throw error;
@@ -54,19 +59,28 @@ export function followUpsHandler({directory,client}:Options) {
       if (request.method!=='POST') return send(405,{error:'Method not allowed.'});
       const body=await readJson(request,4096);
       if (body==='too_large') return send(413,{error:'Request is too large.'});if (body==='invalid') return send(400,{error:'Invalid request.'});
+      if (path==='/api/follow-ups') {
+        // Staff attest that the customer agreed; without that tick nothing is stored.
+        if (body.agreed!==true) throw new FollowUpError('Confirm that the customer agreed to a follow-up call.');
+        const phone=normalisePhone(body.phone);const personName=normaliseName(body.firstName);
+        const ids=Array.isArray(body.services) ? [...new Set(body.services.map(item => typeof item==='object' && item ? String((item as {id?:unknown}).id ?? '') : ''))].filter(Boolean) : [];
+        if (!ids.length) throw new FollowUpError('Choose at least one service to follow up on.');
+        if (ids.length>maxServices) throw new FollowUpError(`Follow up on at most ${maxServices} services.`);
+        const services=ids.map(id => {const record=readCatalogueRecord(directory,id);if (!record) throw new FollowUpError('One of the services was not found.',404);return {id,name:String(record.name)};});
+        return send(201,{sandbox:true,followUp:follow.create({personName,phone,services})});
+      }
       if (!gov) return send(503,{error:notConfigured.replace('Web enrichment','Follow-up calls')});
-      const feedbackId=typeof body.feedbackId==='string' ? body.feedbackId : '';
-      if (!feedback.get(feedbackId)) return send(404,{error:'Report not found.'});
-      const {phone,followUp}=follow.begin(feedbackId);
+      const id=typeof body.id==='string' ? body.id : '';
+      const {phone,followUp}=follow.begin(id);
       try {
-        const jobId=enrichment.latestSuccess(followUp.serviceId)?.jobId;
-        const accepted=await gov.submitFollowup({person:{phone},consent:{attested:true},services:[{name:followUp.serviceName,...(jobId ? {job_id:jobId} : {})}],reference:feedbackId});
-        follow.attach(feedbackId,accepted.id);
+        const services=followUp.services.map(service => {const jobId=enrichment.latestSuccess(service.id)?.jobId;return {name:service.name,...(jobId ? {job_id:jobId} : {})};});
+        const accepted=await gov.submitFollowup({person:{phone,...(followUp.personName ? {first_name:followUp.personName} : {})},consent:{attested:true},services,reference:id});
+        follow.attach(id,accepted.id);
       } catch (error) {
-        follow.release(feedbackId,error instanceof GovHackError ? error.message : 'The follow-up could not be requested.');
+        follow.release(id,error instanceof GovHackError ? error.message : 'The follow-up could not be requested.');
         throw error;
       }
-      return send(202,{sandbox:true,followUp:follow.get(feedbackId)});
+      return send(202,{sandbox:true,followUp:follow.get(id)});
     } catch (error) {
       if (error instanceof FollowUpError) return send(error.status,{error:error.message});
       if (error instanceof GovHackError) return send(error.status,{error:error.message,code:error.code});

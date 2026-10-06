@@ -1,7 +1,6 @@
 import {useState} from 'react';
 import {ArrowRight} from 'lucide-react';
 import {feedbackFields,answerLabels,type FeedbackEntry} from '../lib/feedback';
-import FollowUpPanel from './FollowUpPanel';
 /** One open report as a single row. A call finding with a proposed change is applied or dismissed in one click. */
 export default function ReportRow({entry,onOpen,onDone,onChanged}:{entry:FeedbackEntry;onOpen:(entry:FeedbackEntry)=>void;onDone:(message:string)=>void;onChanged:()=>void}) {
   const proposed=entry.proposed;const [busy,setBusy]=useState(false);const [error,setError]=useState('');
@@ -22,7 +21,6 @@ export default function ReportRow({entry,onOpen,onDone,onChanged}:{entry:Feedbac
       {proposed
         ? <p className="report-change"><strong>{feedbackFields[proposed.field]}:</strong> <del>{proposed.previous || 'not listed'}</del> <span aria-hidden="true">→</span><span className="visually-hidden"> changed to</span> <ins>{proposed.value}</ins><q>{proposed.quote}</q></p>
         : <p className="report-summary">{summary}</p>}
-      <FollowUpPanel feedbackId={entry.id} onChanged={onChanged}/>
       {error && <p className="form-error" role="alert">{error}</p>}
     </div>
     <div className="report-actions">
