@@ -4,7 +4,7 @@
 .ns-num{flex:none;width:40px;height:40px;border-radius:50%;background:#00703c;color:white;font-weight:700;font-size:22px;display:grid;place-items:center}.ns-body{flex:1;min-width:0}.ns-body h4{margin:0 0 4px;font-size:22px;line-height:1.2}
 .ns-action{margin:0 0 4px;font-size:19px;font-weight:700;color:#00703c}.ns-why{margin:0 0 10px;color:#505a5f;font-size:16px}
 .ns-facts{margin:0;font-size:16px}.ns-facts>div{display:grid;grid-template-columns:170px 1fr;gap:14px;padding:5px 0;border-top:1px solid #e8e8e8}.ns-facts dt{font-weight:700}.ns-facts dd{margin:0;overflow-wrap:anywhere}
-@media(max-width:600px){.ns-facts>div{grid-template-columns:1fr;gap:0}}
+@media (max-width:639px){.ns-facts>div{grid-template-columns:1fr;gap:0}}
 .ns-check{display:none;flex:none;width:22px;height:22px;border:2px solid #0b0c0c;margin-top:6px}
 .ns-actions{display:flex;flex-wrap:wrap;gap:12px}.ns-actions .button{margin:0}
 .ns-share{margin-top:16px;border-left:5px solid #b1b4b6;padding:4px 0 4px 18px}.ns-share label{display:block;font-weight:700;margin-bottom:6px}.ns-share input{display:block;font:inherit;border:2px solid #0b0c0c;padding:6px;width:100%;max-width:26rem;margin-bottom:14px}.ns-error{color:#d4351c;font-weight:700;margin:0 0 8px}

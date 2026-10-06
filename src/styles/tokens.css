@@ -1,0 +1,36 @@
+/*
+ * Layout tokens and the cascade layer order.
+ *
+ * Layers are listed once here, lowest priority first. A rule in a later layer beats one in an earlier layer
+ * whatever its specificity, so a rule has one obvious home and does not need `body .x`, `:has()` or `!important`.
+ * CSS that is not in any layer beats every layer, so files are moved into layers as they are consolidated.
+ *
+ * Breakpoints (custom properties cannot be used inside @media, so these are the three values to write there):
+ *   tablet  min-width: 640px
+ *   wide    min-width: 1024px
+ *   (phone is anything below 640px; write phone rules as the default, not as a max-width query)
+ */
+@layer tokens, base, layout, components, pages;
+
+@layer tokens {
+  :root {
+    /* Frame: the reading width suits text pages; the wide width gives a list and a map room side by side. */
+    --page-width: 960px;
+    --page-width-wide: 1440px;
+    --gutter: 16px;
+    /* Secondary column beside a main column (service details, summaries). */
+    --side-width: 300px;
+    /* Spacing scale for new layout rules. */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 24px;
+    --space-6: 32px;
+    --space-7: 48px;
+    --space-8: 64px;
+  }
+  @media (min-width: 640px) {
+    :root { --gutter: 24px; }
+  }
+}

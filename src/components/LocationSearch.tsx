@@ -1,4 +1,5 @@
 import SearchAutocomplete from './SearchAutocomplete';
+import { usePageWidth } from '../lib/page-width';
 import UrgencyNotice from './UrgencyNotice';
 import { needsHelpToday, type UrgencyMode } from '../lib/urgency';
 import SaveServiceButton from './SaveServiceButton';
@@ -56,6 +57,7 @@ export default function LocationSearch({staff=false,onStartMeeting,selectedId=nu
   function select(id:string) {onSelect?.(id);window.scrollTo({top:0});}
   function search(text:string) {setSearchText(text);setPage(1);setSearched(true);}
   const state=selected ? 'detail' : searched ? 'results' : 'home';
+  usePageWidth(state==='results' ? 'wide' : 'reading');
   const shell=useRef<HTMLDivElement>(null);const bar=useRef<HTMLDivElement>(null);
   // The map sticks below the compact search bar, whose height varies with wrapping.
   useEffect(() => {

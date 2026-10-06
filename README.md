@@ -80,3 +80,7 @@ Staff can enrich a service from the open web and ask for sandbox follow-up calls
 
 - **Enrich service profile** (staff, button above Published contacts on a service's details): the service's facts overwrite the matching fields (cost, opening times, eligibility, accessibility, contact details, address, how to book). The original value, source and quote are kept, and each overwrite can be undone there or from **Recently enriched** in the staff menu. The details appear in **About this service**: standard fields with enriched values, and every other fact as an extra row, with the source recorded for staff. Enriched text renders as markdown without HTML, and all of it is searchable. A staff-verified correction newer than an overwrite always wins. This is the one place unreviewed content changes a published field; the recorded source and the undo are the safeguards.
 - **Follow-up**: the feedback form can ask for a phone number and consent. The number is stored apart from the report (`data/follow-ups.sqlite`), shown only to staff, and deleted after the follow-up or 30 days. "Follow-up scheduled in 1 week" is a label: staff press **Follow up now** to place a call. Calls are sandbox-only and never reach the person's number. Anything the person reports becomes a pending service report for review, and never changes a record by itself.
+
+## Layout
+
+Pages share one frame, two width variants, two grids and three breakpoints. See [docs/layout.md](docs/layout.md) before adding a page or changing widths.
