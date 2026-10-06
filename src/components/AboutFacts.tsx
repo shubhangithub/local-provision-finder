@@ -3,7 +3,7 @@ import type {DirectoryEnrichment} from '../lib/directory';
 import type {Overwrite} from './ServiceEnrichment';
 import Markdown from './Markdown';
 import '../styles/about-facts.css';
-interface Record_ {eligibilitySummary?:string|null;address?:string|null;cost?:string|null;openingTimes?:string|null;referralRoute?:string|null;accessibility?:string[]|null;enrichment?:DirectoryEnrichment}
+interface Record_ {capacity?:string|null;eligibilitySummary?:string|null;address?:string|null;cost?:string|null;openingTimes?:string|null;referralRoute?:string|null;accessibility?:string[]|null;enrichment?:DirectoryEnrichment}
 /** The details of a service in one column. Enriched values replace the catalogue's; other enriched facts follow as extra rows. */
 const short=(value:string,max=140)=>value.length>max ? `${value.slice(0,max).trimEnd()}…` : value;
 /** For admins: what an enriched field used to say, with an undo. */
@@ -21,6 +21,7 @@ export default function AboutFacts({record,changes=[],onUndo}:{record:Record_;ch
     {field:'address',label:'Address',value:record.address,always:true},
     {field:'cost',label:'Cost',value:record.cost,always:true},
     {field:'openingTimes',label:'Opening times',value:record.openingTimes,always:true},
+    {field:'capacity',label:'Capacity',value:record.capacity},
     {field:'referralRoute',label:'How to access',value:record.referralRoute},
     {field:'accessibility',label:'Accessibility',value:record.accessibility?.join('; ')},
   ];

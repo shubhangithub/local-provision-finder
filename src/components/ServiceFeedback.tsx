@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { CheckCircle2, ChevronDown } from 'lucide-react';
 import { feedbackFields, type FeedbackAnswers, type FeedbackField } from '../lib/feedback';
-interface Service {id:string;name:string;publicPhone?:string | null;publicEmail?:string | null;address?:string | null;postcode?:string | null;url?:string | null;cost?:string | null;openingTimes?:string | null;eligibilitySummary?:string | null;description?:string}
+interface Service {id:string;name:string;capacity?:string | null;publicPhone?:string | null;publicEmail?:string | null;address?:string | null;postcode?:string | null;url?:string | null;cost?:string | null;openingTimes?:string | null;eligibilitySummary?:string | null;description?:string}
 export default function ServiceFeedback({service,initiallyOpen=false,context}:{service:Service;initiallyOpen?:boolean;context?:'viewed'|'recommended'}) {
   const [open,setOpen]=useState(initiallyOpen);
   const [upToDate,setUpToDate]=useState<FeedbackAnswers['upToDate'] | ''>('');

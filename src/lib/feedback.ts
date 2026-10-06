@@ -1,7 +1,7 @@
 export const feedbackFields = {
   name:'Service name', publicPhone:'Phone number', publicEmail:'Email address', url:'Website',
   address:'Address', postcode:'Postcode', openingTimes:'Opening times', cost:'Cost',
-  eligibilitySummary:'Who can use the service', availability:'Availability', description:'Service description',
+  eligibilitySummary:'Who can use the service', availability:'Availability', capacity:'Capacity and waiting times', description:'Service description',
 } as const;
 export type FeedbackField = keyof typeof feedbackFields;
 export type FeedbackStatus = 'pending' | 'checking' | 'resolved' | 'dismissed';

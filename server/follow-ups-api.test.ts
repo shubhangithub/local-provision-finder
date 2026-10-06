@@ -15,6 +15,7 @@ const club={id:'bris:2',name:'Kettlebell Club',provider:'Club',description:'Club
 const gym={id:'bris:3',name:'Walking Group',provider:'Group',description:'Walk',cost:'Free',searchText:'z'};
 const phone='07700900123';
 const staff={'x-staff-demo':'true','content-type':'application/json'};
+let summary:(input:{said:string;service:string;field:string;label:string})=>Promise<string|null>;
 let directory:string,server:Server,base:string,client:GovHackClient | null,gov:{submitFollowup:ReturnType<typeof vi.fn>;getFollowup:ReturnType<typeof vi.fn>};
 beforeEach(async()=>{
   directory=mkdtempSync(join(tmpdir(),'followups-api-'));
@@ -22,9 +23,10 @@ beforeEach(async()=>{
   db.exec('CREATE TABLE catalogue_services(id TEXT PRIMARY KEY,source_id TEXT,postcode TEXT,lat REAL,lng REAL,vetting TEXT,availability TEXT,record_json TEXT,search_text TEXT)');
   for (const record of [hub,club,gym]) db.prepare('INSERT INTO catalogue_services VALUES(?,?,?,?,?,?,?,?,?)').run(record.id,'x',null,null,null,'public','Available',JSON.stringify(record),'x');
   db.close();
+  summary=async({said})=>said.includes('twelve') ? 'Costs 12 pounds' : null;
   gov={submitFollowup:vi.fn(async()=>({id:'fu-1',status:'awaiting'})),getFollowup:vi.fn(async()=>({id:'fu-1',status:'awaiting'}))};
   client={...gov,submitJob:vi.fn(),getJob:vi.fn()} as unknown as GovHackClient;
-  const handler=followUpsHandler({directory,client:()=>client});
+  const handler=followUpsHandler({directory,client:()=>client,summarise:input=>summary(input)});
   server=createServer((req,res)=>handler(req,res,()=>{res.statusCode=404;res.end('{}');}));
   await new Promise<void>(done=>server.listen(0,'127.0.0.1',done));base=`http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 });
@@ -98,7 +100,7 @@ describe('what the customer said',()=>{
     expect(first.followUp).toMatchObject({status:'completed',outcome:'answered'});expect(second.followUp.reportIds).toEqual(first.followUp.reportIds);
     const reports=pending();expect(reports).toHaveLength(2);
     const closed=reports.find(entry=>entry.serviceId===hub.id)!;expect(closed.proposed).toEqual({field:'availability',value:'Closed',previous:'',quote:"It's shut down for good.",source:'follow-up'});
-    const price=reports.find(entry=>entry.serviceId===club.id)!;expect(price.proposed).toMatchObject({field:'cost',value:'twelve pounds now',previous:'£10'});
+    const price=reports.find(entry=>entry.serviceId===club.id)!;expect(price.proposed).toMatchObject({field:'cost',value:'Costs 12 pounds',previous:'£10'});
     expect(reports.some(entry=>entry.serviceId===gym.id)).toBe(false);expect(first.followUp.reportIds.sort()).toEqual(reports.map(entry=>entry.id).sort());
     const db=new DatabaseSync(join(directory,'follow-ups.sqlite'));expect((db.prepare('SELECT phone FROM meeting_follow_ups').get() as {phone:string|null}).phone).toBeNull();db.close();
     const cat=new DatabaseSync(join(directory,'services.sqlite'));expect(JSON.parse(String((cat.prepare('SELECT record_json FROM catalogue_services WHERE id=?').get(hub.id) as {record_json:string}).record_json)).cost).toBe('Free');cat.close();
@@ -112,5 +114,25 @@ describe('what the customer said',()=>{
     const {id}=await made();await post('/api/follow-ups/call',{id});
     gov.getFollowup.mockResolvedValue({id:'fu-1',status:'resolved',outcome:'answered',result:{outcome:'answered',services:[{name:'Unrelated Place',operating:{state:'closed_permanently',confidence:'confirmed',quote:'Closed.'}}]}});
     expect((await poll(id)).followUp).toMatchObject({status:'completed',reportIds:[]});expect(pending()).toHaveLength(0);
+  });
+});
+describe('rewriting what was said',()=>{
+  const settle=async()=>{const {id}=await made();await post('/api/follow-ups/call',{id});gov.getFollowup.mockResolvedValue(answered);await poll(id);await poll(id);return id;};
+  it('offers the rewritten value, never the spoken words, and keeps the quote',async()=>{
+    await settle();const price=pending().find(entry=>entry.serviceName===club.name)!;
+    expect(price.proposed).toMatchObject({field:'cost',value:'Costs 12 pounds',quote:'It is twelve pounds now.'});
+    expect(price.note).toContain('twelve pounds now');
+  });
+  it('still creates the report, without a one-click change, when there is no rewrite',async()=>{
+    summary=async()=>null;await settle();const price=pending().find(entry=>entry.serviceName===club.name)!;
+    expect(price.proposed).toBeUndefined();expect(price.note).toContain('twelve pounds now');
+    expect(pending().find(entry=>entry.serviceName===hub.name)!.proposed).toMatchObject({field:'availability',value:'Closed'});
+  });
+  it('makes one set of reports when the same call is settled twice',async()=>{
+    const id=await settle();await poll(id);expect(pending()).toHaveLength(2);
+  });
+  it('sends the model the service name and the words, not the number or first name',async()=>{
+    const seen:string[]=[];summary=async input=>{seen.push(JSON.stringify(input));return 'Costs 12 pounds';};await settle();
+    expect(seen.length).toBeGreaterThan(0);for (const text of seen) {expect(text).not.toContain(phone);expect(text).not.toContain('Sam');}
   });
 });

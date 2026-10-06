@@ -16,7 +16,6 @@
 .recent-enriched .change-line{padding:12px 0;border-top:1px solid #b1b4b6}
 .recent-enriched .change-line .change-service{display:block;font-weight:700}
 .recent-enriched .was-reverted{color:#505a5f}
-.followup-sandbox{padding:0 6px;background:#fff7bf;color:#594d00;font-size:13px;font-weight:700}
 .report-list{list-style:none;padding:0;margin:0}
 .report-row{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px 24px;padding:20px 0;border-top:1px solid #b1b4b6}
 .report-row:last-child{border-bottom:1px solid #b1b4b6}

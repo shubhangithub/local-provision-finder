@@ -35,7 +35,7 @@ export default function FollowUps({ staff, enableStaff, onNavigate }: { staff: b
   }
   if (!staff) return <div className="page-wrap"><div className="panel staff-gate"><Phone size={34} /><h1>Follow-ups</h1><p>See the follow-up calls arranged at the end of meetings, and place them.</p><button className="button primary" onClick={enableStaff}>Enter staff workspace<ArrowRight size={17} /></button></div></div>;
   return <div className="page-wrap follow-ups-page">
-    <div className="page-heading"><div><h1>Follow-ups</h1><p>Calls arranged at the end of meetings. They are due in about a week; place one now to see how it works. <span className="followup-sandbox">Sandbox demo</span></p></div></div>
+    <div className="page-heading"><div><h1>Follow-ups</h1><p>Calls arranged at the end of meetings. They are due in about a week; place one now to see how it works.</p></div></div>
     {error && <p role="alert" className="form-error">{error}</p>}
     {!configured && <p className="field-hint" role="note">Follow-up calls are not configured. Set GOV_HACK_URL and GOV_HACK_API_TOKEN on the server.</p>}
     {items === null ? !error && <p role="status">Loading…</p> : !items.length ? <div className="panel empty-state"><h2>No follow-ups yet</h2><p>Follow-ups are arranged at the end of a meeting, once the customer has ticked services.</p></div> : <ul className="follow-up-list">
@@ -53,7 +53,6 @@ export default function FollowUps({ staff, enableStaff, onNavigate }: { staff: b
         </div>
         <div className="follow-up-actions">
           {['scheduled', 'denied', 'failed'].includes(item.status) && <button type="button" className="button primary" disabled={!configured || busy === item.id} onClick={() => void call(item.id)}>{item.status === 'scheduled' ? 'Follow up now' : 'Try again'}<span className="visually-hidden"> for {item.personName || 'the customer'}</span></button>}
-          <span className="followup-sandbox">Sandbox demo</span>
         </div>
       </li>)}
     </ul>}

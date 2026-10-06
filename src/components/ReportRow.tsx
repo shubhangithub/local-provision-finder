@@ -7,7 +7,7 @@ export default function ReportRow({entry,onOpen,onDone,onChanged}:{entry:Feedbac
   async function decide(action:'corrected'|'dismissed') {
     if (!proposed) return;setBusy(true);setError('');
     const body=action==='corrected'
-      ? {id:entry.id,action,verified:true,field:proposed.field,newValue:proposed.value,note:`Confirmed on a follow-up call (sandbox demo): "${proposed.quote}"`}
+      ? {id:entry.id,action,verified:true,field:proposed.field,newValue:proposed.value,note:`Confirmed on a follow-up call: "${proposed.quote}"`}
       : {id:entry.id,action,note:'Dismissed from the queue.'};
     try {
       const response=await fetch('/api/feedback/review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await response.json();if (!response.ok) throw new Error(data.error);
