@@ -1,9 +1,6 @@
 @scope (.customer-summary-page) {
 .meeting-main{background:#ffffff;min-height:calc(100vh - 70px);padding:28px 32px 56px;color:#0b0c0c}
 .meeting-workspace,.customer-summary-page{max-width:1080px;margin:auto}
-.meeting-entry{display:flex;align-items:center;justify-content:space-between;gap:24px;border:1px solid #b1b4b6;border-left:4px solid #00703c;padding:20px 24px;margin-bottom:28px;background:#f3f2f1;border-radius:0}
-.meeting-entry strong{font-size:19px}
-.meeting-entry p{font-size:16px;margin:6px 0 0;color:#505a5f}
 .meeting-page-top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px}
 .meeting-workspace-tag,.meeting-eyebrow{font-size:12px;letter-spacing:.1em;font-weight:700;color:#505a5f}
 .meeting-page-top .text-button{color:#1d70b8;font-size:14px}
@@ -115,7 +112,6 @@
 .meeting-page-heading h1{font-size:36px}
 .meeting-workspace-tag{display:none}
 .meeting-page-heading{align-items:flex-start}
-.meeting-entry{align-items:flex-start;flex-direction:column}
 .summary-toolbar{align-items:flex-start;flex-direction:column}
 .summary-paper{padding:32px}
 .meeting-transcript{height:380px}

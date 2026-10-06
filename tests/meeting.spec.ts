@@ -34,7 +34,8 @@ test('leaving staff mode releases the microphone and removes transcript', async 
   await page.goto('/');
   await page.getByRole('button', { name: 'Staff sign in', exact: true }).click();
   await completeStaffSignIn(page);
-  await page.getByRole('button', { name: 'Start meeting', exact: true }).click();
+  await page.getByRole('button', { name: /^Staff/ }).click();
+  await page.getByRole('link', { name: 'Start meeting', exact: true }).click();
   await page.getByRole('button', { name: 'Start meeting', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Meeting in progress' })).toBeVisible();
   await page.getByRole('button', { name: /^Staff/ }).click();
@@ -49,7 +50,8 @@ test('microphone denial leaves recording off and explains retry', async ({ page 
   await page.goto('/');
   await page.getByRole('button', { name: 'Staff sign in', exact: true }).click();
   await completeStaffSignIn(page);
-  await page.getByRole('button', { name: 'Start meeting', exact: true }).click();
+  await page.getByRole('button', { name: /^Staff/ }).click();
+  await page.getByRole('link', { name: 'Start meeting', exact: true }).click();
   await page.getByRole('button', { name: 'Start meeting', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Microphone permission was not granted');
   await expect(page.getByRole('button', { name: 'Start meeting', exact: true })).toBeVisible();
@@ -62,7 +64,8 @@ test('unavailable live transcription explains why and releases the microphone', 
   await page.goto('/');
   await page.getByRole('button', { name: 'Staff sign in', exact: true }).click();
   await completeStaffSignIn(page);
-  await page.getByRole('button', { name: 'Start meeting', exact: true }).click();
+  await page.getByRole('button', { name: /^Staff/ }).click();
+  await page.getByRole('link', { name: 'Start meeting', exact: true }).click();
   await page.getByRole('button', { name: 'Start meeting', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('AZURE_OPENAI_API_KEY');
   await expect(page.getByRole('button', { name: 'Start meeting', exact: true })).toBeVisible();
@@ -76,7 +79,8 @@ test('ten-minute limit stops recording automatically', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Staff sign in', exact: true }).click();
   await completeStaffSignIn(page);
-  await page.getByRole('button', { name: 'Start meeting', exact: true }).click();
+  await page.getByRole('button', { name: /^Staff/ }).click();
+  await page.getByRole('link', { name: 'Start meeting', exact: true }).click();
   await page.getByRole('button', { name: 'Start meeting', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Meeting in progress' })).toBeVisible();
   await page.clock.fastForward(600_000);
@@ -92,7 +96,8 @@ test('live services can be saved or hidden and feed the next-steps report', asyn
   await page.goto('/');
   await page.getByRole('button', { name: 'Staff sign in', exact: true }).click();
   await completeStaffSignIn(page);
-  await page.getByRole('button', { name: 'Start meeting', exact: true }).click();
+  await page.getByRole('button', { name: /^Staff/ }).click();
+  await page.getByRole('link', { name: 'Start meeting', exact: true }).click();
   await page.getByRole('button', { name: 'Start meeting', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Childcare support', level: 4 })).toBeVisible();
   await page.getByRole('button', { name: 'Hide Beta Club, not relevant' }).click();

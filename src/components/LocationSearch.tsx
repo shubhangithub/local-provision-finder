@@ -15,7 +15,7 @@ import { rememberService } from '../lib/notifications';
 import { type DirectoryResponse, type MapBounds } from '../lib/directory';
 import { openRegionMenu, regionParams, regionSearch, useRegion } from '../lib/region';
 const sameBounds=(a:MapBounds|null,b:MapBounds)=>!!a && ['west','north','east','south'].every(key => Math.abs(a[key as keyof MapBounds]-b[key as keyof MapBounds])<0.000001);
-export default function LocationSearch({staff=false,onStartMeeting,selectedId=null,onSelect,onBack,feedbackOpen=false,feedbackContext}:{staff?:boolean;onStartMeeting?:()=>void;selectedId?:string|null;onSelect?:(id:string)=>void;onBack?:()=>void;feedbackOpen?:boolean;feedbackContext?:'viewed'|'recommended'}) {
+export default function LocationSearch({staff=false,selectedId=null,onSelect,onBack,feedbackOpen=false,feedbackContext}:{staff?:boolean;selectedId?:string|null;onSelect?:(id:string)=>void;onBack?:()=>void;feedbackOpen?:boolean;feedbackContext?:'viewed'|'recommended'}) {
   const [saved,setSaved]=useState(readDirectorySaved);
   useEffect(() => {const update=()=>setSaved(readDirectorySaved());window.addEventListener("directory-saved-changed",update);return () => window.removeEventListener("directory-saved-changed",update);},[]);
   const heading=useRef<HTMLHeadingElement>(null);
@@ -76,7 +76,7 @@ export default function LocationSearch({staff=false,onStartMeeting,selectedId=nu
   if (state==='detail') return <div className="location-search directory-home" data-state="detail"><section className="page-wrap finder-section directory-service-detail" aria-label="Real directory results"><button className="back-link" type="button" onClick={closeDetail}><ArrowLeft size={16}/>Back to results</button><ImportedServices key={selected!} initialId={selected!} directoryView feedbackOpen={feedbackOpen} feedbackContext={feedbackContext} staff={staff} enableStaff={() => {}} onNavigate={closeDetail}/></section></div>;
   if (state==='home') return <div className="location-search directory-home" data-state="home">
     <section className="hero page-wrap"><div className="hero-copy"><h1>What do you need help with?</h1><p>Describe it in your own words. You don't need the right term.</p></div></section>
-    <section className="page-wrap finder-section" aria-label="Search local support">{searchForm}{urgencyNotice}{staff && onStartMeeting && <div className="meeting-entry"><div><strong>Meet with a customer</strong><p>Capture the conversation and explore relevant provision together.</p></div><button className="button primary meeting-start" onClick={onStartMeeting}>Start meeting</button></div>}</section>
+    <section className="page-wrap finder-section" aria-label="Search local support">{searchForm}{urgencyNotice}</section>
   </div>;
   return <div ref={shell} className="location-search directory-home results-shell" data-state="results">
     <div ref={bar} className="results-bar"><div className="results-bar-inner">{searchForm}</div></div>

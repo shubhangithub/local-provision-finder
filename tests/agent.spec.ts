@@ -53,7 +53,8 @@ test.fixme('agent summary review reflects edits and exports remain separate from
   });
   await page.goto('/');
   await page.getByRole('button',{name:'Staff sign in',exact:true}).click();await completeStaffSignIn(page);
-  await page.getByRole('button',{name:'Start meeting',exact:true}).click();
+  await page.getByRole('button', { name: /^Staff/ }).click();
+  await page.getByRole('link', { name: 'Start meeting', exact: true }).click();
   await page.getByLabel('Add conversation note').fill('I need help finding work.');
   await page.getByRole('button',{name:'Add note',exact:true}).click();
   await page.getByRole('button',{name:'Stop meeting',exact:true}).click();

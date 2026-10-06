@@ -106,9 +106,6 @@ button:disabled {opacity:.55;}
 .agent-question-form {background:var(--blue-pale);}
 .agent-prompt-options {gap:10px 18px;}
 .agent-prompt-options .text-button {font-size:16px;}
-.meeting-entry {background:var(--blue-pale);border:1px solid #8eb8dc;border-left:5px solid var(--brand);padding:20px 24px;margin-bottom:28px;}
-.meeting-entry strong {font-size:21px;}
-.meeting-entry p {font-size:17px;color:var(--muted);margin-top:6px;}
 .meeting-page-heading {margin-bottom:24px;}
 .meeting-eyebrow {font-size:19px;}
 .meeting-actionbar {background:var(--blue-pale);border-left:4px solid var(--brand);padding:20px 24px;}
@@ -164,8 +161,6 @@ button:disabled {opacity:.55;}
  .field-hint,.panel p.field-hint {font-size:15px;}
  .review-advisor {padding:16px;}
  .review-advisor-label span {margin-left:0;width:100%;}
- .meeting-entry {padding:18px;align-items:flex-start;flex-direction:column;gap:16px;}
- .meeting-entry .button {width:auto;}
  .meeting-actionbar {padding:18px;}
  .meeting-assist,.summary-agent-review{padding:20px;}
  .summary-paper-wrap {padding:12px;}
