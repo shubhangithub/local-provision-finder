@@ -114,7 +114,6 @@ test('live services can be saved or hidden and feed the next-steps report', asyn
   // The hand-over actions are their own box after the follow-up call.
   const takeAway = page.getByRole('region', { name: 'Take this away' });
   await expect(takeAway.getByRole('button', { name: 'Print or save as PDF' })).toBeVisible();
-  await expect(takeAway.getByText('Sandbox demo: nothing is sent yet')).toBeVisible();
   await takeAway.getByRole('button', { name: 'Send a copy' }).click();
   await takeAway.getByRole('button', { name: 'Send email' }).click();
   await expect(takeAway.getByRole('alert')).toContainText('Enter an email address');

@@ -19,7 +19,6 @@ export default function TakeAway({ hasSteps }: { hasSteps: boolean }) {
     <div className="ns-actions">
       <button type="button" className="button primary" onClick={() => window.print()}>Print or save as PDF</button>
       <button type="button" className="button secondary" aria-expanded={sharing} onClick={() => { setSharing(!sharing); setSent(''); setFieldError(''); }}>Send a copy</button>
-      <span className="followup-sandbox">Sandbox demo: nothing is sent yet</span>
     </div>
     {sharing && <form className="ns-share" onSubmit={send} noValidate>
       <fieldset><legend>Send these steps by</legend>
