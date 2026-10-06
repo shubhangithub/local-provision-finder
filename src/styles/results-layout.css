@@ -4,8 +4,6 @@
 .directory-search-row {display:flex;gap:16px;align-items:stretch;}
 .directory-search-row .search-autocomplete {flex:1;min-width:0;}
 .directory-search-row>.button {align-self:stretch;white-space:nowrap;min-height:48px;padding-left:24px;padding-right:24px;}
-.region-line {margin:0;font-size:16px;color:var(--muted,#484949);display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
-.region-line .text-button {min-height:32px;}
 @media(max-width:650px) {.directory-search-row {flex-direction:column;}.directory-search-row>.button {min-height:48px;width:100%;}}
 
 /* Results: sticky compact bar, then list beside a full-height map. */
@@ -15,7 +13,6 @@
 .results-bar .directory-search-form {margin:0;gap:4px;}
 .results-bar .directory-query {min-height:52px;}
 .results-bar .directory-search-row>.button {min-height:52px;}
-.results-bar .region-line {font-size:15px;}
 .results-main{padding:0}
 .results-shell .directory-results-list {padding:20px 12px 40px 0;min-width:0;}
 .results-shell .directory-results-map {position:sticky;top:var(--results-bar-h);height:calc(100dvh - var(--results-bar-h));min-height:320px;margin:0 0 0 12px;display:flex;flex-direction:column;align-self:start;}

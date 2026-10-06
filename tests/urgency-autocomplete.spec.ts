@@ -10,7 +10,7 @@ test('urgent wording activates help today; opt-out refreshes results',async({pag
  await expect(page.getByLabel('I need help today',{exact:true})).toBeChecked();
  await page.getByRole('button',{name:'Find support',exact:true}).click();await chooseRegion(page,'Bristol');
  await expect(page.getByText('Urgent support listed',{exact:true})).toBeVisible();
- await expect(page.locator('.search-options').getByLabel('I need help today',{exact:true})).toBeVisible();
+ await expect(page.locator('.results-urgency').getByLabel('I need help today',{exact:true})).toBeVisible();
  await page.getByLabel('I need help today',{exact:true}).uncheck();
  await expect.poll(()=>requests.some(url=>url.includes('urgency=normal')&&url.includes('area=Bristol'))).toBe(true);
  await expect(page.getByText('Urgent support listed',{exact:true})).toHaveCount(0);

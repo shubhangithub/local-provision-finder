@@ -31,7 +31,7 @@ test('a region is shown, persists across a reload and can be cleared', async ({ 
   await page.goto('/');
   await chooseArea(page, 'Kingston');
   await expect(trigger(page)).toHaveAccessibleName(/Kingston upon Thames/);
-  await expect(page.getByText('Searching in Kingston upon Thames')).toBeVisible();
+  await expect(page.getByRole('button',{name:/^Region settings/})).toContainText('Kingston');
   await page.reload();
   await expect(trigger(page)).toHaveAccessibleName(/Kingston upon Thames/);
   const panel = await openRegionMenu(page);
@@ -61,7 +61,7 @@ test('the region indicator appears only when a region is set and opens the heade
   await expect(page.getByText(/all areas/i)).toHaveCount(0);
   await expect(trigger(page)).toHaveAccessibleName('Region settings');
   await chooseArea(page, 'Bristol');
-  await expect(page.getByText('Searching in Bristol')).toBeVisible();
+  await expect(page.getByRole('button',{name:/^Region settings/})).toContainText('Bristol');
   await page.getByRole('button', { name: 'Change region' }).click();
   await expect(page.getByRole('region', { name: 'Region settings' })).toBeVisible();
 });

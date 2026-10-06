@@ -70,9 +70,8 @@ export default function LocationSearch({staff=false,selectedId=null,onSelect,onB
       <SearchAutocomplete value={words} onChange={value=>{setWords(value);setUrgency('auto');}} area={region?.area} onChoose={value=>{setWords(value);setUrgency(urgent?'today':'normal');search(value);}}/>
       <button className="button primary" type="submit">Find support<ArrowRight size={18}/></button>
     </div>
-    <div className="search-options">{region && <p className="region-line">Searching in <strong>{region.label}</strong> <span aria-hidden="true">·</span> <button type="button" className="text-button" onClick={openRegionMenu}>Change<span className="visually-hidden"> region</span></button></p>}<UrgencyNotice part="checkbox" text={words} mode={urgency} onChange={mode=>{setUrgency(mode);setPage(1);}}/></div>
   </form>;
-  const urgencyNotice=<UrgencyNotice part="details" text={words} mode={urgency} onChange={mode=>{setUrgency(mode);setPage(1);}}/>;
+  const urgencyNotice=<UrgencyNotice text={words} mode={urgency} onChange={mode=>{setUrgency(mode);setPage(1);}}/>;
   if (state==='detail') return <div className="location-search directory-home" data-state="detail"><section className="page-wrap finder-section directory-service-detail" aria-label="Real directory results"><button className="back-link" type="button" onClick={closeDetail}><ArrowLeft size={16}/>Back to results</button><ImportedServices key={selected!} initialId={selected!} directoryView feedbackOpen={feedbackOpen} feedbackContext={feedbackContext} staff={staff} enableStaff={() => {}} onNavigate={closeDetail}/></section></div>;
   if (state==='home') return <div className="location-search directory-home" data-state="home">
     <section className="hero page-wrap"><div className="hero-copy"><h1>What do you need help with?</h1></div></section>
