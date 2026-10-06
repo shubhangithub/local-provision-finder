@@ -11,7 +11,6 @@ import ImportedServices from './ImportedServices';
 import ServicesMap from './ServicesMap';
 import ResizableResults from './ResizableResults';
 import { readDirectorySaved, toggleDirectorySaved } from '../lib/directory-saved';
-import { rememberService } from '../lib/notifications';
 import { type DirectoryResponse, type MapBounds } from '../lib/directory';
 import { openRegionMenu, regionParams, regionSearch, useRegion } from '../lib/region';
 const sameBounds=(a:MapBounds|null,b:MapBounds)=>!!a && ['west','north','east','south'].every(key => Math.abs(a[key as keyof MapBounds]-b[key as keyof MapBounds])<0.000001);
@@ -53,7 +52,6 @@ export default function LocationSearch({staff=false,selectedId=null,onSelect,onB
     return () => controller.abort();
   },[searched,region,page,searchText,includeUnknown,bounds,reload,urgent]);
   useEffect(() => {if (!selected && data) heading.current?.focus();},[selected]);
-  useEffect(() => {if (!bounds && searchText && data?.searchMode==='semantic') data.records.slice(0,1).forEach(record => rememberService(record.id,record.name,'recommended'));},[data,searchText]);
   function select(id:string) {onSelect?.(id);window.scrollTo({top:0});}
   function search(text:string) {setSearchText(text);setPage(1);setSearched(true);}
   const state=selected ? 'detail' : searched ? 'results' : 'home';

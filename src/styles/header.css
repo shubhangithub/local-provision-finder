@@ -1,0 +1,31 @@
+/* The header on a phone: the brand and one Menu button; the rest opens below. From 640px up the row is as before. */
+.header-menu-toggle { display: none; }
+@media (max-width: 639px) {
+  .site-header .header-inner { flex-wrap: wrap; align-items: center; justify-content: space-between; }
+  .site-header .header-inner .header-menu-toggle {
+    display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px;
+    background: transparent; color: #fff; border: 2px solid #fff; font: inherit; font-size: 17px; cursor: pointer;
+  }
+  .site-header .header-inner .header-menu-toggle:focus-visible { outline: 3px solid #ffdd00; outline-offset: 2px; }
+  .site-header .header-inner nav#main-navigation { display: none; }
+  .site-header .header-inner nav#main-navigation.is-open {
+    display: flex; flex-direction: column; align-items: stretch; gap: 0;
+    flex-basis: 100%; width: 100%; margin-top: 10px; padding-top: 4px; border-top: 1px solid #505a5f;
+  }
+  nav#main-navigation.is-open > * { width: 100%; }
+  nav#main-navigation.is-open .region-menu .header-trigger,
+  nav#main-navigation.is-open .agent-header-trigger,
+  nav#main-navigation.is-open .saved-nav,
+  nav#main-navigation.is-open .staff-toggle,
+  nav#main-navigation.is-open .staff-menu-trigger {
+    width: 100%; min-height: 48px; justify-content: flex-start; padding-left: 4px; padding-right: 4px; margin: 0; border: 0;
+    border-bottom: 1px solid #2b2d2e;
+  }
+}
+@media (max-width: 639px) {
+  /* Brand and Menu share one row; the brand wraps rather than pushing the button down. */
+  .site-header .header-inner .brand { flex: 1 1 0; min-width: 0; max-width: none; font-size: 20px; white-space: normal; }
+  .site-header .header-inner .header-menu-toggle { flex: 0 0 auto; margin-left: 12px; }
+  nav#main-navigation.is-open .staff-toggle,
+  nav#main-navigation.is-open .staff-menu-trigger { background: transparent; color: #fff; font-size: 17px; font-weight: 400; }
+}

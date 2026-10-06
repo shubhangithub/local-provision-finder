@@ -8,7 +8,7 @@ import { forgetStaffSession, readStaffSession, rememberStaffSession } from './li
 import ServiceSuggestions from './components/ServiceSuggestions';
 import SuggestionReview from './components/SuggestionReview';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowRight, ArrowLeft, ArrowUpRight, Bookmark, X, Check, ShieldCheck, CircleAlert, RotateCcw, ClipboardCheck, LockKeyhole, MessageSquare, CheckCircle2, Globe } from 'lucide-react';
+import { ArrowRight, ArrowLeft, ArrowUpRight, Bookmark, X, Check, ShieldCheck, CircleAlert, RotateCcw, ClipboardCheck, LockKeyhole, MessageSquare, CheckCircle2, Globe, Menu } from 'lucide-react';
 import { catalogue, changes, pathways } from './data/catalogue';
 import { effectiveStatus } from './lib/search';
 import { applyDecisions, canPublish } from './lib/review';
@@ -26,7 +26,6 @@ import FeedbackReview from './components/FeedbackReview';
 import RecentlyEnriched from './components/RecentlyEnriched';
 import SavedDirectoryServices from './components/SavedDirectoryServices';
 import { readDirectorySaved } from './lib/directory-saved';
-import ServiceNotifications from './components/ServiceNotifications';
 import RegionMenu from './components/RegionMenu';
 import type { ProposedChange, ReviewDecision, Service, ServiceMatch } from './types';
 
@@ -104,6 +103,14 @@ export default function App() {
   const [feedback, setFeedback] = useState<Record<string,string>>({});
   const [notice, setNotice] = useState('');
   const [signInOpen,setSignInOpen]=useState(false);
+  // On a phone the header is the brand plus one Menu button that opens the rest.
+  const [menuOpen,setMenuOpen]=useState(false);
+  useEffect(() => {setMenuOpen(false);},[route]);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const escape=(event:KeyboardEvent) => {if (event.key==='Escape') setMenuOpen(false);};
+    document.addEventListener('keydown',escape);return () => document.removeEventListener('keydown',escape);
+  },[menuOpen]);
   const services = useMemo(() => applyDecisions(catalogue, changes, decisions), [decisions]);
   const pendingCount = changes.length - decisions.length;
   useEffect(() => {
@@ -154,7 +161,7 @@ export default function App() {
   const agentContext:AgentContext|undefined = route === '/meeting/summary' && customerDocument ? summaryAgentContext(customerDocument) : detailService ? {title:detailService.name,searchText:detailService.category+' '+detailService.needs.join(' '),facts:[`${detailService.name}: ${detailService.category}.`, `Availability: ${detailService.availability}. Who it is for: ${detailService.eligibilitySummary}.`, `Listed areas: ${detailService.postcodePrefixes.join(', ')}. Access: ${detailService.referralRoute}.`, `Record status: ${effectiveStatus(detailService)}. Last checked: ${detailService.lastVerified}.`, detailService.coverageConflict ? 'Resolve the conflicting coverage information before recommending this service.' : detailService.venueConflict ? 'Confirm the current venue before recommending this service.' : 'Confirm current availability and practical access with the provider.'],prompts:['Explain this service','What details need checking?','Find similar provision']} : route === '/saved' ? {title:'Saved provision',facts:[...savedServices.map(service=>`${service.name}: ${service.category}; ${service.availability}; listed for ${service.postcodePrefixes.join(', ')}.`),...directorySaved.map(service=>`${service.name}: ${service.provider}; ${service.postcode ?? 'postcode not supplied'}.`),savedServices.length+directorySaved.length ? 'Compare eligibility, location, current availability and accessibility with the providers.' : 'No services are saved yet. Use a service’s bookmark to start your shortlist.'],prompts:['Compare my saved provision','Find alternatives','What should I check before a referral?']} : undefined;
 
   return <><StaffSignIn open={signInOpen} onClose={()=>setSignInOpen(false)} onSuccess={()=>{rememberStaffSession();setStaff(true);setSignInOpen(false);setNotice('Staff demo enabled.');}}/><a className="skip-link" href="#main-content" onClick={e => { e.preventDefault(); document.getElementById('main-content')?.focus(); }}>Skip to content</a>
-    <header className="site-header"><div className="header-inner"><a className="brand" href="#/" onClick={e => { e.preventDefault(); freshSearch(); }} aria-label="Local Provision Finder home">Local Provision Finder</a><nav aria-label="Main navigation"><RegionMenu/><ServiceNotifications onNavigate={navigate}/><button className="agent-header-trigger" onClick={()=>askAgent()}><MessageSquare size={17}/>Ask agent</button><a className={route === '/' ? 'nav-link active' : 'nav-link'} href="#/" onClick={e => { e.preventDefault(); navigate('/'); }}>Find support</a><a className={`nav-link saved-nav ${route === '/saved' ? 'active' : ''}`} href="#/saved" onClick={e => { e.preventDefault(); navigate('/saved'); }}><Bookmark size={18} strokeWidth={1.75} aria-hidden="true"/>Saved<span className="nav-count">{saved.length+directorySaved.length}</span></a>{staff ? <StaffMenu route={route} onNavigate={navigate} onSignOut={signOut}/> : <button className="staff-toggle" onClick={() => { setSignInOpen(true); }}>Staff sign in</button>}</nav></div></header>
+    <header className="site-header"><div className="header-inner"><a className="brand" href="#/" onClick={e => { e.preventDefault(); freshSearch(); }} aria-label="Local Provision Finder home">Local Provision Finder</a><button type="button" className="header-menu-toggle" aria-expanded={menuOpen} aria-controls="main-navigation" onClick={() => setMenuOpen(value => !value)}>{menuOpen ? <X size={18} aria-hidden="true"/> : <Menu size={18} aria-hidden="true"/>}<span>Menu</span></button><nav id="main-navigation" className={menuOpen ? 'is-open' : undefined} aria-label="Main navigation"><RegionMenu/><button className="agent-header-trigger" onClick={()=>{setMenuOpen(false);askAgent();}}><MessageSquare size={17}/>Ask agent</button><a className={`nav-link saved-nav ${route === '/saved' ? 'active' : ''}`} href="#/saved" onClick={e => { e.preventDefault(); navigate('/saved'); }}><Bookmark size={18} strokeWidth={1.75} aria-hidden="true"/>Saved<span className="nav-count">{saved.length+directorySaved.length}</span></a>{staff ? <StaffMenu route={route} onNavigate={navigate} onSignOut={signOut}/> : <button className="staff-toggle" onClick={() => { setMenuOpen(false);setSignInOpen(true); }}>Staff sign in</button>}</nav></div></header>
     <main id="main-content" tabIndex={-1} className={meetingPage ? 'meeting-main' : undefined}>
       {route === '/meeting' && <PageWidthClaim width="wide"/>}
       <div className="page-wrap" hidden={route !== '/meeting'}><MeetingDemo enabled={staff && meetingPage}/></div>

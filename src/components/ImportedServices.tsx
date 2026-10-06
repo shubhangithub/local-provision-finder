@@ -8,7 +8,6 @@ import { askAgent } from '../lib/agent';
 import ReviewAdvisor from './ReviewAdvisor';
 import { ServiceTags } from './ServiceTags';
 import ServiceFeedback from './ServiceFeedback';
-import { rememberService } from '../lib/notifications';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, ArrowUpRight, CircleAlert, Database, Globe, Mail, MapPin, Phone, Search, ShieldCheck } from 'lucide-react';
 interface ImportedRecord {
@@ -69,7 +68,7 @@ export default function ImportedServices({ staff, enableStaff, onNavigate, initi
     load(true);
     return()=>{controller.abort();if(retry)clearTimeout(retry);};
   }, [staff, directoryView, search, page, selectedId, reload]);
-  useEffect(() => { heading.current?.focus(); if (record && directoryView) rememberService(record.id,record.name,'viewed'); }, [record,directoryView]);
+  useEffect(() => { heading.current?.focus(); }, [record,directoryView]);
   if (!staff && !directoryView) return <div className="page-wrap"><div className="staff-gate panel"><Database size={34} /><h1>Imported directory</h1><p>Browse source records, published contacts and retained service text before public approval.</p><button className="button primary" onClick={enableStaff}>Enter staff demo <ArrowRight size={17} /></button></div></div>;
   if(selectedId&&(loading||error))return <div className="page-wrap imports-page"><button className="back-link" onClick={()=>directoryView?onNavigate('/'):setSelectedId(null)}><ArrowLeft size={15}/>{directoryView?'Back to results':'Back to directory'}</button><h1>{loading?'Loading service details':missing?'Service not found':'Service details unavailable'}</h1>{loading?<p role="status">Loading source record…</p>:<><p role="alert">{error}</p>{!missing&&<button className="button secondary" onClick={()=>setReload(value=>value+1)}>Try again</button>}<button className="text-button" onClick={()=>askAgent({question:'Find alternative support',context:{title:'Service unavailable',facts:['The requested service is missing from the current catalogue. Find alternatives and check eligibility and current availability.']}})}>Ask agent for alternatives</button></>}</div>;
   return <div className="page-wrap imports-page">{!directoryView && <button className="back-link" onClick={() => selectedId ? setSelectedId(null) : onNavigate('/review')}><ArrowLeft size={15} />{selectedId ? 'Back to directory' : 'Back to review'}</button>}

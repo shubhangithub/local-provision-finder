@@ -26,7 +26,7 @@ button:disabled {opacity:.55;}
 .header-inner {padding:18px 0;gap:12px 28px;}
 .header-inner .brand {font-size:26px;line-height:1.3;}
 .header-inner nav {gap:12px 24px;}
-.header-inner .nav-link,.header-inner .agent-header-trigger,.notification-trigger,.header-inner .staff-toggle {min-height:44px;font-size:16px;}
+.header-inner .nav-link,.header-inner .agent-header-trigger,.header-trigger,.header-inner .staff-toggle {min-height:44px;font-size:16px;}
 .header-inner .agent-header-trigger {text-decoration:none;}
 .header-inner .staff-toggle {border:1px solid #858686;padding:6px 12px;text-decoration:none;}
 .header-inner .staff-toggle:hover {background:#252626;}
@@ -128,8 +128,6 @@ button:disabled {opacity:.55;}
 .empty-state h2,.empty-state h3 {color:var(--ink);font-size:24px;}
 .notice.warning,.meeting-time-alert {background:var(--amber-pale);border-left:5px solid #b7592a;color:#7a3c1c;}
 .notice.neutral {background:var(--blue-pale);border-left-color:var(--brand);}
-.notifications-panel {border-color:var(--line);border-top:4px solid var(--brand);padding:24px;}
-.notification-count {background:#d2e2f1;color:#0f385c;}
 .toast {border:1px solid #87bca8;box-shadow:0 2px 8px #0b0c0c20;background:#0b5c3e;max-width:calc(100vw - 32px);}
 .site-footer {background:var(--blue-pale);border-top:4px solid var(--brand);margin-top:0;}
 .footer-inner {padding:28px 0;align-items:center;}
@@ -307,7 +305,7 @@ button:disabled {opacity:.55;}
  width:auto;max-width:100%;gap:8px 18px;
 }
 .site-header .header-inner nav>a,.site-header .header-inner nav>button,
-.site-header .notification-trigger,.site-header .staff-toggle {
+.site-header .header-trigger,.site-header .staff-toggle {
  flex-shrink:0;white-space:nowrap;
 }
 .site-header .header-inner .agent-header-trigger {white-space:nowrap;}
@@ -395,19 +393,19 @@ button:disabled {opacity:.55;}
 .feedback-extra summary:focus-visible,.service-tags-list li button:focus-visible {background:#ffdd00;color:#0b0c0c;outline:3px solid #ffdd00;}
 
 /* Shared interactions for every top-level header control. */
-.site-header .header-inner nav :is(.nav-link,.agent-header-trigger,.notification-trigger,.staff-toggle) {
+.site-header .header-inner nav :is(.nav-link,.agent-header-trigger,.header-trigger,.staff-toggle) {
  cursor:pointer;
  text-decoration:none;
  text-underline-offset:5px;
  text-decoration-thickness:2px;
  border-radius:0;
 }
-.site-header .header-inner nav :is(.nav-link,.agent-header-trigger,.notification-trigger,.staff-toggle):hover {
+.site-header .header-inner nav :is(.nav-link,.agent-header-trigger,.header-trigger,.staff-toggle):hover {
  color:#fff;
  background:#252626;
  text-decoration:underline;
 }
-.site-header .header-inner nav :is(.nav-link,.agent-header-trigger,.notification-trigger,.staff-toggle):focus-visible {
+.site-header .header-inner nav :is(.nav-link,.agent-header-trigger,.header-trigger,.staff-toggle):focus-visible {
  color:#0b0c0c;
  background:#ffdd00;
  outline:3px solid #ffdd00;
@@ -422,7 +420,7 @@ button:disabled {opacity:.55;}
  border-bottom-color:transparent;
 }
 /* Use a single background treatment instead of lines in the header. */
-.site-header .header-inner nav :is(.nav-link,.agent-header-trigger,.notification-trigger,.staff-toggle) {
+.site-header .header-inner nav :is(.nav-link,.agent-header-trigger,.header-trigger,.staff-toggle) {
  text-decoration:none;
 }
 .site-header .header-inner nav .nav-link {
@@ -434,11 +432,11 @@ button:disabled {opacity:.55;}
  color:#fff;
  border-bottom-color:transparent;
 }
-.site-header .header-inner nav :is(.nav-link,.agent-header-trigger,.notification-trigger,.staff-toggle):hover {
+.site-header .header-inner nav :is(.nav-link,.agent-header-trigger,.header-trigger,.staff-toggle):hover {
  background:#333434;
  text-decoration:none;
 }
-.site-header .header-inner nav :is(.nav-link,.agent-header-trigger,.notification-trigger,.staff-toggle):focus-visible {
+.site-header .header-inner nav :is(.nav-link,.agent-header-trigger,.header-trigger,.staff-toggle):focus-visible {
  background:#ffdd00;
  color:#0b0c0c;
 }

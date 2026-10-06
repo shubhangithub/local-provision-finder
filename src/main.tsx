@@ -7,6 +7,7 @@ import './styles.css';
 import './styles/ui-cohesion.css';
 import './styles/region.css';
 import './styles/results-layout.css';
+import './styles/header.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode><App /></React.StrictMode>,
