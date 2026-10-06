@@ -1,0 +1,16 @@
+.about-facts{margin:24px 0 0;padding-top:24px;border-top:1px solid #cecece;display:grid;grid-template-columns:1fr;gap:24px}
+.about-facts dt{font-size:17px;font-weight:700;color:#0b0c0c;margin-bottom:6px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.about-facts dd{margin:0;font-size:17px;max-width:none}
+.about-facts .markdown>*:first-child{margin-top:0}
+.about-facts .markdown>*:last-child{margin-bottom:0}
+.about-facts .markdown p,.about-facts .markdown ul,.about-facts .markdown ol{margin:0 0 8px}
+.about-facts .markdown ul,.about-facts .markdown ol{padding-left:22px}
+.about-facts .fact-ended{padding:1px 6px;background:#fcd6c3;color:#6e3619;font-size:14px;font-weight:700}
+.about-note{margin-top:16px}
+.row-diff{margin:6px 0 0;font-size:16px;color:#505a5f}
+.row-diff del{color:#505a5f}
+.row-diff .text-button{margin-left:8px}
+.contact-line{margin-top:16px}
+.contact-line>a:first-child{display:flex;align-items:flex-start;gap:10px;font-size:17px;line-height:1.5;overflow-wrap:anywhere}
+.contact-line>a:first-child svg{margin-top:2px}
+.contact-line .contact-line .row-diff{margin:4px 0 0;font-size:15px}

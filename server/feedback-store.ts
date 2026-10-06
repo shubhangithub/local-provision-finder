@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
-import { feedbackFields, type FeedbackAnswers, type FeedbackEntry, type FeedbackField } from '../src/lib/feedback.ts';
+import { feedbackFields, type FeedbackAnswers, type FeedbackEntry, type FeedbackField, type ProposedChange } from '../src/lib/feedback.ts';
 export interface FeedbackService {id:string;name:string;[key:string]:unknown}
 export class FeedbackInputError extends Error { status=400; }
 function fail(message:string):never {throw new FeedbackInputError(message);}
@@ -20,7 +20,8 @@ export class FeedbackStore {
     return status ? entries.filter(entry => entry.status===status) : entries;
   }
   get(id:string):FeedbackEntry | null {const row=this.db.prepare('SELECT entry_json FROM feedback WHERE id=?').get(id);return row ? JSON.parse(String(row.entry_json)) : null;}
-  submit(service:FeedbackService,input:unknown):FeedbackEntry {
+  /** `proposed` can only be passed by trusted server code, never from a request body. */
+  submit(service:FeedbackService,input:unknown,proposed?:ProposedChange):FeedbackEntry {
     const payload=object(input), answers=object(payload.answers);
     if (!['yes','changed','unsure'].includes(String(answers.upToDate))) fail('Answer whether the information is up to date.');
     if (answers.availability!==undefined && !['open','waiting','closed','unsure'].includes(String(answers.availability))) fail('Invalid availability answer.');
@@ -35,7 +36,7 @@ export class FeedbackStore {
     if (clean.availability==='closed' || clean.availability==='waiting') clean.issues=[...new Set([...clean.issues,'availability' as const])];
     if (clean.contact==='no') clean.issues=[...new Set([...clean.issues,...(['publicPhone','publicEmail'] as const).filter(field => service[field])])];
     if (clean.location==='no') clean.issues=[...new Set([...clean.issues,'address' as const])];
-    const entry:FeedbackEntry={id:randomUUID(),serviceId:service.id,serviceName:service.name,createdAt:new Date().toISOString(),status:'pending',answers:clean,note};
+    const entry:FeedbackEntry={id:randomUUID(),serviceId:service.id,serviceName:service.name,createdAt:new Date().toISOString(),status:'pending',answers:clean,note,...(proposed ? {proposed} : {})};
     this.db.prepare('INSERT INTO feedback VALUES(?,?,?)').run(entry.id,service.id,JSON.stringify(entry));return entry;
   }
   review(id:string,service:FeedbackService,input:unknown):FeedbackEntry {

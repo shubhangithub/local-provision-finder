@@ -1,4 +1,4 @@
-import {readAvailability,availabilityOverlay} from './availability.ts';
+import {readEnrichment,enrichmentOverlay} from './enrichment-store.ts';
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createRequire } from 'node:module';
@@ -18,7 +18,10 @@ export function importsApi(): Plugin {
   // Term suggestions come from a vocabulary built once and refreshed shortly after catalogue or tag changes.
   // Parsing and overlaying every catalogue record is the dominant cost per request, so keep the result until a data file changes.
   let cached: { signature: string; records: DirectoryRecord[] } | null = null;
-  const signature = () => ['services','feedback','tags','availability'].flatMap(name => ['.sqlite','.sqlite-wal'].map(ext => { try { const stat = statSync(resolve(directory, name + ext)); return `${stat.mtimeMs}:${stat.size}`; } catch { return '-'; } })).join('|');
+  const signature = () => ['services','feedback','tags','enrichment'].flatMap(name => ['.sqlite','.sqlite-wal'].map(ext => { try { const stat = statSync(resolve(directory, name + ext)); return `${stat.mtimeMs}:${stat.size}`; } catch { return '-'; } })).join('|');
+  // Enrichment is read once per change to the data files, not on every request.
+  let enrichmentCache: { signature: string; map: ReturnType<typeof readEnrichment> } | null = null;
+  const currentEnrichment = () => { const current = signature(); if (enrichmentCache?.signature !== current) enrichmentCache = { signature: current, map: readEnrichment(directory) }; return enrichmentCache.map; };
   let vocabulary: { built: number; value: Vocabulary } | null = null;
   const handler = async (request: IncomingMessage, response: ServerResponse, next: () => void) => {
     const url = new URL(request.url ?? '/', 'http://localhost');
@@ -35,9 +38,9 @@ export function importsApi(): Plugin {
       const db = new DatabaseSync(resolve(directory, 'services.sqlite'), { readOnly: true });
       db.exec('PRAGMA busy_timeout=5000');
       const feedback = existsSync(resolve(directory,'feedback.sqlite')) ? new FeedbackStore(resolve(directory,'feedback.sqlite')) : null;
-      const tags = readServiceTags();const availability=readAvailability(directory);
+      const tags = readServiceTags();const enrichment=currentEnrichment();
       const corrected = <T extends FeedbackService>(record:T):T => {
-        const updated = availabilityOverlay(feedback ? feedback.corrected(record) : record,availability);
+        const updated = enrichmentOverlay(feedback ? feedback.corrected(record) : record,enrichment.get(record.id));
         const serviceTags = tags.get(record.id) ?? [];
         return serviceTags.length ? {...updated,tags:serviceTags,searchText:`Tags: ${serviceTags.join(', ')}\n${updated.searchText ?? ''}`} : {...updated,tags:[]};
       };

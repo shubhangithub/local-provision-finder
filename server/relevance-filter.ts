@@ -54,7 +54,7 @@ export async function filterResults(query: string, context: string[], candidates
   const hit = cache.get(key);
   if (hit) return { ...hit, ms: 0 };
   if (!config.apiKey) return null;
-  const list = candidates.map((c, i) => `${i}. ${c.name} | ${c.needs.slice(0, 4).join(', ')} | ${c.snippet.replace(/\s+/g, ' ').slice(0, 100)}`).join('\n');
+  const list = candidates.map((c, i) => `${i}. ${c.name} | ${c.needs.slice(0, 4).join(', ')} | ${c.snippet.replace(/\s+/g, ' ').slice(0, 220)}`).join('\n');
   const user = `Recent conversation:\n${context.slice(-3).join('\n') || '(none)'}\n\nNeed: ${query}\n\nCandidates:\n${list}`;
   const started = Date.now();
   try {

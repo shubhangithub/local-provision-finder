@@ -4,6 +4,7 @@ import { DatabaseSync } from 'node:sqlite';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Plugin } from 'vite';
 import { FeedbackInputError, FeedbackStore, type FeedbackService } from './feedback-store.ts';
+import { FollowUpError, FollowUpStore, validateFollowUp } from './follow-ups-store.ts';
 export function feedbackApi():Plugin {
   const directory=resolve(process.cwd(),'data');mkdirSync(directory,{recursive:true});
   const handler=async (request:IncomingMessage,response:ServerResponse,next:()=>void) => {
@@ -27,11 +28,17 @@ export function feedbackApi():Plugin {
       let service:FeedbackService | undefined;
       try {const row=source.prepare('SELECT record_json FROM catalogue_services WHERE id=?').get(serviceId);if (row) service=store.corrected(JSON.parse(String(row.record_json)));} finally {source.close();}
       if (!service) return send(404,{error:'Service not found.'});
-      if (url.pathname==='/api/feedback') return send(201,{entry:store.submit(service,body)});
+      if (url.pathname==='/api/feedback') {
+        // Invalid follow-up details reject the whole submission before anything is stored.
+        const followUp=validateFollowUp(body.followUp);
+        const entry=store.submit(service,body);
+        if (followUp) {const follow=new FollowUpStore(resolve(directory,'follow-ups.sqlite'));try {follow.record(entry.id,service,followUp.phone);} finally {follow.close();}}
+        return send(201,{entry,followUp:!!followUp});
+      }
       if (url.pathname==='/api/feedback/review') return send(200,{entry:store.review(String(body.id),service,body)});
       return send(404,{error:'Endpoint not found.'});
     } catch (error) {
-      if (error instanceof FeedbackInputError) return send(error.status,{error:error.message});
+      if (error instanceof FeedbackInputError || error instanceof FollowUpError) return send(error.status,{error:error.message});
       console.error('Feedback operation failed:',error);return send(500,{error:'Could not save this feedback. Please try again.'});
     } finally {store.close();}
   };

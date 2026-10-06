@@ -27,4 +27,10 @@ describe('feedback and reviewed corrections',()=>{
   const db=store();expect(()=>db.submit(service,{answers:{upToDate:'changed',issues:['lastVerified']}})).toThrow('valid details');const entry=db.submit(service,{answers:{upToDate:'unsure',issues:[],recommendation:'no'}});
   db.review(entry.id,service,{action:'checking',note:'Contact provider'});expect(db.get(entry.id)?.status).toBe('checking');db.review(entry.id,service,{action:'dismissed',note:'Different service reported'});expect(db.get(entry.id)?.status).toBe('dismissed');expect(db.corrected(service)).toEqual(service);db.close();
  });
+ it('keeps a proposed change only when trusted server code supplies it, never from a request body',()=>{
+  const db=store();const sneaky=db.submit(service,{answers:{upToDate:'changed',issues:['cost']},proposed:{field:'cost',value:'Free',previous:'',quote:'x',source:'follow-up'}});
+  expect(sneaky.proposed).toBeUndefined();expect(db.get(sneaky.id)?.proposed).toBeUndefined();
+  const trusted=db.submit(service,{answers:{upToDate:'changed',issues:['cost']}},{field:'cost',value:'Free',previous:'£5',quote:'It is free now.',source:'follow-up'});
+  expect(db.get(trusted.id)?.proposed).toEqual({field:'cost',value:'Free',previous:'£5',quote:'It is free now.',source:'follow-up'});
+ });
 });

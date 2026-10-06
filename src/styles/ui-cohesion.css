@@ -101,10 +101,8 @@ button:disabled {opacity:.55;}
 .service-feedback {background:var(--green-pale);border-left-color:var(--green);}
 .suggestion-status,.assistant-pending {display:inline-block;background:var(--amber-pale);color:#594d00;font-size:14px;padding:4px 8px;}
 .suggestion-draft {background:var(--blue-pale);padding:24px;}
-.public-assistant,.summary-agent-review {background:var(--purple-pale);border-left-color:var(--purple);padding:24px;}
-.public-assistant h2,.summary-agent-review h2 {font-size:24px;}
-.assistant-discovery {border-color:var(--line);padding:20px;margin-top:16px;}
-.assistant-discovery h4 {font-size:21px;line-height:1.3;}
+.summary-agent-review{background:var(--purple-pale);border-left-color:var(--purple);padding:24px;}
+.summary-agent-review h2{font-size:24px;}
 .assistant-mode {color:var(--muted);font-size:14px;}
 .agent-panel-heading {border-top:0;border-bottom-color:#ddd6ec;background:var(--purple-pale);}
 .directory-agent {border-top-color:var(--purple);}
@@ -181,7 +179,7 @@ button:disabled {opacity:.55;}
  .meeting-entry {padding:18px;align-items:flex-start;flex-direction:column;gap:16px;}
  .meeting-entry .button {width:auto;}
  .meeting-actionbar {padding:18px;}
- .meeting-assist,.public-assistant,.summary-agent-review {padding:20px;}
+ .meeting-assist,.summary-agent-review{padding:20px;}
  .summary-paper-wrap {padding:12px;}
  .summary-paper {padding:24px 18px;}
  .footer-inner {align-items:flex-start;flex-direction:column;gap:12px;}

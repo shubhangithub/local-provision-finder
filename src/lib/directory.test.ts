@@ -4,7 +4,10 @@ const record:DirectoryRecord={id:'multi-site',name:'Support',provider:'Charity',
 describe('recorded service locations',()=>{
  it('uses the closest of all sites, preserves coordinate zero and rejects invalid coordinates',()=>{
   const sites=directorySites(record);expect(sites).toHaveLength(2);expect(nearestDistance({lat:51.5,lng:-0.1},sites)).toBe(0);
-  expect(directorySites({...record,locations:[{location:{lat:0,lon:0}}],lat:null,lng:null})[0].lat).toBe(0);
+  expect(directorySites({...record,locations:[{location:{lat:51.5,lon:0}}],lat:null,lng:null})[0].lng).toBe(0);
+  // 0,0 and other points outside the UK are how the sources say "unknown", not a place to plot.
+  expect(directorySites({...record,locations:[{location:{lat:0,lon:0}}],lat:null,lng:null})[0]).toMatchObject({lat:null,lng:null});
+  expect(directorySites({...record,locations:[{location:{lat:-33.9,lon:151.2}}],lat:null,lng:null})[0].lat).toBeNull();
   expect(directorySites({...record,locations:[],lat:NaN,lng:2})[0].lat).toBeNull();
  });
  it('matches postcode coverage at any site without matching unrelated source prose',()=>{

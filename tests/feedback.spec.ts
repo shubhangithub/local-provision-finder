@@ -22,7 +22,7 @@ test('user report is reviewed and a checked field correction reaches service det
     reportId=entries.find((entry:{note:string})=>entry.note===note).id;
     await page.getByRole('button',{name:'Staff sign in',exact:true}).click();await completeStaffSignIn(page);
     await page.getByRole('link',{name:'Review feedback',exact:true}).click();
-    await page.locator('.review-card').filter({hasText:summary.name}).getByRole('button',{name:'Review report'}).click();
+    await page.locator('.report-row').filter({hasText:summary.name}).getByRole('button',{name:'Review report'}).click();
     await page.getByLabel('Detail to correct').selectOption('cost');
     await page.getByLabel('Checked value').fill(correctedCost);
     await page.getByLabel('Evidence and review note').fill('Test provider confirms free eligibility-based support.');

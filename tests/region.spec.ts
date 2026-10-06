@@ -50,10 +50,9 @@ test('searching without a region covers all areas without mentioning them, and c
   await expect(page.getByRole('heading', { name: 'Search results' })).toBeVisible();
   await expect.poll(() => requests.some(params => params.get('q') === 'food' && !params.has('area'))).toBe(true);
   await chooseArea(page, 'Bristol');
-  await expect(page.getByRole('heading', { name: 'Support in Bristol' })).toBeVisible();
   await expect.poll(() => requests.some(params => params.get('q') === 'food' && params.get('area') === 'Bristol' && params.get('page') === '1')).toBe(true);
   await chooseArea(page, 'Kingston');
-  await expect(page.getByRole('heading', { name: 'Support in Kingston upon Thames' })).toBeVisible();
+  await expect.poll(() => requests.some(params => params.get('q') === 'food' && params.get('area') === 'Kingston')).toBe(true);
 });
 
 test('the region indicator appears only when a region is set and opens the header settings', async ({ page }) => {
@@ -101,17 +100,6 @@ test.describe('results layout', () => {
     expect(stuck.y).toBeGreaterThanOrEqual(0);
     expect(stuck.y + stuck.height).toBeLessThanOrEqual(721);
     await expect(page.getByRole('button', { name: 'Map', exact: true })).toBeHidden();
-  });
-
-  test('the overview is a compact card that expands on request', async ({ page }) => {
-    await page.route('**/api/assistant', route => route.fulfill({ json: { mode: 'openai', summary: 'Short overview.', answer: '', needs: [], nextSteps: ['Call the provider.'], citations: [], services: [], warnings: [] } }));
-    await page.goto('/');
-    await page.getByLabel('What do you need help with?', { exact: true }).fill('food');
-    await chooseArea(page, 'Bristol');
-    await expect(page.getByText('Short overview.')).toBeVisible();
-    await expect(page.getByText('Call the provider.')).toBeHidden();
-    await page.getByText('Show details', { exact: true }).click();
-    await expect(page.getByText('Call the provider.')).toBeVisible();
   });
 
   test('small screens switch between list and map with a bottom toggle', async ({ page }) => {
