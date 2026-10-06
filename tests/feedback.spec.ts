@@ -21,7 +21,7 @@ test('user report is reviewed and a checked field correction reaches service det
     const entries=(await (await request.get('/api/feedback')).json()).entries;
     reportId=entries.find((entry:{note:string})=>entry.note===note).id;
     await page.getByRole('button',{name:'Staff sign in',exact:true}).click();await completeStaffSignIn(page);
-    await page.getByRole('link',{name:'Review feedback',exact:true}).click();
+    await page.getByRole('button',{name:/^Staff/}).click();await page.getByRole('link',{name:/^Service reports/}).click();
     await page.locator('.report-row').filter({hasText:summary.name}).getByRole('button',{name:'Review report'}).click();
     await page.getByLabel('Detail to correct').selectOption('cost');
     await page.getByLabel('Checked value').fill(correctedCost);

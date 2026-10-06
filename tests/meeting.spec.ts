@@ -15,8 +15,8 @@ test('meeting is staff-only, shows live words and stops microphone', async ({ pa
   await expect(page.getByRole('button', { name: 'Start meeting', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Staff sign in', exact: true }).click();
   await completeStaffSignIn(page);
-  await page.getByRole('button', { name: 'Start meeting', exact: true }).click();
-  await expect(page.getByText('streams the microphone audio to Azure OpenAI', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: /^Staff/ }).click();
+  await page.getByRole('link', { name: 'Start meeting', exact: true }).click();
   await page.getByRole('button', { name: 'Start meeting', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Meeting in progress' })).toBeVisible();
   await expect(page.getByText('13 words captured')).toBeVisible();
@@ -34,10 +34,12 @@ test('leaving staff mode releases the microphone and removes transcript', async 
   await page.goto('/');
   await page.getByRole('button', { name: 'Staff sign in', exact: true }).click();
   await completeStaffSignIn(page);
-  await page.getByRole('button', { name: 'Start meeting', exact: true }).click();
+  await page.getByRole('button', { name: /^Staff/ }).click();
+  await page.getByRole('link', { name: 'Start meeting', exact: true }).click();
   await page.getByRole('button', { name: 'Start meeting', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Meeting in progress' })).toBeVisible();
-  await page.getByRole('button', { name: 'Staff demo', exact: true }).click();
+  await page.getByRole('button', { name: /^Staff/ }).click();
+  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Meeting in progress' })).toHaveCount(0);
   expect(await mic(page)).toMatchObject({ stopped: 1, recording: false });
 });
@@ -48,7 +50,8 @@ test('microphone denial leaves recording off and explains retry', async ({ page 
   await page.goto('/');
   await page.getByRole('button', { name: 'Staff sign in', exact: true }).click();
   await completeStaffSignIn(page);
-  await page.getByRole('button', { name: 'Start meeting', exact: true }).click();
+  await page.getByRole('button', { name: /^Staff/ }).click();
+  await page.getByRole('link', { name: 'Start meeting', exact: true }).click();
   await page.getByRole('button', { name: 'Start meeting', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Microphone permission was not granted');
   await expect(page.getByRole('button', { name: 'Start meeting', exact: true })).toBeVisible();
@@ -61,7 +64,8 @@ test('unavailable live transcription explains why and releases the microphone', 
   await page.goto('/');
   await page.getByRole('button', { name: 'Staff sign in', exact: true }).click();
   await completeStaffSignIn(page);
-  await page.getByRole('button', { name: 'Start meeting', exact: true }).click();
+  await page.getByRole('button', { name: /^Staff/ }).click();
+  await page.getByRole('link', { name: 'Start meeting', exact: true }).click();
   await page.getByRole('button', { name: 'Start meeting', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('AZURE_OPENAI_API_KEY');
   await expect(page.getByRole('button', { name: 'Start meeting', exact: true })).toBeVisible();
@@ -75,7 +79,8 @@ test('ten-minute limit stops recording automatically', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Staff sign in', exact: true }).click();
   await completeStaffSignIn(page);
-  await page.getByRole('button', { name: 'Start meeting', exact: true }).click();
+  await page.getByRole('button', { name: /^Staff/ }).click();
+  await page.getByRole('link', { name: 'Start meeting', exact: true }).click();
   await page.getByRole('button', { name: 'Start meeting', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Meeting in progress' })).toBeVisible();
   await page.clock.fastForward(600_000);
@@ -91,7 +96,8 @@ test('live services can be saved or hidden and feed the next-steps report', asyn
   await page.goto('/');
   await page.getByRole('button', { name: 'Staff sign in', exact: true }).click();
   await completeStaffSignIn(page);
-  await page.getByRole('button', { name: 'Start meeting', exact: true }).click();
+  await page.getByRole('button', { name: /^Staff/ }).click();
+  await page.getByRole('link', { name: 'Start meeting', exact: true }).click();
   await page.getByRole('button', { name: 'Start meeting', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Childcare support', level: 4 })).toBeVisible();
   await page.getByRole('button', { name: 'Hide Beta Club, not relevant' }).click();
@@ -105,11 +111,15 @@ test('live services can be saved or hidden and feed the next-steps report', asyn
   await expect(report).toContainText('Call 0117 000 1111');
   await expect(report).toContainText('Refer yourself');
   await expect(report).not.toContainText('Beta Club');
-  await expect(report.getByRole('button', { name: 'Print or save as PDF' })).toBeVisible();
-  await report.getByRole('button', { name: 'Send a copy' }).click();
-  await report.getByRole('button', { name: 'Send email' }).click();
-  await expect(report.getByRole('alert')).toContainText('Enter an email address');
-  await report.getByLabel('Email address').fill('sam@example.com');
-  await report.getByRole('button', { name: 'Send email' }).click();
-  await expect(report.getByRole('status')).toContainText('Not sent (prototype)');
+  // The hand-over actions are their own box after the follow-up call.
+  const takeAway = page.getByRole('region', { name: 'Take this away' });
+  await expect(takeAway.getByRole('button', { name: 'Print or save as PDF' })).toBeVisible();
+  await takeAway.getByRole('button', { name: 'Send a copy' }).click();
+  await takeAway.getByRole('button', { name: 'Send email' }).click();
+  await expect(takeAway.getByRole('alert')).toContainText('Enter an email address');
+  await takeAway.getByLabel('Email address').fill('sam@example.com');
+  await takeAway.getByRole('button', { name: 'Send email' }).click();
+  await expect(takeAway.getByRole('status')).toContainText('Not sent (prototype)');
+  await expect(page.getByRole('region', { name: 'Ask for a follow-up call' })).toBeVisible();
+  await expect(page.getByRole('tab')).toHaveCount(0);
 });

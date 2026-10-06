@@ -3,7 +3,7 @@ import '../styles/resizable-results.css';
 export default function ResizableResults({view,children}:{view:'list'|'map';children:ReactNode[]}) {
  const [width,setWidth]=useState(50);const container=useRef<HTMLDivElement>(null);
  function move(x:number){const box=container.current?.getBoundingClientRect();if(box)setWidth(Math.max(25,Math.min(75,(x-box.left)/box.width*100)));}
- return <div ref={container} className={`directory-results-layout resizable-results view-${view}`} style={{'--results-list-width':`${width}%`} as React.CSSProperties}>
+ return <div ref={container} className={`directory-results-layout resizable-results grid-split view-${view}`} style={{'--results-list-width':`${width}%`} as React.CSSProperties}>
  {children[0]}<div className="results-divider" role="separator" aria-label="Resize service list and map" aria-orientation="vertical" aria-valuemin={25} aria-valuemax={75} aria-valuenow={Math.round(width)} tabIndex={0}
  onPointerDown={event=>{event.preventDefault();event.currentTarget.setPointerCapture(event.pointerId);}}
  onPointerMove={event=>{if(event.currentTarget.hasPointerCapture(event.pointerId))move(event.clientX);}}

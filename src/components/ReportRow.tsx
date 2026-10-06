@@ -1,14 +1,13 @@
 import {useState} from 'react';
 import {ArrowRight} from 'lucide-react';
 import {feedbackFields,answerLabels,type FeedbackEntry} from '../lib/feedback';
-import FollowUpPanel from './FollowUpPanel';
 /** One open report as a single row. A call finding with a proposed change is applied or dismissed in one click. */
 export default function ReportRow({entry,onOpen,onDone,onChanged}:{entry:FeedbackEntry;onOpen:(entry:FeedbackEntry)=>void;onDone:(message:string)=>void;onChanged:()=>void}) {
   const proposed=entry.proposed;const [busy,setBusy]=useState(false);const [error,setError]=useState('');
   async function decide(action:'corrected'|'dismissed') {
     if (!proposed) return;setBusy(true);setError('');
     const body=action==='corrected'
-      ? {id:entry.id,action,verified:true,field:proposed.field,newValue:proposed.value,note:`Confirmed on a follow-up call (sandbox demo): "${proposed.quote}"`}
+      ? {id:entry.id,action,verified:true,field:proposed.field,newValue:proposed.value,note:`Confirmed on a follow-up call: "${proposed.quote}"`}
       : {id:entry.id,action,note:'Dismissed from the queue.'};
     try {
       const response=await fetch('/api/feedback/review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await response.json();if (!response.ok) throw new Error(data.error);
@@ -22,7 +21,6 @@ export default function ReportRow({entry,onOpen,onDone,onChanged}:{entry:Feedbac
       {proposed
         ? <p className="report-change"><strong>{feedbackFields[proposed.field]}:</strong> <del>{proposed.previous || 'not listed'}</del> <span aria-hidden="true">→</span><span className="visually-hidden"> changed to</span> <ins>{proposed.value}</ins><q>{proposed.quote}</q></p>
         : <p className="report-summary">{summary}</p>}
-      <FollowUpPanel feedbackId={entry.id} onChanged={onChanged}/>
       {error && <p className="form-error" role="alert">{error}</p>}
     </div>
     <div className="report-actions">

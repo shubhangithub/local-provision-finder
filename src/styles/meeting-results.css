@@ -1,0 +1,14 @@
+/* The ended meeting is a stack of boxes, one job each. */
+.meeting-results{display:grid;gap:16px;margin-top:8px}
+.meeting-box{padding:20px 24px;background:#fff;border:1px solid #b1b4b6;border-top:4px solid #1d70b8}
+.meeting-box-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px}
+.meeting-box-head h2{margin:0 0 4px}
+.meeting-box-head .meeting-meta{margin:0}
+.meeting-box h3{margin-top:0}
+.meeting-box .meeting-footer{margin:12px 0 0}
+.meeting-results .followup-offer{margin:0;padding:20px 24px;border:1px solid #b1b4b6;border-top:4px solid #1d70b8;background:#fff}
+.meeting-results .ns-report{margin-top:0}
+.meeting-results .ns-top{position:static;border-bottom:0;padding:0}
+.take-away .ns-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;margin-top:12px}
+/* The boxes are the cards; the old outer card around the ended meeting goes. */
+.meeting-session.is-finished{border:0;padding:0;background:transparent;box-shadow:none}

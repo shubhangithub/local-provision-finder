@@ -84,10 +84,10 @@ test('staff see recently enriched changes with evidence and can revert one',asyn
   await page.route('**/api/enrichment/recent',route=>route.fulfill({json:{configured:true,overwrites:items}}));
   await page.route('**/api/enrichment/revert',route=>{reverted=route.request().postDataJSON().id;items=items.map(item=>({...item,revertedAt:when}));return route.fulfill({json:{overwrite:items[0]}});});
   await page.goto('/#/enriched');await page.getByRole('button',{name:'Enter staff workspace'}).click();await completeStaffSignIn(page);
-  await expect(page.getByRole('heading',{name:'Recently enriched'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Enrichment log'})).toBeVisible();
   await expect(page.getByRole('link',{name:'Elmhurst Family Hub'})).toBeVisible();await expect(page.getByRole('listitem').filter({hasText:'Cost: Free'})).toContainText('Five pounds');
   expect((await new AxeBuilder({page}).withTags(wcag).analyze()).violations).toEqual([]);
   await page.getByRole('button',{name:/^Undo/}).click();
   await expect(page.getByText('(reverted)')).toBeVisible();expect(reverted).toBe('o1');await expect(page.getByRole('button',{name:/^Undo/})).toHaveCount(0);
-  await expect(page.getByRole('link',{name:'Recently enriched'})).toHaveAttribute('aria-current','page');
+  await page.getByRole('button',{name:/^Staff/}).click();await expect(page.getByRole('link',{name:'Enrichment log'})).toHaveAttribute('aria-current','page');
 });

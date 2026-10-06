@@ -17,13 +17,17 @@ export function useMeetingShortlist() {
     window.addEventListener('storage', update);
     return () => { window.removeEventListener('directory-saved-changed', update); window.removeEventListener('storage', update); };
   }, []);
-  const savedIds = new Set(saved.map(item => item.id));
+  const storedIds = new Set(saved.map(item => item.id));
+  // Ticks belong to this meeting only; services saved earlier on the site are not shown as ticked.
+  const savedIds = new Set([...choices.keys()].filter(id => storedIds.has(id)));
   const toggle = (service: MeetingService, concept: string) => {
-    toggleDirectorySaved(service);
-    setChoices(previous => { const next = new Map(previous); if (savedIds.has(service.id)) next.delete(service.id); else next.set(service.id, { service, concept }); return next; });
+    const picking = !choices.has(service.id);
+    // Keep the site-wide Saved list in step: save when picking, unsave when unpicking, never flip it the wrong way.
+    if (picking !== storedIds.has(service.id)) toggleDirectorySaved(service);
+    setChoices(previous => { const next = new Map(previous); if (picking) next.set(service.id, { service, concept }); else next.delete(service.id); return next; });
   };
   // Only services still saved count, in case someone unsaves from the shortlist page.
-  const picked = [...choices.values()].filter(choice => savedIds.has(choice.service.id));
+  const picked = [...choices.values()].filter(choice => storedIds.has(choice.service.id));
   return { savedIds, toggle, picked, clear: () => setChoices(new Map()) };
 }
 

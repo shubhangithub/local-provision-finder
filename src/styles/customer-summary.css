@@ -1,9 +1,6 @@
 @scope (.customer-summary-page) {
 .meeting-main{background:#ffffff;min-height:calc(100vh - 70px);padding:28px 32px 56px;color:#0b0c0c}
 .meeting-workspace,.customer-summary-page{max-width:1080px;margin:auto}
-.meeting-entry{display:flex;align-items:center;justify-content:space-between;gap:24px;border:1px solid #b1b4b6;border-left:4px solid #00703c;padding:20px 24px;margin-bottom:28px;background:#f3f2f1;border-radius:0}
-.meeting-entry strong{font-size:19px}
-.meeting-entry p{font-size:16px;margin:6px 0 0;color:#505a5f}
 .meeting-page-top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px}
 .meeting-workspace-tag,.meeting-eyebrow{font-size:12px;letter-spacing:.1em;font-weight:700;color:#505a5f}
 .meeting-page-top .text-button{color:#1d70b8;font-size:14px}
@@ -108,19 +105,18 @@
 .summary-export-paper{max-width:none;box-shadow:none;border:0;min-height:1123px}
 .summary-empty{text-align:center;padding:60px 20px}@keyframes assist-appear{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 @media(prefers-reduced-motion:reduce){.assist-provision{animation:none}}
-@media(min-width:1100px){.meeting-assist{position:sticky;top:24px}
+@media (min-width:1024px){.meeting-assist{position:sticky;top:24px}
 .assist-suggestions{max-height:480px;overflow-y:auto;padding-right:4px}}
-@media(max-width:850px){.meeting-main{padding:20px 16px 40px}
+@media (max-width:1023px){.meeting-main{padding:20px 16px 40px}
 .meeting-grid{grid-template-columns:1fr}
 .meeting-page-heading h1{font-size:36px}
 .meeting-workspace-tag{display:none}
 .meeting-page-heading{align-items:flex-start}
-.meeting-entry{align-items:flex-start;flex-direction:column}
 .summary-toolbar{align-items:flex-start;flex-direction:column}
 .summary-paper{padding:32px}
 .meeting-transcript{height:380px}
 .assist-empty{padding:32px 12px}}
-@media(max-width:500px){.meeting-actionbar{align-items:flex-start;flex-direction:column}
+@media (max-width:639px){.meeting-actionbar{align-items:flex-start;flex-direction:column}
 .meeting-actions{width:100%;justify-content:space-between}
 .meeting-page-heading{flex-direction:column;gap:16px}
 .conversation-heading{padding:16px}
@@ -192,10 +188,10 @@
 .document-title-input{font-size:36px;letter-spacing:0}
 .summary-paper textarea:focus,.document-meta input:focus{outline:3px solid #ffdd00;box-shadow:inset 0 0 0 2px #0b0c0c;background:#fff}
 .document-meta input{font-size:16px}
-@media(max-width:850px){.meeting-page-heading h1{font-size:36px}
+@media (max-width:1023px){.meeting-page-heading h1{font-size:36px}
 .meeting-eyebrow{font-size:19px}
 .meeting-page-heading p:not(.meeting-eyebrow){font-size:16px}}
-@media(max-width:500px){.meeting-page-heading h1{font-size:32px}
+@media (max-width:639px){.meeting-page-heading h1{font-size:32px}
 .conversation-heading{align-items:flex-start;flex-direction:column}
 .assist-title{flex-wrap:wrap}
 .assist-count{margin-left:0}
@@ -205,8 +201,8 @@
 /* Align meeting navigation with the shared page container. */
 .meeting-main {padding:24px 0 56px;}
 .meeting-main .meeting-workspace,.meeting-main .customer-summary-page {max-width:960px;margin:0 auto;}
-@media(max-width:1020px) {.meeting-main .meeting-workspace,.meeting-main .customer-summary-page {margin-left:30px;margin-right:30px;}}
-@media(max-width:650px) {.meeting-main .meeting-workspace,.meeting-main .customer-summary-page {margin-left:20px;margin-right:20px;}}
+@media (max-width:1023px) {.meeting-main .meeting-workspace,.meeting-main .customer-summary-page {margin-left:30px;margin-right:30px;}}
+@media (max-width:639px) {.meeting-main .meeting-workspace,.meeting-main .customer-summary-page {margin-left:20px;margin-right:20px;}}
 
 .live-services h4{margin:18px 0 4px;font-size:19px}.live-services .live-concept:first-child h4{margin-top:0}.live-query{font-size:15px;color:#505a5f;margin:0 0 8px}.live-flash{animation:live-flash 1.6s}@keyframes live-flash{from{background:#ffdd00}to{background:transparent}}
 .live-checking{font-size:15px;color:#505a5f;margin:0 0 8px}.live-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}.live-list.is-pending{opacity:.5}

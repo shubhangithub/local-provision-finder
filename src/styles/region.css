@@ -16,4 +16,4 @@
 .region-map .picker-map-panel .services-map {height:260px;min-height:260px;}
 .region-map .picker-map-section>.button {margin-top:12px;}
 .region-clear {display:block;margin-top:4px;}
-@media(max-width:750px) {.region-trigger-label {max-width:90px;}.region-panel {position:fixed;left:16px;right:16px;top:120px;width:auto;}}
+@media (max-width:639px) {.region-trigger-label {max-width:90px;}.region-panel {position:fixed;left:16px;right:16px;top:120px;width:auto;}}

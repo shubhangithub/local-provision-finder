@@ -4,21 +4,16 @@
 .directory-search-row {display:flex;gap:16px;align-items:stretch;}
 .directory-search-row .search-autocomplete {flex:1;min-width:0;}
 .directory-search-row>.button {align-self:stretch;white-space:nowrap;min-height:48px;padding-left:24px;padding-right:24px;}
-.region-line {margin:0;font-size:16px;color:var(--muted,#484949);display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
-.region-line .text-button {min-height:32px;}
-.finder-section .meeting-entry {margin-top:28px;}
 @media(max-width:650px) {.directory-search-row {flex-direction:column;}.directory-search-row>.button {min-height:48px;width:100%;}}
 
 /* Results: sticky compact bar, then list beside a full-height map. */
 .results-shell {--results-bar-h:76px;width:100%;}
 .results-bar {position:sticky;top:0;z-index:900;background:white;border-bottom:1px solid var(--line,#cecece);}
-.results-bar-inner {padding:10px 24px;max-width:1800px;margin:0 auto;}
+.results-bar-inner{padding:10px 0}
 .results-bar .directory-search-form {margin:0;gap:4px;}
 .results-bar .directory-query {min-height:52px;}
 .results-bar .directory-search-row>.button {min-height:52px;}
-.results-bar .region-line {font-size:15px;}
-.results-main {padding:0 24px;max-width:1800px;margin:0 auto;}
-.results-shell .directory-results-layout {align-items:stretch;}
+.results-main{padding:0}
 .results-shell .directory-results-list {padding:20px 12px 40px 0;min-width:0;}
 .results-shell .directory-results-map {position:sticky;top:var(--results-bar-h);height:calc(100dvh - var(--results-bar-h));min-height:320px;margin:0 0 0 12px;display:flex;flex-direction:column;align-self:start;}
 .results-shell .directory-results-map .services-map-panel {flex:1;display:flex;flex-direction:column;min-height:0;}
@@ -27,8 +22,7 @@
 /* A slim row for the controls that belong to the results. The old title, count and 'results for' lines are gone. */
 .results-controls {display:flex;flex-wrap:wrap;gap:6px 20px;align-items:baseline;margin-bottom:12px;}
 .results-controls:empty {display:none;}
-.results-urgency {max-width:1800px;margin:0 auto;padding:0 24px 8px;}
-@media (max-width:700px){.results-urgency{padding:0 16px 8px;}}
+.results-urgency{padding:0 0 8px}
 .results-controls .nearby-options {flex-basis:100%;margin:0;}
 .results-controls .nearby-options .checkbox-label {margin-top:6px;}
 .results-shell .urgency-control {margin:8px 0 12px;}
@@ -37,16 +31,18 @@
 @media(max-width:1023px) {
   .results-shell {--results-bar-h:0px;padding-bottom:72px;}
   .results-bar {position:static;}
-  .results-main {padding:0 16px;}
-  .results-bar-inner {padding:12px 16px;}
-  .results-shell .directory-results-layout {display:block;}
-  .results-shell .results-divider {display:none;}
+  
+  .results-bar-inner {padding:12px 0;}
   .results-shell .directory-results-list {padding:16px 0 24px;}
-  .results-shell .directory-results-layout.view-map .directory-results-list {display:none;}
-  .results-shell .directory-results-layout.view-list .directory-results-map {display:none;}
   .results-shell .directory-results-map {position:static;margin:0;height:calc(100dvh - 140px);min-height:320px;}
   .results-view-toggle {display:flex;position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:950;background:white;box-shadow:0 2px 10px #0b0c0c40;}
 }
 @media(max-height:480px) and (min-width:1024px) {
   .results-shell .directory-results-map {min-height:320px;}
+}
+
+/* Below the wide breakpoint the toggle shows the list or the map, not both. Kept here because the map's own display rule is page-level. */
+@media (max-width:1023px) {
+  .results-shell .directory-results-layout.view-map .directory-results-list {display:none;}
+  .results-shell .directory-results-layout.view-list .directory-results-map {display:none;}
 }

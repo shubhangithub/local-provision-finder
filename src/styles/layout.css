@@ -1,0 +1,70 @@
+/*
+ * The frame. Every page, and the header, staff bar, staff navigation and footer around it, share one width and one
+ * gutter. A page is "reading" (--page-width) unless it asks for "wide" (--page-width-wide): see usePageWidth.
+ */
+@layer layout {
+  :root { --frame-width: var(--page-width); }
+  :root[data-width="wide"] { --frame-width: var(--page-width-wide); }
+
+  .page-wrap,
+  .header-inner,
+  .footer-inner,
+  .results-bar-inner,
+  .results-main,
+  .results-urgency {
+    width: min(100% - 2 * var(--gutter), var(--frame-width));
+    margin-inline: auto;
+  }
+
+  /*
+   * Main column plus a side column (service details). The side column stacks below the main one on a phone.
+   * Modifiers change the columns through two custom properties instead of redefining the grid:
+   *   .grid-main-side--even  two equal columns that stack until the wide breakpoint (the feedback review).
+   */
+  .grid-main-side {
+    --grid-main: minmax(0, 1fr);
+    --grid-side: var(--side-width);
+    display: grid;
+    grid-template-columns: var(--grid-main) var(--grid-side);
+    gap: var(--space-5);
+    align-items: start;
+  }
+  .grid-main-side--even { --grid-side: minmax(0, 1fr); }
+
+  @media (max-width: 639px) {
+    .grid-main-side { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (min-width: 640px) and (max-width: 1023px) {
+    .grid-main-side:not(.grid-main-side--even) { --grid-side: 260px; }
+    .grid-main-side--even { grid-template-columns: minmax(0, 1fr); }
+  }
+
+  /*
+   * A list beside a map with a draggable divider between them (search results). The list width is --results-list-width,
+   * set by the divider. Below the wide breakpoint the two stack. The list/map toggle that shows one at a time lives with the results page styles.
+   */
+  .grid-split {
+    display: grid;
+    grid-template-columns: minmax(0, var(--results-list-width, 50%)) 8px minmax(0, 1fr);
+    align-items: stretch;
+  }
+  @media (max-width: 1023px) {
+    .grid-split { display: block; }
+  }
+
+  /*
+   * The home page: the question and the search box sit in the vertical middle of the space between header and
+   * footer, nudged up a little because the eye reads the middle of a page as slightly higher than the maths says.
+   */
+  #main-content:has(> .directory-home[data-state="home"]) {
+    display: flex;
+    flex-direction: column;
+  }
+  .directory-home[data-state="home"] {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-bottom: 8vh;
+  }
+}

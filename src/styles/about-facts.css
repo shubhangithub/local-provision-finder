@@ -14,3 +14,8 @@
 .contact-line>a:first-child{display:flex;align-items:flex-start;gap:10px;font-size:17px;line-height:1.5;overflow-wrap:anywhere}
 .contact-line>a:first-child svg{margin-top:2px}
 .contact-line .contact-line .row-diff{margin:4px 0 0;font-size:15px}
+
+.markdown-table{overflow-x:auto;max-width:100%;margin:0 0 8px}
+.markdown-table table{border-collapse:collapse;min-width:100%;font-size:16px}
+.markdown-table th,.markdown-table td{border:1px solid #b1b4b6;padding:6px 10px;text-align:left;vertical-align:top}
+.markdown-table th{background:#f3f2f1;font-weight:700}

@@ -49,7 +49,7 @@ export default function RegionMenu() {
   }
   
   return <div className="region-menu" ref={container}>
-    <button ref={trigger} type="button" className="notification-trigger region-trigger" aria-label={region ? `Region settings, ${region.label}` : 'Region settings'} aria-haspopup="true" aria-expanded={open} aria-controls="region-menu-panel" onClick={()=>open?close():setOpen(true)}><Settings size={18} aria-hidden="true"/>{region && <span className="region-trigger-label">{region.label}</span>}</button>
+    <button ref={trigger} type="button" className="header-trigger region-trigger" aria-label={region ? `Region settings, ${region.label}` : 'Region settings'} aria-haspopup="true" aria-expanded={open} aria-controls="region-menu-panel" onClick={()=>open?close():setOpen(true)}><Settings size={18} aria-hidden="true"/>{region && <span className="region-trigger-label">{region.label}</span>}</button>
     {open && <section id="region-menu-panel" className="region-panel" aria-label="Region settings">
       <div className="region-panel-heading"><h2>Search region</h2><button type="button" className="icon-button" aria-label="Close region settings" onClick={()=>close()}><X size={19}/></button></div>
       <p className="region-current" role="status">{region ? <>Searching in <strong>{region.label}</strong></> : <>No region set</>}</p>
