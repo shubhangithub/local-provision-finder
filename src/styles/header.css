@@ -29,3 +29,33 @@
   nav#main-navigation.is-open .staff-toggle,
   nav#main-navigation.is-open .staff-menu-trigger { background: transparent; color: #fff; font-size: 17px; font-weight: 400; }
 }
+
+/*
+ * Header controls, one style. The bar is black with a blue rule; every item is white 16px text on a 44px target with the
+ * same hover and focus. Count badges are one blue pill. Staff is an outlined button in both states.
+ */
+.site-header .header-inner nav .header-trigger,
+.site-header .header-inner nav .agent-header-trigger,
+.site-header .header-inner nav .nav-link,
+.site-header .header-inner nav .staff-toggle {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; margin: 0; padding: 0 12px;
+  background: transparent; color: #fff; border: 0; border-radius: 0;
+  font: inherit; font-size: 16px; font-weight: 400; line-height: 1.2; text-decoration: none; cursor: pointer;
+}
+.site-header .header-inner nav .header-trigger:hover,
+.site-header .header-inner nav .agent-header-trigger:hover,
+.site-header .header-inner nav .nav-link:hover { background: #2b2d2e; text-decoration: underline; }
+.site-header .header-inner nav .nav-link.active { background: transparent; box-shadow: inset 0 -3px 0 #fff; }
+.site-header .header-inner nav .header-trigger:focus-visible,
+.site-header .header-inner nav .agent-header-trigger:focus-visible,
+.site-header .header-inner nav .nav-link:focus-visible,
+.site-header .header-inner nav .staff-toggle:focus-visible { outline: 3px solid #ffdd00; outline-offset: 0; background: #ffdd00; color: #0b0c0c; }
+.site-header .header-inner nav .staff-toggle,
+.site-header .header-inner nav .staff-toggle.enabled { border: 2px solid #fff; font-weight: 700; padding: 0 12px; }
+.site-header .header-inner nav .staff-toggle:hover { background: #2b2d2e; }
+.site-header .header-inner nav .nav-count,
+.site-header .header-inner nav .staff-menu-trigger .workspace-count {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 6px;
+  background: #1d70b8; color: #fff; border: 0; border-radius: 11px; font-size: 13px; font-weight: 700; line-height: 1;
+}
+.site-header .header-inner nav .live-dot { background: #00a35c; }
