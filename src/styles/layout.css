@@ -51,4 +51,20 @@
   @media (max-width: 1023px) {
     .grid-split { display: block; }
   }
+
+  /*
+   * The home page: the question and the search box sit in the vertical middle of the space between header and
+   * footer, nudged up a little because the eye reads the middle of a page as slightly higher than the maths says.
+   */
+  #main-content:has(> .directory-home[data-state="home"]) {
+    display: flex;
+    flex-direction: column;
+  }
+  .directory-home[data-state="home"] {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-bottom: 8vh;
+  }
 }

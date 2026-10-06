@@ -75,7 +75,7 @@ export default function LocationSearch({staff=false,selectedId=null,onSelect,onB
   const urgencyNotice=<UrgencyNotice part="details" text={words} mode={urgency} onChange={mode=>{setUrgency(mode);setPage(1);}}/>;
   if (state==='detail') return <div className="location-search directory-home" data-state="detail"><section className="page-wrap finder-section directory-service-detail" aria-label="Real directory results"><button className="back-link" type="button" onClick={closeDetail}><ArrowLeft size={16}/>Back to results</button><ImportedServices key={selected!} initialId={selected!} directoryView feedbackOpen={feedbackOpen} feedbackContext={feedbackContext} staff={staff} enableStaff={() => {}} onNavigate={closeDetail}/></section></div>;
   if (state==='home') return <div className="location-search directory-home" data-state="home">
-    <section className="hero page-wrap"><div className="hero-copy"><h1>What do you need help with?</h1><p>Describe it in your own words. You don't need the right term.</p></div></section>
+    <section className="hero page-wrap"><div className="hero-copy"><h1>What do you need help with?</h1></div></section>
     <section className="page-wrap finder-section" aria-label="Search local support">{searchForm}{urgencyNotice}</section>
   </div>;
   return <div ref={shell} className="location-search directory-home results-shell" data-state="results">
